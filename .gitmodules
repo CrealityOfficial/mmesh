@@ -1,0 +1,9 @@
+[submodule "cmake"]
+	path = cmake
+	url = ssh://git@172.20.180.12:8022/yanfa4/shared/cmake.git
+[submodule "trimesh2"]
+	path = trimesh2
+	url = ssh://git@172.20.180.12:8022/yanfa4/thirdparty/trimesh2.git
+[submodule "headonly"]
+	path = headonly
+	url = ssh://git@172.20.180.12:8022/yanfa4/thirdparty/headonly.git
