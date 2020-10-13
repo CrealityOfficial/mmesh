@@ -1,7 +1,7 @@
 __files_group(${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ SRCS)
 
 set(Incs ${CMAKE_CURRENT_SOURCE_DIR})
-set(Libs)
+set(Libs trimesh2)
 __add_real_target(mmesh lib SOURCE ${SRCS} INC ${Incs} LIB ${Libs})
 
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
