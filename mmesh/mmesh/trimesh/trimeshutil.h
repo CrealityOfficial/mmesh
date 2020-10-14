@@ -1,6 +1,7 @@
 #ifndef MMESH_TRIMESHUTIL_1602590289222_H
 #define MMESH_TRIMESHUTIL_1602590289222_H
 #include <vector>
+#include "trimesh2/XForm.h"
 
 namespace trimesh
 {
@@ -18,6 +19,8 @@ namespace mmesh
 	trimesh::TriMesh* partMesh(const std::vector<int>& indices, trimesh::TriMesh* inMesh);
 
 	void dumplicateMesh(trimesh::TriMesh* mesh);
+
+	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix);
 }
 
 #endif // MMESH_TRIMESHUTIL_1602590289222_H
