@@ -45,7 +45,7 @@ namespace mmesh
 
 		void lowestVertex(std::vector<trimesh::vec3>& vertexes, std::vector<int>& indices);
 		void hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, std::vector<trimesh::ivec2>& edges);
-		void chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& faces);
+		void chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& faces, float faceCosValue);
 
 		trimesh::TriMesh* m_mesh;
 

@@ -170,13 +170,12 @@ namespace mmesh
 		}
 	}
 
-	void MeshTopo::chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& supportFaces)
+	void MeshTopo::chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& supportFaces, float faceCosValue)
 	{
 		int faceNum = (int)m_mesh->faces.size();
 		std::vector<bool> visitFlags(faceNum, false);
 		std::vector<int> visitStack;
 		std::vector<int> nextStack;
-		float faceCosValue = cosf(M_PIf * 30.0f / 180.0f);
 		for (int faceID = 0; faceID < faceNum; ++faceID)
 		{
 			if (dotValues.at(faceID) < -faceCosValue && visitFlags.at(faceID) == false)
