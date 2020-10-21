@@ -1,5 +1,6 @@
 #include "mmesh/trimesh/trimeshutil.h"
 #include "trimesh2/TriMesh.h"
+#include "trimesh2/TriMesh_algo.h"
 
 #include <unordered_map>
 #include <assert.h>
@@ -291,5 +292,18 @@ namespace mmesh
 				}
 			}
 		}
+	}
+
+	trimesh::vec3 moveTrimesh2Center(trimesh::TriMesh* mesh)
+	{
+		trimesh::box3 b = mesh->bbox;
+
+		trimesh::vec3 size = b.size() / 2.0f;
+		size.x = 0.0f;
+		size.y = 0.0f;
+		trimesh::vec3 offset = size - b.center();
+		trimesh::trans(mesh, offset);
+
+		return offset;
 	}
 }

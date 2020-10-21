@@ -21,6 +21,8 @@ namespace mmesh
 	void dumplicateMesh(trimesh::TriMesh* mesh);
 
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix);
+
+	trimesh::vec3 moveTrimesh2Center(trimesh::TriMesh* mesh);
 }
 
 #endif // MMESH_TRIMESHUTIL_1602590289222_H
