@@ -1,8 +1,8 @@
 __files_group(${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ SRCS)
 
 set(Incs ${CMAKE_CURRENT_SOURCE_DIR})
-set(Libs trimesh2)
+set(Libs trimesh2 clipper)
 __add_real_target(mmesh lib SOURCE ${SRCS} INC ${Incs} LIB ${Libs})
 
-INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ DESTINATION include/mmesh/ FILES_MATCHING PATTERN "*.h")
+INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
 set_property(TARGET mmesh PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR})
