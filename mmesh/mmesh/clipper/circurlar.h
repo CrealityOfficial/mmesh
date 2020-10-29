@@ -4,7 +4,8 @@
 
 namespace mmesh
 {
-	void loopPolyTree(polyNodeFunc func, ClipperLib::PolyTree* polyTree);
+	void loopPolyTree(polyNodeFunc func, ClipperLib::PolyNode* polyNode);
+	void level2PolyNode(polyNodeFunc func, ClipperLib::PolyNode* polyNode);
 }
 
 #endif // MMESH_CIRCURLAR_1603379885432_H

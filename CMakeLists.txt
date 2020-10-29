@@ -5,6 +5,7 @@ include(ConfigureAllModules)
 
 project(mmesh)
 
+add_subdirectory(trimesh2/external/ trimesh2)
 add_subdirectory(mmesh)
 
 __configure_all()
