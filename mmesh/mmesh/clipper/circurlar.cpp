@@ -30,4 +30,17 @@ namespace mmesh
 
 		cFunc(polyNode);
 	}
+
+	void seperatePolyTree(ClipperLib::PolyTree* polyTree,
+		std::vector<ClipperLib::Path*>& exterior, std::vector<ClipperLib::Path*>& interior)
+	{
+		polyNodeFunc func = [&func, &exterior, &interior](ClipperLib::PolyNode* node) {
+			if (!node->IsHole())
+				exterior.push_back(&node->Contour);
+			if (node->IsHole() && node->Parent)
+				interior.push_back(&node->Contour);
+		};
+
+		mmesh::loopPolyTree(func, polyTree);
+	}
 }
