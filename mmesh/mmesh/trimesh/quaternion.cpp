@@ -193,6 +193,6 @@ namespace trimesh
 
 	bool quaternion::qFuzzyIsNull(float f)
 	{
-		return std::fabsf(f) <= 0.00001f;
+		return fabsf(f) <= 0.00001f;
 	}
 }

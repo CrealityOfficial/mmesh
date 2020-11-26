@@ -21,7 +21,7 @@ namespace mmesh
 	{
 	}
 
-	void Box2DGrid::build(TriMesh* mesh, fxform& xf)
+	void Box2DGrid::build(TriMesh* mesh, fxform xf)
 	{
 		m_mesh = mesh;
 		m_xf = xf;
