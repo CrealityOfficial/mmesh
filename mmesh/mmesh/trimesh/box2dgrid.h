@@ -63,7 +63,8 @@ namespace mmesh
 		Box2DGrid();
 		~Box2DGrid();
 
-		void build(trimesh::TriMesh* mesh, trimesh::fxform& xf, bool isFanZhuan);
+		void build(trimesh::TriMesh* mesh, trimesh::fxform xf, bool isFanZhuan);
+
 		void buildGlobalProperties();
 		void clear();
 

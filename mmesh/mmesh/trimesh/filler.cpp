@@ -19,8 +19,8 @@ namespace mmesh
 		std::vector<float> sinValue;
 		for (int i = 0; i < hPart; ++i)
 		{
-			cosValue.push_back(std::cosf(deltaTheta * (float)i + theta));
-			sinValue.push_back(std::sinf(deltaTheta * (float)i + theta));
+			cosValue.push_back(cosf(deltaTheta * (float)i + theta));
+			sinValue.push_back(sinf(deltaTheta * (float)i + theta));
 		}
 
 		std::vector<trimesh::vec3> baseNormals;

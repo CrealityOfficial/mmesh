@@ -21,7 +21,7 @@ namespace mmesh
 	{
 	}
 
-	void Box2DGrid::build(TriMesh* mesh, fxform& xf, bool isFanZhuan)
+	void Box2DGrid::build(TriMesh* mesh, fxform xf, bool isFanZhuan)
 	{
 		m_mesh = mesh;
 		m_xf = xf;
