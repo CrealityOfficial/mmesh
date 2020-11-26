@@ -21,7 +21,7 @@ namespace mmesh
 	{
 	}
 
-	void Box2DGrid::build(TriMesh* mesh, fxform& xf)
+	void Box2DGrid::build(TriMesh* mesh, fxform& xf, bool isFanZhuan)
 	{
 		m_mesh = mesh;
 		m_xf = xf;
@@ -44,9 +44,17 @@ namespace mmesh
 				for (int i = 0; i < faceNum; ++i)
 				{
 					TriMesh::Face& f = m_mesh->faces.at(i);
+
+					int fv1 = 1, fv2 = 2;
+					if (isFanZhuan)
+					{
+						fv1 = 2;
+						fv2 = 1;
+					}
+
 					vec3& v0 = m_vertexes.at(f[0]);
-					vec3& v1 = m_vertexes.at(f[1]);
-					vec3& v2 = m_vertexes.at(f[2]);
+					vec3& v1 = m_vertexes.at(f[fv1]);
+					vec3& v2 = m_vertexes.at(f[fv2]);
 
 					vec3 v01 = v1 - v0;
 					vec3 v02 = v2 - v0;
