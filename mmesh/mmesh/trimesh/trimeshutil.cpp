@@ -7,7 +7,7 @@
 
 namespace mmesh
 {
-	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes)
+	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
 	{
 		assert(outMesh);
 		size_t totalVertexSize = outMesh->vertices.size();
@@ -48,6 +48,13 @@ namespace mmesh
 							trimesh::TriMesh::Face& face = outMesh->faces.at(ii);
 							for (int j = 0; j < 3; ++j)
 								face[j] += startVertexIndex;
+
+							if (fanzhuan)
+							{
+								int t = face[1];
+								face[1] = face[2];
+								face[2] = t;
+							}
 						}
 					}
 
@@ -226,7 +233,7 @@ namespace mmesh
 		delete omesh;
 	}
 
-	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix)
+	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan)
 	{
 		assert(outMesh);
 		size_t totalVertexSize = outMesh->vertices.size();
@@ -283,7 +290,15 @@ namespace mmesh
 						{
 							trimesh::TriMesh::Face& face = outMesh->faces.at(ii);
 							for (int j = 0; j < 3; ++j)
+							{
 								face[j] += startVertexIndex;
+							}
+							if (fanzhuan)
+							{
+								int t = face[1];
+								face[1] = face[2];
+								face[2] = t;
+							}
 						}
 					}
 
