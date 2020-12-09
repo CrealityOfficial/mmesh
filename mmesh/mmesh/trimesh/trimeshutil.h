@@ -10,7 +10,7 @@ namespace trimesh
 
 namespace mmesh
 {
-	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes);
+	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan = false);
 
 	void reverseTriMesh(trimesh::TriMesh* Mesh);
 
@@ -20,7 +20,7 @@ namespace mmesh
 
 	void dumplicateMesh(trimesh::TriMesh* mesh);
 
-	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix);
+	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan);
 
 	trimesh::vec3 moveTrimesh2Center(trimesh::TriMesh* mesh);
 }

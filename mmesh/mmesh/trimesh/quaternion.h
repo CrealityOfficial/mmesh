@@ -11,10 +11,10 @@ namespace trimesh
 		~quaternion();
 		quaternion(float w, float x, float y, float z);
 		quaternion(float w, const vec3& src);
-		quaternion rotationTo(const vec3& from, const vec3& to);
+		static quaternion rotationTo(const vec3& from, const vec3& to);
 		quaternion QuaterNormalized() const;
-		quaternion fromAxes(const vec3& xAxis, const vec3& yAxis, const vec3& zAxis);
-		quaternion fromRotationMatrix(float rot3x3[3][3]);
+		static quaternion fromAxes(const vec3& xAxis, const vec3& yAxis, const vec3& zAxis);
+		static quaternion fromRotationMatrix(float rot3x3[3][3]);
 
 		inline quaternion conjugated() const;
 
@@ -22,8 +22,8 @@ namespace trimesh
 		vec3 rotatedVector(const vec3& vector3) const;
 		inline float dotProduct(const quaternion& q1, const quaternion& q2);
 
-		quaternion fromDirection(vec3 dir, const vec3& fixedValue);
-		inline bool qFuzzyIsNull(float f) const;
+		static quaternion fromDirection(vec3 dir, const vec3& fixedValue);
+		static bool qFuzzyIsNull(float f);
 	
 	public:
 		float wp, xp, yp, zp;

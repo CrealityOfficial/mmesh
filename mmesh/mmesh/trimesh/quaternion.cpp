@@ -191,8 +191,8 @@ namespace trimesh
 		return quaternion(w, x, y, z);
 	}
 
-	inline bool quaternion::qFuzzyIsNull(float f) const
+	bool quaternion::qFuzzyIsNull(float f)
 	{
-		return std::fabsf(f) <= 0.00001f;
+		return fabsf(f) <= 0.00001f;
 	}
 }
