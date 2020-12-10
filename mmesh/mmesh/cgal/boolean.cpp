@@ -4,143 +4,145 @@
 #include <CGAL/Surface_mesh.h>
 #include <fstream>
 
-    typedef CGAL::Exact_predicates_exact_constructions_kernel K;
-    typedef CGAL::Surface_mesh<K::Point_3>             Mesh;
-    typedef Mesh::Vertex_index vertex_descriptor;
-    typedef Mesh::Face_index face_descriptor;
-    typedef K::Point_3                                      Point;
+typedef CGAL::Exact_predicates_exact_constructions_kernel K;
+typedef CGAL::Surface_mesh<K::Point_3>             Mesh;
+typedef Mesh::Vertex_index vertex_descriptor;
+typedef Mesh::Face_index face_descriptor;
+typedef K::Point_3                                      Point;
 
-    namespace PMP = CGAL::Polygon_mesh_processing;
+namespace PMP = CGAL::Polygon_mesh_processing;
 
-    trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
+trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
+{
+    size_t vertexSize = surfaceMesh.number_of_vertices();
+    size_t faceSize = surfaceMesh.number_of_faces();
+
+    if ((vertexSize < 3) && (faceSize < 1))
+        return nullptr;
+
+    trimesh::TriMesh* mesh = new trimesh::TriMesh();
+    mesh->vertices.resize(vertexSize);
+    mesh->faces.resize(faceSize);
+    // The status of being used or removed is stored in a property map
+    Mesh::Property_map<Mesh::Vertex_index, bool> removed
+        = surfaceMesh.property_map<Mesh::Vertex_index, bool>("v:removed").first;
+
     {
-        size_t vertexSize = surfaceMesh.number_of_vertices();
-        size_t faceSize = surfaceMesh.number_of_faces();
+        unsigned int i = 0, end = surfaceMesh.number_of_vertices() + surfaceMesh.number_of_removed_vertices();
+        for (; i < end; ++i) {
+            vertex_descriptor vh(i);
+           if (surfaceMesh.is_removed(vh))
+                continue;
+         const Point& p = surfaceMesh.point(vh);
+         trimesh::vec3& v = mesh->vertices.at(i);
+         v[0] = CGAL::to_double(p.exact().x());
+         v[1] = CGAL::to_double(p.exact().y());
+         v[2] = CGAL::to_double(p.exact().z());
 
-        if ((vertexSize < 3) && (faceSize < 1))
-            return nullptr;
-
-        trimesh::TriMesh* mesh = new trimesh::TriMesh();
-        mesh->vertices.resize(vertexSize);
-        mesh->faces.resize(faceSize);
-        // The status of being used or removed is stored in a property map
-        Mesh::Property_map<Mesh::Vertex_index, bool> removed
-            = surfaceMesh.property_map<Mesh::Vertex_index, bool>("v:removed").first;
-
-        {
-
-            unsigned int i = 0, end = surfaceMesh.number_of_vertices() + surfaceMesh.number_of_removed_vertices();
-            for (; i < end; ++i) {
-                vertex_descriptor vh(i);
-               if (surfaceMesh.is_removed(vh))
-                    continue;
-             const Point& p = surfaceMesh.point(vh);
-             trimesh::vec3& v = mesh->vertices.at(i);
-             v[0] = CGAL::to_double(p.exact().x());
-             v[1] = CGAL::to_double(p.exact().y());
-             v[2] = CGAL::to_double(p.exact().z());
-
-              //  std::cout << m.point(vh) << ((m.is_removed(vh)) ? "  R\n" : "\n");
-            }
+          //  std::cout << m.point(vh) << ((m.is_removed(vh)) ? "  R\n" : "\n");
         }
+    }
 
-        size_t faceIndex = 0;
-        //for (faceIndex=0; faceIndex< faceSize; faceIndex++)
+    size_t faceIndex = 0;
+    //for (faceIndex=0; faceIndex< faceSize; faceIndex++)
+    {
+
+        //Get face indices ...
+        for (Mesh::Face_index face_index : surfaceMesh.faces()) 
         {
 
-            //Get face indices ...
-            for (Mesh::Face_index face_index : surfaceMesh.faces()) 
+            trimesh::TriMesh::Face& f = mesh->faces.at(faceIndex);
+           // Mesh::Vertex_around_face_circulator fvit(surfaceMesh.halfedge(face_index), surfaceMesh);
+            CGAL::Vertex_around_face_circulator<Mesh> vcirc(surfaceMesh.halfedge(face_index), surfaceMesh), done(vcirc);
+            int index = 0;
+            do
             {
-
-                trimesh::TriMesh::Face& f = mesh->faces.at(faceIndex);
-               // Mesh::Vertex_around_face_circulator fvit(surfaceMesh.halfedge(face_index), surfaceMesh);
-                CGAL::Vertex_around_face_circulator<Mesh> vcirc(surfaceMesh.halfedge(face_index), surfaceMesh), done(vcirc);
-                int index = 0;
-                do
-                {
-                    std::cout << (*vcirc).idx() << std::endl;
-                    f[index] = (*vcirc).idx();
-                    index += 1;
-                } while (++vcirc != done);
-                faceIndex += 1;
-            }
-
+                std::cout << (*vcirc).idx() << std::endl;
+                f[index] = (*vcirc).idx();
+                index += 1;
+            } while (++vcirc != done);
+            faceIndex += 1;
         }
 
-            //for (Mesh::Face_iterator fit = surfaceMesh.faces_begin(); fit != surfaceMesh.faces_end(); ++fit)
-            //{
-            //    Mesh::Vertex_around_face_circulator vertices(*fit);
-            //    Mesh::Vertex_around_face_circulator fvit = surfaceMesh.vertices(*fit), fvend = fvit;
-            //    do
-            //    {
-            //        std::cout<< (*fvit).idx()<<std::endl;
-            //    } while (++fvit != fvend);
-            //}
-
-        return mesh;
     }
 
-    void trimesh2cgal(const trimesh::TriMesh& mesh, Mesh& surfaceMesh)
+        //for (Mesh::Face_iterator fit = surfaceMesh.faces_begin(); fit != surfaceMesh.faces_end(); ++fit)
+        //{
+        //    Mesh::Vertex_around_face_circulator vertices(*fit);
+        //    Mesh::Vertex_around_face_circulator fvit = surfaceMesh.vertices(*fit), fvend = fvit;
+        //    do
+        //    {
+        //        std::cout<< (*fvit).idx()<<std::endl;
+        //    } while (++fvit != fvend);
+        //}
+
+    return mesh;
+}
+
+void trimesh2cgal(const trimesh::TriMesh& mesh, Mesh& surfaceMesh)
+{
+    int pointSize = (int)mesh.vertices.size();
+    int facesSize = (int)mesh.faces.size();
+    if (pointSize < 3 || facesSize < 1)
+        return;
+    for (int i = 0; i < pointSize; i++)
     {
-        int pointSize = (int)mesh.vertices.size();
-        int facesSize = (int)mesh.faces.size();
-        if (pointSize < 3 || facesSize < 1)
-            return;
-        for (int i = 0; i < pointSize; i++)
-        {
-            const trimesh::vec3& v = mesh.vertices.at(i);
-            surfaceMesh.add_vertex(K::Point_3(v.x, v.y, v.z));
+        const trimesh::vec3& v = mesh.vertices.at(i);
+        surfaceMesh.add_vertex(K::Point_3(v.x, v.y, v.z));
 
-        }
-
-        for (int i = 0; i < facesSize; i++)
-        {
-            const trimesh::TriMesh::Face& f = mesh.faces.at(i);
-            vertex_descriptor vh0(f[0]);
-            vertex_descriptor vh1(f[1]);
-            vertex_descriptor vh2(f[2]);
-            surfaceMesh.add_face(vh0, vh1, vh2);
-        }
     }
 
-    
-    int main_test()
+    for (int i = 0; i < facesSize; i++)
     {
-        const char* filename1 = "data/blobby.off";
-        const char* filename2 = "data/eight.off";
-        std::ifstream input(filename1);
+        const trimesh::TriMesh::Face& f = mesh.faces.at(i);
+        vertex_descriptor vh0(f[0]);
+        vertex_descriptor vh1(f[1]);
+        vertex_descriptor vh2(f[2]);
+        surfaceMesh.add_face(vh0, vh1, vh2);
+    }
+}
 
-        Mesh mesh1, mesh2;
-        if (!input || !(input >> mesh1))
-        {
-            std::cerr << "First mesh is not a valid off file." << std::endl;
-            return 1;
-        }
-        input.close();
-        input.open(filename2);
-        if (!input || !(input >> mesh2))
-        {
-            std::cerr << "Second mesh is not a valid off file." << std::endl;
-            return 1;
-        }
 
-        Mesh out;
-        bool valid_union = PMP::corefine_and_compute_union(mesh1, mesh2, out);
+int main_test()
+{
+    const char* filename1 = "data/blobby.off";
+    const char* filename2 = "data/eight.off";
+    std::ifstream input(filename1);
 
-        if (valid_union)
-        {
-            std::cout << "Union was successfully computed\n";
-            std::ofstream output("union.off");
-            output.precision(17);
-            output << out;
-            return 0;
-        }
-        std::cout << "Union could not be computed\n";
+    Mesh mesh1, mesh2;
+    if (!input || !(input >> mesh1))
+    {
+        std::cerr << "First mesh is not a valid off file." << std::endl;
         return 1;
     }
-trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriMesh* Mesh2, cxBoolean_operation_type typeindex)
+    input.close();
+    input.open(filename2);
+    if (!input || !(input >> mesh2))
     {
-        trimesh::TriMesh* outMesh= NULL;
+        std::cerr << "Second mesh is not a valid off file." << std::endl;
+        return 1;
+    }
+
+    Mesh out;
+    bool valid_union = PMP::corefine_and_compute_union(mesh1, mesh2, out);
+
+    if (valid_union)
+    {
+        std::cout << "Union was successfully computed\n";
+        std::ofstream output("union.off");
+        output.precision(17);
+        output << out;
+        return 0;
+    }
+    std::cout << "Union could not be computed\n";
+    return 1;
+}
+
+namespace mmesh
+{
+    trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriMesh* Mesh2, cxBoolean_operation_type typeindex)
+    {
+        trimesh::TriMesh* outMesh = NULL;
         Mesh surfaceMesh1;
         Mesh surfaceMesh2;
         Mesh surfaceOut;
@@ -152,28 +154,29 @@ trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriM
         //main_test();
         switch (typeindex)
         {
-        case CX_UNION:
+        case cxBoolean_operation_type::CX_UNION:
             validvalue = PMP::corefine_and_compute_union(surfaceMesh1, surfaceMesh2, surfaceOut);
             break;
-        case CX_INTERSECTION:
+        case cxBoolean_operation_type::CX_INTERSECTION:
             validvalue = PMP::corefine_and_compute_intersection(surfaceMesh1, surfaceMesh2, surfaceOut);
             break;
-        case CX_TM1_MINUS_TM2:
-             validvalue = PMP::corefine_and_compute_difference(surfaceMesh1, surfaceMesh2, surfaceOut);
-           break;
-        case CX_TM2_MINUS_TM1:
-              validvalue = PMP::corefine_and_compute_difference( surfaceMesh2, surfaceMesh1, surfaceOut);
-          break;
+        case cxBoolean_operation_type::CX_TM1_MINUS_TM2:
+            validvalue = PMP::corefine_and_compute_difference(surfaceMesh1, surfaceMesh2, surfaceOut);
+            break;
+        case cxBoolean_operation_type::CX_TM2_MINUS_TM1:
+            validvalue = PMP::corefine_and_compute_difference(surfaceMesh2, surfaceMesh1, surfaceOut);
+            break;
         }
         if (validvalue)
         {
-            #if 0
+#if 0
             std::ofstream output("bool_result.off");
             output.precision(17);
             output << surfaceOut;
-            #endif
+#endif
             outMesh = cgal2trimesh(surfaceOut);
         }
-        END:
+    END:
         return outMesh;
     }
+}
