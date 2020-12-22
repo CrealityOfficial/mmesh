@@ -1,4 +1,4 @@
-#include "simplification.h"
+#include "simplify.h"
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polyhedron_3.h>
 
