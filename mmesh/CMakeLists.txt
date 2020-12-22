@@ -4,6 +4,8 @@ __cgal_include_common_packages()
 __cgal_include_package(Straight_skeleton_2)
 __cgal_include_package(Polygon)
 __cgal_include_package(Polygon_mesh_processing)
+__cgal_include_package(Polyhedron)
+__cgal_include_package(Polyhedron_IO)
 __cgal_include_package(Random_numbers)
 __cgal_include_package(Box_intersection_d) 
 __cgal_include_package(AABB_tree)
@@ -15,6 +17,10 @@ __cgal_include_package(Modifier)
 __cgal_include_package(Triangulation_2)
 __cgal_include_package(TDS_2)
 __cgal_include_package(Surface_mesh)
+
+
+__cgal_include_package(Surface_mesh_simplification)
+
 
 set(DEFS CGAL_NO_GMP=1 CGAL_NO_MPFR=1)
 set(Incs ${CMAKE_CURRENT_SOURCE_DIR})
