@@ -1,5 +1,5 @@
-#ifndef MMESH_BOOLEAN_1607481576423_H
-#define MMESH_BOOLEAN_1607481576423_H
+#ifndef MMESH_SIMPLIFY_1607481576423_H
+#define MMESH_SIMPLIFY_1607481576423_H
 #include "trimesh2/TriMesh.h"
 
     enum cxSimplify_operation_type {
@@ -9,4 +9,4 @@
     trimesh::TriMesh* cxSimplifyOperateMeshObj(trimesh::TriMesh* meshObj, cxSimplify_operation_type typeindex);
     void cxSimplifySetTypeVaue(void* setvalue, cxSimplify_operation_type typeindex);
 
-#endif // MMESH_BOOLEAN_1607481576423_H
+#endif // MMESH_SIMPLIFY_1607481576423_H
