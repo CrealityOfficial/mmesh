@@ -201,7 +201,7 @@ namespace mmesh
                 Halfedge_const_handle h = he;
                 do
                 {
-                    ClipperLib::IntPoint& p= cgal_to_point(h->vertex()->point());
+                    ClipperLib::IntPoint p= cgal_to_point(h->vertex()->point());
                     if (h->vertex()->is_skeleton())
                     {
                         p.Z = 500;
