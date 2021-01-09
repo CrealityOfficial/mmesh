@@ -510,7 +510,7 @@ namespace mmesh
 				{
 					VerticalCollide& nResult = collides.at(startIndex + 1);
 					float dotd = nResult.faceid >= 0 ? m_dotValues.at(nResult.faceid) : 1.0f;
-					if ((abs(dotd) >= cosValue) && (abs(nResult.z - cResult.z) >= 0.1f))
+					if ((dotu * dotd < 0.0f) && (abs(dotd) >= cosValue) && (abs(nResult.z - cResult.z) >= 0.5f))
 					{
 						VerticalSeg seg;
 						seg.t = vec3(nResult.xy.x, nResult.xy.y, nResult.z);
@@ -528,8 +528,14 @@ namespace mmesh
 			}
 		};
 
-		for (vec2& v : samples)
+		size_t sampleSize = samples.size();
+		for (size_t i = 0; i < sampleSize; ++i)
 		{
+			//if (i != 790)
+			//	continue;
+
+			vec2 v = samples.at(i);
+
 			std::vector<VerticalSeg> supps;
 			testOneSample(v, supps);
 			if (supps.size() > 0)
