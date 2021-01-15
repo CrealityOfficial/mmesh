@@ -19,6 +19,8 @@ namespace AABBTreeModle
         float x;
         float y;
         float z;
+        My_point()
+            : x(0), y(0), z(0) {};
 
         My_point(float _x, float _y, float _z)
             : x(_x), y(_y), z(_z) {}
@@ -122,20 +124,26 @@ namespace AABBTreeModle
         int verticeSize = (int)meshPtr->vertices.size();
         meshPtrBefore =(trimesh::TriMesh*) meshPtr;
         points.clear();
-        points.reserve(verticeSize);
+        points.resize(verticeSize);
+        #ifdef _OPENMP
+        #pragma omp parallel for shared(points, meshPtr) num_threads(20)
+        #endif
         for (int i = 0; i < verticeSize; i++)
         {
+           // printf("OpenMP Thread ID: %d\n", omp_get_thread_num());
             const trimesh::vec3& v = meshPtr->vertices.at(i);
             trimesh::vec3 vt = v;
             if(xfPtr !=NULL)
                 vt = (*xfPtr) * v;
 
             My_point a(vt.x, vt.y, vt.z);
-            points.push_back(a);
-            if (i == 0)
-            {
-                std::cout <<"tree Point"<< vt.x <<" "<< vt.y << " " << vt.z << std::endl;
-            }
+            //points.push_back(a);
+            points.at(i)= a;
+
+            //if (i == 0)
+            //{
+            //    std::cout <<"tree Point"<< vt.x <<" "<< vt.y << " " << vt.z << std::endl;
+            //}
 
         }
 
@@ -165,7 +173,7 @@ namespace AABBTreeModle
         {
         static Tree tree(Triangle_iterator(triangles.begin()),
             Triangle_iterator(triangles.end()));
-        tree.build();
+        //tree.build();
         gTreeObjPtr = &tree;
         }
         else

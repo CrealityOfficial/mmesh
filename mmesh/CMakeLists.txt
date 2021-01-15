@@ -24,6 +24,8 @@ set(DEFS CGAL_NO_GMP=1 CGAL_NO_MPFR=1)
 set(Incs ${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions(-DUSE_CGAL_REPAIR_MESH)
 
+__enable_openmp()
+
 if(WIN32)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif()
