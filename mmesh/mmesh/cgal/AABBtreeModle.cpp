@@ -167,21 +167,16 @@ namespace AABBTreeModle
             triangles.push_back(f[1]);
             triangles.push_back(f[2]);
         }
-
         // constructs AABB tree
-        if (gTreeObjPtr == NULL)
-        {
-        static Tree tree(Triangle_iterator(triangles.begin()),
+         clearAABBTree();
+        //static Tree tree(Triangle_iterator(triangles.begin()),
+        //    Triangle_iterator(triangles.end()));
+        ////tree.build();
+        gTreeObjPtr =new Tree(Triangle_iterator(triangles.begin()),
             Triangle_iterator(triangles.end()));
-        //tree.build();
-        gTreeObjPtr = &tree;
-        }
-        else
-        {
-            gTreeObjPtr->rebuild(Triangle_iterator(triangles.begin()),
-                Triangle_iterator(triangles.end()));
+        gTreeObjPtr->build();
 
-        }
+
 #if 0
         // counts #intersections
         K::Ray_3 ray_query(K::Point_3(0.2, 0.2, 0.2), K::Point_3(0.0, 1.0, 0.0));
@@ -273,5 +268,14 @@ namespace AABBTreeModle
         //std::cout << "do_intersect"<<retvalue << std::endl;
         return retvalue;
 
+    }
+    void clearAABBTree()
+    {
+        if (gTreeObjPtr != NULL)
+        {
+            gTreeObjPtr->clear();
+            delete gTreeObjPtr;
+            gTreeObjPtr = NULL;
+        }
     }
 }

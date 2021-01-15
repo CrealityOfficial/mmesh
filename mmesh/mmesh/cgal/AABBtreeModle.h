@@ -12,6 +12,7 @@ namespace AABBTreeModle
 	int CreateAABBTree(const trimesh::TriMesh* meshPtr, const trimesh::fxform* xfPtr);
 	bool TriangleIntersect(const trimesh::TriMesh* meshPtr);
 	bool TriangleFaceIntersect(const trimesh::vec3* v0, const trimesh::vec3* v1, const trimesh::vec3* v2);
+	void clearAABBTree();
 	static bool testTriangleIntersect(const trimesh::TriMesh* meshPtr)
 	{
 		return TriangleIntersect(meshPtr);
