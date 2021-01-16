@@ -1,25 +1,6 @@
 #include "roof.h"
 #include <boost/shared_ptr.hpp>
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Polygon_with_holes_2.h>
-#include <CGAL/create_straight_skeleton_from_polygon_with_holes_2.h>
-
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-
-typedef K::Point_2                    Point;
-typedef CGAL::Polygon_2<K>            Polygon_2;
-typedef CGAL::Polygon_with_holes_2<K> Polygon_with_holes;
-typedef CGAL::Straight_skeleton_2<K>  Straight_skeleton;
-typedef Straight_skeleton::Halfedge_const_iterator Halfedge_const_iterator;
-typedef Straight_skeleton::Halfedge_const_handle   Halfedge_const_handle;
-typedef Straight_skeleton::Vertex_const_iterator Vertex_const_iterator;
-typedef Straight_skeleton::Vertex_const_handle Vertex_const_handle;
-typedef Straight_skeleton::Face_const_iterator Face_const_iterator;
-typedef Straight_skeleton::Face_const_handle Face_const_handle;
-
-typedef boost::shared_ptr<Straight_skeleton> Straight_skeleton_ptr;
-
 void seperate1423(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPairs)
 {
     for (ClipperLib::PolyNode* node1 : polyTree->Childs)
@@ -48,6 +29,27 @@ void seperate1423(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPa
         }
     }
 }
+
+#ifdef WIN32
+
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Polygon_with_holes_2.h>
+#include <CGAL/create_straight_skeleton_from_polygon_with_holes_2.h>
+
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+
+typedef K::Point_2                    Point;
+typedef CGAL::Polygon_2<K>            Polygon_2;
+typedef CGAL::Polygon_with_holes_2<K> Polygon_with_holes;
+typedef CGAL::Straight_skeleton_2<K>  Straight_skeleton;
+typedef Straight_skeleton::Halfedge_const_iterator Halfedge_const_iterator;
+typedef Straight_skeleton::Halfedge_const_handle   Halfedge_const_handle;
+typedef Straight_skeleton::Vertex_const_iterator Vertex_const_iterator;
+typedef Straight_skeleton::Vertex_const_handle Vertex_const_handle;
+typedef Straight_skeleton::Face_const_iterator Face_const_iterator;
+typedef Straight_skeleton::Face_const_handle Face_const_handle;
+
+typedef boost::shared_ptr<Straight_skeleton> Straight_skeleton_ptr;
 
 namespace mmesh
 {
@@ -201,7 +203,7 @@ namespace mmesh
                 Halfedge_const_handle h = he;
                 do
                 {
-                    ClipperLib::IntPoint& p= cgal_to_point(h->vertex()->point());
+                    ClipperLib::IntPoint p= cgal_to_point(h->vertex()->point());
                     if (h->vertex()->is_skeleton())
                     {
                         p.Z = 500;
@@ -411,3 +413,19 @@ namespace mmesh
         pairs.clear();
     }
 }
+
+#else
+
+namespace mmesh
+{
+    void buildRoofs(ClipperLib::PolyTree* polyTree, std::vector<std::vector<trimesh::vec3>*>& patches, double roofHeight, double thickness)
+    {
+
+    }
+
+    void roofLine(ClipperLib::PolyTree* polyTree,
+        ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace)
+    {
+    }
+}
+#endif

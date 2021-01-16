@@ -1,4 +1,7 @@
 #include "simplify.h"
+
+
+#if WIN32
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polyhedron_3.h>
 
@@ -279,3 +282,14 @@ void cxSimplifySetTypeVaue(void* setvalue, cxSimplify_operation_type typeindex)
         break;
     }
 }
+
+#else
+trimesh::TriMesh* cxSimplifyOperateMeshObj(trimesh::TriMesh* meshObj, cxSimplify_operation_type typeindex)
+{
+    return nullptr;
+}
+
+void cxSimplifySetTypeVaue(void* setvalue, cxSimplify_operation_type typeindex)
+{
+}
+#endif

@@ -17,8 +17,11 @@ namespace mmesh
 		size_t meshSize = inMeshes.size();
 		for (size_t i = 0; i < meshSize; ++i)
 		{
-			addVertexSize += inMeshes.at(i)->vertices.size();
-			addTriangleSize += inMeshes.at(i)->faces.size();
+			if (inMeshes.at(i))
+			{
+				addVertexSize += inMeshes.at(i)->vertices.size();
+				addTriangleSize += inMeshes.at(i)->faces.size();
+			}
 		}
 		totalVertexSize += addVertexSize;
 		totalTriangleSize += addTriangleSize;
@@ -33,33 +36,36 @@ namespace mmesh
 			for (size_t i = 0; i < meshSize; ++i)
 			{
 				trimesh::TriMesh* mesh = inMeshes.at(i);
-				int vertexNum = (int)mesh->vertices.size();
-				int faceNum = (int)mesh->faces.size();
-				if (vertexNum > 0 && faceNum > 0)
+				if (mesh)
 				{
-					outMesh->vertices.insert(outMesh->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
-					outMesh->faces.insert(outMesh->faces.end(), mesh->faces.begin(), mesh->faces.end());
-
-					int endFaceIndex = startFaceIndex + faceNum;
-					if (startVertexIndex > 0)
+					int vertexNum = (int)mesh->vertices.size();
+					int faceNum = (int)mesh->faces.size();
+					if (vertexNum > 0 && faceNum > 0)
 					{
-						for (int ii = startFaceIndex; ii < endFaceIndex; ++ii)
-						{
-							trimesh::TriMesh::Face& face = outMesh->faces.at(ii);
-							for (int j = 0; j < 3; ++j)
-								face[j] += startVertexIndex;
+						outMesh->vertices.insert(outMesh->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
+						outMesh->faces.insert(outMesh->faces.end(), mesh->faces.begin(), mesh->faces.end());
 
-							if (fanzhuan)
+						int endFaceIndex = startFaceIndex + faceNum;
+						if (startVertexIndex > 0)
+						{
+							for (int ii = startFaceIndex; ii < endFaceIndex; ++ii)
 							{
-								int t = face[1];
-								face[1] = face[2];
-								face[2] = t;
+								trimesh::TriMesh::Face& face = outMesh->faces.at(ii);
+								for (int j = 0; j < 3; ++j)
+									face[j] += startVertexIndex;
+
+								if (fanzhuan)
+								{
+									int t = face[1];
+									face[1] = face[2];
+									face[2] = t;
+								}
 							}
 						}
-					}
 
-					startFaceIndex += faceNum;
-					startVertexIndex += vertexNum;
+						startFaceIndex += faceNum;
+						startVertexIndex += vertexNum;
+					}
 				}
 			}
 		}
@@ -82,10 +88,13 @@ namespace mmesh
 		for (size_t i = 0; i < meshSize; ++i)
 		{
 			trimesh::TriMesh* mesh = inMeshes.at(i);
-			if (mesh->faces.size() == 0)
-				totalVertexSize += (int)mesh->vertices.size();
-			else
-				totalVertexSize += mesh->vertices.size();
+			if (mesh)
+			{
+				if (mesh->faces.size() == 0)
+					totalVertexSize += (int)mesh->vertices.size();
+				else
+					totalVertexSize += mesh->vertices.size();
+			}
 		}
 
 		if (totalVertexSize > 0)
@@ -94,22 +103,25 @@ namespace mmesh
 			for (size_t i = 0; i < meshSize; ++i)
 			{
 				trimesh::TriMesh* mesh = inMeshes.at(i);
-				if (mesh->faces.size() == 0)
+				if (mesh)
 				{
-					outMesh->vertices.insert(outMesh->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
-				}
-				else
-				{
-					size_t fnum = mesh->faces.size();
-					if (fnum > 0)
+					if (mesh->faces.size() == 0)
 					{
-						for (size_t ii = 0; ii < fnum; ++ii)
+						outMesh->vertices.insert(outMesh->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
+					}
+					else
+					{
+						size_t fnum = mesh->faces.size();
+						if (fnum > 0)
 						{
-							trimesh::TriMesh::Face& face = mesh->faces.at(ii);
-							for (int j = 0; j < 3; ++j)
+							for (size_t ii = 0; ii < fnum; ++ii)
 							{
-								int index = face[j];
-								outMesh->vertices.push_back(mesh->vertices.at(index));
+								trimesh::TriMesh::Face& face = mesh->faces.at(ii);
+								for (int j = 0; j < 3; ++j)
+								{
+									int index = face[j];
+									outMesh->vertices.push_back(mesh->vertices.at(index));
+								}
 							}
 						}
 					}
