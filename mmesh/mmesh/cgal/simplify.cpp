@@ -1,7 +1,7 @@
 #include "simplify.h"
 
 
-#if WIN32
+#if defined(WIN32) && defined(USE_CGAL)
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polyhedron_3.h>
 

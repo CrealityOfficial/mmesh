@@ -1,5 +1,4 @@
 #include "roof.h"
-#include <boost/shared_ptr.hpp>
 
 void seperate1423(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPairs)
 {
@@ -30,8 +29,8 @@ void seperate1423(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPa
     }
 }
 
-#ifdef WIN32
-
+#if defined(WIN32) && defined(USE_CGAL)
+#include <boost/shared_ptr.hpp>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_with_holes_2.h>
 #include <CGAL/create_straight_skeleton_from_polygon_with_holes_2.h>
