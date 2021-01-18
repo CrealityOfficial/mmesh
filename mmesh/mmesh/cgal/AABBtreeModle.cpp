@@ -225,6 +225,8 @@ namespace AABBTreeModle
                 std::cout << "triangle_query Point==" << v.x << " " << v.y << " " << v.z<< std::endl;
                 std::cout << "triangle_query Point==" << v1.x << " " << v1.y << " " << v1.z << std::endl;
                 std::cout << "triangle_query Point==" << v2.x << " " << v2.y << " " << v2.z << std::endl;
+				std::cout << "triangle_query Point==" << v2.x << " " << v2.y << " " << v2.z << std::endl;
+
             }
 
             Triangle3dFace triangle_query(a, b, c);
