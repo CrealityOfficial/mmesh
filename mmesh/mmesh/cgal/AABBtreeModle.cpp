@@ -3,12 +3,14 @@
 
 #include <iostream>
 #include <list>
+#include "AABBtreeModle.h"
+
+#if defined(WIN32) && defined(USE_CGAL)
+
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits.h>
-
-#include "AABBtreeModle.h"
 namespace AABBTreeModle
 {
     typedef CGAL::Simple_cartesian<float> K;
@@ -281,3 +283,27 @@ namespace AABBTreeModle
         }
     }
 }
+#else
+namespace AABBTreeModle
+{
+    int CreateAABBTree(const trimesh::TriMesh* meshPtr, const trimesh::fxform* xfPtr)
+    {
+        return 0;
+    }
+
+    bool TriangleIntersect(const trimesh::TriMesh* meshPtr)
+    {
+        return false;
+    }
+
+    bool TriangleFaceIntersect(const trimesh::vec3* v0, const trimesh::vec3* v1, const trimesh::vec3* v2)
+    {
+        return false;
+    }
+
+    void clearAABBTree()
+    {
+
+    }
+}
+#endif
