@@ -94,7 +94,7 @@ namespace mmesh
 			for (int halfIndex = 0; halfIndex < halfSize; ++halfIndex)
 			{
 				int endVertexID = endvertexid(vertexHalfs.at(halfIndex));
-				if (vertexes.at(endVertexID).z < vertex.z)
+				if (vertexes.at(endVertexID).z <= vertex.z)
 				{
 					lowest = false;
 					break;
