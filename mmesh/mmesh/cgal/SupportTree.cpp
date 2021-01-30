@@ -15,6 +15,7 @@ TreeNode* InsertNodeToSortTree(TreeNode** mainnode, TreeNode* addnode)
 	{
 		// 初始化新插入的结点
 		*mainnode = (TreeNode*)new TreeNode();
+		(*mainnode)->treenodetype = TreeNodeEnum::ROOT_SUPPORT;
 		(*mainnode)->child = addnode;
 	}
 	else // 如果树不为空
