@@ -19,6 +19,7 @@ typedef struct __TREE_NODE__
 
 TreeNode* InsertNodeToSortTree(TreeNode** mainnode, TreeNode* addnode);
 void DestroyTreeNode(TreeNode* pRoot);
+unsigned int CalculateNodeNum(TreeNode* nodeptr);
 TreeNodeEnum getNodeTreePoint(TreeNode* nodeptr, std::vector<trimesh::vec3>& points);
 void getNodeTreeALLPoint(TreeNode* nodeptr, std::vector<trimesh::vec3>& points);
 class SupportTreeObj

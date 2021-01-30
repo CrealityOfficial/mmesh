@@ -92,7 +92,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
             //    (p1[1] + p2[1]) / 2 ,
             //    (p1[2] + p2[2]) / 2);
             ComputeNormalsSM::K::FT face_area = CGAL::Polygon_mesh_processing::face_area(face(hd, pmesh), pmesh);
-            if (face_area >0.01)
+            if (face_area >0.4)
             {
             pt = Point((p1[0] + p2[0]) / 2,
                (p1[1] + p2[1]) / 2,
@@ -125,7 +125,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
             Point_ref ep1 = get(vpm, target(hd, pmesh));
             Point_ref ep2 = get(vpm, target(opposite(hd, pmesh), pmesh));
             ComputeNormalsSM::K::FT face_area = CGAL::Polygon_mesh_processing::face_area(face(hd, pmesh), pmesh);
-            if (face_area > 0.01)
+            if (face_area > 0.4)
             {
                 ept = Point((ep1[0] + ep2[0]) / 2, (ep1[1] + ep2[1]) / 2, (ep1[2] + ep2[2]) / 2);
                 vpt = Point(ep1[0], ep1[1], ep1[2]);
@@ -191,7 +191,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
                 if (face_area < 0.12|| borderLength<1.2)//PI*R*R,确保面积大于挤出点面积
                     continue;
-#if 1
+#if 0
                 pointsOut.emplace_back(trimesh::vec3(point0.x(), point0.y(), point0.z()));
                 pointsOut.emplace_back(trimesh::vec3(point1.x(), point1.y(), point1.z()));
                 pointsOut.emplace_back(trimesh::vec3(point2.x(), point2.y(), point2.z()));
@@ -571,6 +571,14 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         if (gSMinforPtr)
             delete gSMinforPtr;
         gSMinforPtr = NULL;
+        if (gTreeObjPtr)
+        {
+            gTreeObjPtr->clear();
+            delete gTreeObjPtr;
+            gTreeObjPtr = NULL;
+
+        }
+
     }
     void extractSupportInfor::setNeedSupportMesh(trimesh::TriMesh* meshObj)
     {
