@@ -3,8 +3,8 @@
 #define PI 3.141596
 #endif
 #define SUPPORT_TREE_ANGLE_THRES 45.0*PI/180.0
-#define SUPPORT_VERTEX_BETWEEN_LENMIN 0.4  //2 mm
-#define SUPPORT_VERTEX_BETWEEN_LENMAX 10.0  //2 mm
+#define SUPPORT_VERTEX_BETWEEN_LENMIN 0.05  //2 mm
+#define SUPPORT_VERTEX_BETWEEN_LENMAX 2.0  //2 mm
 
 TreeNode* InsertNodeToSortTree(TreeNode** mainnode, TreeNode* addnode)
 {
@@ -40,14 +40,27 @@ void DestroyTreeNode(TreeNode* pRoot)
 		pRoot = NULL;
 	}
 }
+static unsigned int NodeNumInner = 0;
+unsigned int CalculateNodeNumInner(TreeNode* nodeptr)
+{
+	if (nodeptr != NULL)
+	{
+		if (nodeptr->child != NULL)
+			NodeNumInner++;
+		NodeNumInner = CalculateNodeNumInner(nodeptr->child);
+	}
+	return NodeNumInner;
+}
+
 unsigned int CalculateNodeNum(TreeNode* nodeptr)
 {
-	static unsigned int num = 0;
+	 unsigned int num = 0;
+	 NodeNumInner=0;
 	if (nodeptr != NULL)
 	{
 		if (nodeptr->child != NULL)
 			num++;
-		num = CalculateNodeNum(nodeptr->child);
+		num = CalculateNodeNumInner(nodeptr->child);
 	}
 	return num;
 }
@@ -61,6 +74,7 @@ TreeNodeEnum getNodeTreePoint(TreeNode* nodeptr, std::vector<trimesh::vec3> &poi
 		{
 			case TreeNodeEnum::BRANCH_SUPPORT:
 				points.emplace_back(nodeptr->points[0]);
+				points.emplace_back(nodeptr->points[2]);
 				points.emplace_back(nodeptr->points[1]);
 				points.emplace_back(nodeptr->points[2]);
 				treenodetype = TreeNodeEnum::BRANCH_SUPPORT;
@@ -141,54 +155,85 @@ void SupportTreeObj::createTreeContainer(std::vector < TreeNode*> &treeContainer
 	std::vector<trimesh::vec3> pointcircle = points;
 	std::vector<bool> pointAvalible;
 	bool firstEnterflg = true;
+	int indexCircle = 0;
+	int indexCircletimes = 0;
+	int indexCircleMax = pointcircle.size();
+	pointAvalible.resize(indexCircleMax, true);
+	//for (indexCircle=0; indexCircle< indexCircleMax; indexCircle++)
 	while (1)
 	{
 		trimesh::vec3 PointZmax(0.0, 0.0, -1000.0);
 		trimesh::vec3 PointZmin(0.0, 0.0, 0.0);
-		float distanceMin = SUPPORT_VERTEX_BETWEEN_LENMAX;
+		float distanceMin = SUPPORT_VERTEX_BETWEEN_LENMAX+1.0;
 		int indexPointZmax = -1;
 		int indexPointNearZmax = -1;
-
-		for (int index = 0; index < pointcircle.size(); index++)
+		//搜索最高点
+		for (int index = 0; index < indexCircleMax; index++)
 		{
-			if (firstEnterflg)
-			{
-				pointAvalible.push_back(true);
-			}
-			else if (pointAvalible[index] == false)//标识该顶点已用完
+			if (pointAvalible[index] == false)//标识该顶点已用完
 				continue;
 			if (pointcircle[index].z > PointZmax.z)
 			{
-				PointZmax= pointcircle[index];
+				PointZmax = pointcircle[index];
 				indexPointZmax = index;
 			}
 		}
-		firstEnterflg = false;
-		if (indexPointZmax == -1)
-			break;
-		for (int index = 0; index < pointcircle.size(); index++)
+			//搜索最近点
+		for (int index = 0; index < indexCircleMax; index++)
 		{
-			float deltX			= 0.0;
-			float deltY			= 0.0;
-			float deltZ			=0.0;
-			float deltXYZlen	= 0.0;
-			if (indexPointZmax == index)//排除自已项
-				continue;
 			if (pointAvalible[index] == false)//标识该顶点已用完
 				continue;
-			 deltX = PointZmax.x - pointcircle[index].x;
-			 deltY = PointZmax.y - pointcircle[index].y;
-			 deltZ = PointZmax.z - pointcircle[index].z;
-			 deltXYZlen = deltX * deltX + deltY * deltY + deltZ * deltZ;
-
-			if (deltXYZlen < distanceMin)
 			{
-				distanceMin = deltXYZlen;
-				PointZmin = pointcircle[index];
-				indexPointNearZmax = index;
+				float deltX = 0.0;
+				float deltY = 0.0;
+				float deltZ = 0.0;
+				float deltXYZlen = 0.0;
+				if (indexPointZmax == index)//排除最高点项
+					continue;
+				deltX = PointZmax.x - pointcircle[index].x;
+				deltY = PointZmax.y - pointcircle[index].y;
+				deltZ = PointZmax.z - pointcircle[index].z;
+				//deltXYZlen = deltX * deltX + deltY * deltY + deltZ * deltZ;
+				deltXYZlen = deltX * deltX + deltY * deltY;
+
+				if (deltXYZlen < distanceMin)
+				{
+					distanceMin = deltXYZlen;
+					PointZmin = pointcircle[index];
+					indexPointNearZmax = index;
+				}
 			}
 		}
-		if ((distanceMin > SUPPORT_VERTEX_BETWEEN_LENMIN)&& (distanceMin < SUPPORT_VERTEX_BETWEEN_LENMAX))
+		if ( indexPointNearZmax == -1)
+		{
+			{
+				std::cout << "the last point" << std::endl;
+				TreeNode* child = (TreeNode*) new TreeNode;
+				child->points.emplace_back(PointZmax);
+				child->points.emplace_back(trimesh::vec3(PointZmax.x, PointZmax.y, 0.0));
+				child->treenodetype = TreeNodeEnum::MAIN_SUPPORT;
+				child->child = NULL;
+				InsertNodeToSortTree(&treeContainerPtr, child);
+				treeContainer.emplace_back(treeContainerPtr);
+				//////////////////////////
+				treeContainerPtr = NULL;
+
+
+			}
+			break;
+		}
+		if (PointZmin.z > PointZmax.z)
+		{
+			trimesh::vec3  PointZminmax = PointZmax;
+			int indexPointZmaxmin = indexPointZmax;
+			PointZmax = PointZmin;
+			indexPointZmax = indexPointNearZmax;
+			PointZmin = PointZmax;
+			indexPointNearZmax = indexPointZmaxmin;
+		}
+
+		//if ((distanceMin > SUPPORT_VERTEX_BETWEEN_LENMIN)&& (distanceMin < SUPPORT_VERTEX_BETWEEN_LENMAX))
+		if (distanceMin < SUPPORT_VERTEX_BETWEEN_LENMAX)
 		{
 			trimesh::vec3 crossPoint(0.0, 0.0, 0.0);
 			bool avalible = calculateCrossPoint(PointZmin, PointZmax, crossPoint);
@@ -197,20 +242,25 @@ void SupportTreeObj::createTreeContainer(std::vector < TreeNode*> &treeContainer
 				//TreeNode* child = (TreeNode*)malloc(sizeof(TreeNode));
 				TreeNode* child = (TreeNode*) new TreeNode;
 				child->points.emplace_back(PointZmax);
-				child->points.emplace_back(PointZmin);
-				child->points.emplace_back(crossPoint);
-				if(crossPoint== PointZmin)
-				child->treenodetype = TreeNodeEnum::MAIN_SUPPORT;
+				if (crossPoint == PointZmin)
+				{
+					child->points.emplace_back(PointZmin);
+					//pointAvalible[indexPointNearZmax] = false;
+					std::cout << "contain point inner" << std::endl;
+					child->treenodetype = TreeNodeEnum::MAIN_SUPPORT;
+				}
 				else
-				child->treenodetype = TreeNodeEnum::BRANCH_SUPPORT;
+				{ 
+					child->points.emplace_back(PointZmin);
+					child->points.emplace_back(crossPoint);
+					pointcircle[indexPointNearZmax]= crossPoint;
+					child->treenodetype = TreeNodeEnum::BRANCH_SUPPORT;
+				}
 				///
 				child->child = NULL;
 				InsertNodeToSortTree(&treeContainerPtr, child);
-				///////
 				pointAvalible[indexPointZmax] = false;
-				pointAvalible[indexPointNearZmax] = false;
-				pointAvalible.emplace_back(true);
-				pointcircle.emplace_back(crossPoint);
+				///////
 
 			}
 			else
@@ -222,32 +272,34 @@ void SupportTreeObj::createTreeContainer(std::vector < TreeNode*> &treeContainer
 				child->treenodetype = TreeNodeEnum::MAIN_SUPPORT;
 				child->child = NULL;
 				InsertNodeToSortTree(&treeContainerPtr, child);
+				treeContainer.emplace_back(treeContainerPtr);
 				//////////////////////////
 				pointAvalible[indexPointZmax] = false;
-				treeContainer.emplace_back(treeContainerPtr);
 				treeContainerPtr = NULL;
 
 
 			}
 		}
-		else if(distanceMin >= SUPPORT_VERTEX_BETWEEN_LENMAX|| (indexPointZmax == pointcircle.size()-1))//相距比较远的点单独生成支撑点，或最后一个点生成主支撑
+		else 
 		{
+			std::cout << "distanceMin out of range" << std::endl;
+
 			TreeNode* child = (TreeNode*) new TreeNode;
 			child->points.emplace_back(PointZmax);
 			child->points.emplace_back(trimesh::vec3(PointZmax.x, PointZmax.y, 0.0));
 			child->treenodetype = TreeNodeEnum::MAIN_SUPPORT;
 			child->child = NULL;
 			InsertNodeToSortTree(&treeContainerPtr, child);
-			//////////////////////////
 			pointAvalible[indexPointZmax] = false;
 			treeContainer.emplace_back(treeContainerPtr);
 			treeContainerPtr = NULL;
+			//////////////////////////
+
 
 		}
-		else
-		{
-			pointAvalible[indexPointZmax] = false;
-		}
+		//else
+		//{
+		//	pointAvalible[indexPointZmax] = false;
+		//}
 	};
-	unsigned int nodnumber=CalculateNodeNum(treeContainer[0]);
 }

@@ -12,6 +12,8 @@
 
 namespace ClusterPoint
 {
+    #define GRID_SIMPLITFY_CELL_SIZE        0.1
+    #define CLUSTER_SPACE_SZIE              0.5
     typedef CGAL::Simple_cartesian<float>	Kernel;
     typedef  Kernel::Point_3                       Point;
     typedef  CGAL::Point_set_3<Point>              Point_set;
@@ -23,33 +25,30 @@ namespace ClusterPoint
             pointset.insert(Point(pointtmp.x, pointtmp.y, pointtmp.z));
         }
     }
-    std::vector<std::vector<trimesh::vec3>>  ClusterAllPoints(std::vector<trimesh::vec3>& pointsF, std::vector<trimesh::vec3>& pointsL, std::vector<trimesh::vec3>& pointsP)
+    std::vector<std::vector<trimesh::vec3>>  ClusterAllPoints(std::vector<trimesh::vec3>& points)
     {
         CGAL::Real_timer t;
         Point_set pointset;
         std::vector<std::vector<trimesh::vec3>> pointsout;
-        ClusterAddPoints(pointsF, pointset);
-        ClusterAddPoints(pointsL, pointset);
-        ClusterAddPoints(pointsP, pointset);
+        ClusterAddPoints(points, pointset);
         std::cout<<"before gird_simplify size=="<<pointset.size()<<std::endl;
         t.start();
-        double cell_size = 0.1;
-        pointset.remove(CGAL::grid_simplify_point_set(pointset, cell_size),
+        pointset.remove(CGAL::grid_simplify_point_set(pointset, GRID_SIMPLITFY_CELL_SIZE),
             pointset.end());
         pointset.collect_garbage();
 
-         {
-             pointsout.resize(1);
-             Point_set::Point_map testpmap = pointset.point_map();
-             for (Point_set::iterator it = pointset.begin(); it != pointset.end(); ++it)
-             {
+         //{
+         //    pointsout.resize(1);
+         //    Point_set::Point_map testpmap = pointset.point_map();
+         //    for (Point_set::iterator it = pointset.begin(); it != pointset.end(); ++it)
+         //    {
 
-                 Point temp = get(testpmap, *it);
-                 /* testmaptemp.push_back(   (temp);*/
-                 pointsout[0].emplace_back(trimesh::vec3(temp.x(), temp.y(), temp.z()));
+         //        Point temp = get(testpmap, *it);
+         //        /* testmaptemp.push_back(   (temp);*/
+         //        pointsout[0].emplace_back(trimesh::vec3(temp.x(), temp.y(), temp.z()));
 
-             }
-         }
+         //    }
+         //}
 
          std::cout<<"end gird_simplify size=="<<pointset.size()<<std::endl;
          std::cerr << "grid_simplify_point_set time==" << t.time() << " seconds" << std::endl;
@@ -61,8 +60,6 @@ namespace ClusterPoint
 
         // Compute average spacing
         //double spacing = CGAL::compute_average_spacing<CGAL::Parallel_if_available_tag>(points, 12);
-        double spacing =0.5;
-       std::cerr << "Spacing = " << spacing << std::endl;
 
         // Adjacencies stored in vector
         std::vector<std::pair<std::size_t, std::size_t> > adjacencies;
@@ -71,7 +68,7 @@ namespace ClusterPoint
         t.reset();
         std::size_t nb_clusters
             = CGAL::cluster_point_set(pointset, cluster_map,
-                pointset.parameters().neighbor_radius(spacing).
+                pointset.parameters().neighbor_radius(CLUSTER_SPACE_SZIE).
                 adjacencies(std::back_inserter(adjacencies)));
         t.stop();
         std::cerr << "Found " << nb_clusters << " clusters with " << adjacencies.size()
