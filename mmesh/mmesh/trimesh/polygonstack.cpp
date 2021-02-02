@@ -226,9 +226,11 @@ namespace mmesh
 								int mutaulIndex = -1;
 								if (cOuterIndex >= 0)
 								{
-									if (cmx == points.at(outerPolygon.at(cOuterIndex)).x)
+									if (cmx == points.at(outerPolygon.at(cOuterIndex)).x
+										&& tvertex.y == points.at(outerPolygon.at(cOuterIndex)).y)
 										mutaulIndex = cOuterIndex;
-									else if (cmx == points.at(outerPolygon.at(cOuterIndex0)).x)
+									else if (cmx == points.at(outerPolygon.at(cOuterIndex0)).x
+										&& tvertex.y == points.at(outerPolygon.at(cOuterIndex0)).y)
 									{
 										mutaulIndex = cOuterIndex0;
 									}
