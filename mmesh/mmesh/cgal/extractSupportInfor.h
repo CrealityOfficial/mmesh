@@ -14,8 +14,7 @@ namespace extractSupportInfor
         void getSupportFace(std::vector<trimesh::vec3>& points);
         void getSupportLine(std::vector<trimesh::vec3>& points);
         void getSupportPoint(std::vector<trimesh::vec3>& points);
-        std::vector<trimesh::vec3> ClusterSupportPoint(std::vector<trimesh::vec3>& pointsF, std::vector<trimesh::vec3>& pointsL, std::vector<trimesh::vec3>& pointsP);
-
+        std::vector<std::vector<trimesh::vec3>> ClusterSupportPoint(std::vector<trimesh::vec3>& pointsF, std::vector<trimesh::vec3>& pointsL, std::vector<trimesh::vec3>& pointsP);
     };
 
 }
