@@ -222,7 +222,7 @@ namespace mmesh
     }
 
     void roofLine(ClipperLib::PolyTree* polyTree,
-        ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace,bool onePoly)
+        ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace, bool onePoly)
     {
         std::vector<PolyPair*> pairs;
         seperate1423(polyTree, pairs);
@@ -232,9 +232,9 @@ namespace mmesh
             if (onePoly)
             {
 				if (pair->clockwise) //outer
-                {
-                     continue;
-                }
+				{
+					continue;
+				}
             }
 
             Polygon_with_holes input;
