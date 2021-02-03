@@ -3,6 +3,7 @@
 #include "compute_normals_sm.h"
 #include "AABBtreeModle.h"
 
+#if defined(WIN32) && defined(USE_CGAL)
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Timer.h>
 #include <CGAL/AABB_tree.h>
@@ -18,6 +19,7 @@
 #include <CGAL/Subdivision_method_3/subdivision_masks_3.h>
 using namespace CGAL;
 namespace params = CGAL::parameters;
+
 static bool subdivideloopflg = false;
 
 namespace extractSupportInfor
@@ -725,3 +727,5 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
 
 }//end extractSupportInfor
+
+#endif

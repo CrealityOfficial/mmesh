@@ -2,6 +2,7 @@
 #define __EXTRACT_SUPPORT_FACE_H__
 #include "trimesh2/TriMesh.h"
 
+#if defined(WIN32) && defined(USE_CGAL)
 namespace extractSupportInfor
 {
     typedef struct SUPPORT_FACE_CONFIG
@@ -40,5 +41,5 @@ namespace extractSupportInfor
     };
 
 }
-
+#endif
 #endif // 

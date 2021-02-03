@@ -1,4 +1,6 @@
 #include "clusterPoint.h"
+
+#if defined(WIN32) && defined(USE_CGAL)
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Point_set_3.h>
 #include <CGAL/Point_set_3/IO.h>
@@ -8,10 +10,13 @@
 
 #include <CGAL/Random.h>
 #include <CGAL/Real_timer.h>
+#endif
+
 #include <fstream>
 
 namespace ClusterPoint
 {
+#if defined(WIN32) && defined(USE_CGAL)
     #define GRID_SIMPLITFY_CELL_SIZE        0.1
     #define CLUSTER_SPACE_SZIE              0.5
     typedef CGAL::Simple_cartesian<float>	Kernel;
@@ -25,11 +30,14 @@ namespace ClusterPoint
             pointset.insert(Point(pointtmp.x, pointtmp.y, pointtmp.z));
         }
     }
+#endif
     std::vector<std::vector<trimesh::vec3>>  ClusterAllPoints(std::vector<trimesh::vec3>& points)
     {
+        std::vector<std::vector<trimesh::vec3>> pointsout;
+#if defined(WIN32) && defined(USE_CGAL)
         CGAL::Real_timer t;
         Point_set pointset;
-        std::vector<std::vector<trimesh::vec3>> pointsout;
+        
         ClusterAddPoints(points, pointset);
         std::cout<<"before gird_simplify size=="<<pointset.size()<<std::endl;
         t.start();
@@ -86,6 +94,7 @@ namespace ClusterPoint
            pointsout[clusterindex].emplace_back(trimesh::vec3(temp.x(), temp.y(), temp.z()));
 
         }
+#endif
 #endif
         // Output a colored PLY file
 #if 0
