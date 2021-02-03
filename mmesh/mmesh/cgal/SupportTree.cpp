@@ -1,4 +1,6 @@
 #include "SupportTree.h"
+#include <cmath>
+
 #ifndef PI 
 #define PI 3.141596
 #endif
