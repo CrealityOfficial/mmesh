@@ -1,5 +1,6 @@
 #include "SupportTree.h"
 #include <cmath>
+#include <math.h>
 
 #ifndef PI 
 #define PI 3.141596
@@ -122,11 +123,11 @@ SupportTreeObj::~SupportTreeObj()
 bool  SupportTreeObj::calculateCrossPoint(trimesh::vec3 point1, trimesh::vec3 point2, trimesh::vec3 &crossPoint)
 {
 	bool retvalue = false;
-	float tanAngle = std::tanf(SUPPORT_TREE_ANGLE_THRES);
+	float tanAngle = tanf(SUPPORT_TREE_ANGLE_THRES);
 	float deltX = point2.x - point1.x;
 	float deltY = point2.y - point1.y;
 	float deltZ = point2.z - point1.z;
-	float deltXYlen = std::sqrtf(deltX * deltX + deltY * deltY);
+	float deltXYlen = sqrtf(deltX * deltX + deltY * deltY);
 	float r1 = point1.z* tanAngle;
 	float r2 = point2.z* tanAngle;
 	float tangAngleTest = deltXYlen/ deltZ;//测试低点圆锥是不是在内部
