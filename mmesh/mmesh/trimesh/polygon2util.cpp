@@ -28,7 +28,7 @@ namespace mmesh
 		double aCbp = ax * bpy - ay * bpx;
 		double cCap = cx * apy - cy * apx;
 		double bCcp = bx * cpy - by * cpx;
-		return ((aCbp > 0.0) && (bCcp > 0.0) && (cCap > 0.0));
+		return ((aCbp >= 0.0) && (bCcp >= 0.0) && (cCap >= 0.0));
 	}
 
 	bool insideTriangleEx(const trimesh::dvec2& va, const trimesh::dvec2& vb, const trimesh::dvec2& vc,
