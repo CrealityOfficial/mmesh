@@ -71,6 +71,62 @@ namespace mmesh
 		}
 	}
 
+	void mergeTriMesh_omp(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes)
+	{
+		size_t totalVertexSize = outMesh->vertices.size();
+		size_t totalTriangleSize = outMesh->faces.size();
+		size_t addVertexSize = 0;
+		size_t addTriangleSize = 0;
+		size_t meshSize = inMeshes.size();
+		for (size_t i = 0; i < meshSize; ++i)
+		{
+			if (inMeshes.at(i))
+			{
+				addVertexSize += inMeshes.at(i)->vertices.size();
+				addTriangleSize += inMeshes.at(i)->faces.size();
+			}
+		}
+		totalVertexSize += addVertexSize;
+		totalTriangleSize += addTriangleSize;
+
+		if (addVertexSize > 0 && addTriangleSize > 0)
+		{
+			outMesh->vertices.reserve(totalVertexSize);
+			outMesh->faces.reserve(totalTriangleSize);
+
+			int startFaceIndex = outMesh->faces.size();
+			int startVertexIndex = outMesh->vertices.size();;
+			for (size_t i = 0; i < meshSize; ++i)
+			{
+				trimesh::TriMesh* mesh = inMeshes.at(i);
+				if (mesh)
+				{
+					int vertexNum = (int)mesh->vertices.size();
+					int faceNum = (int)mesh->faces.size();
+					if (vertexNum > 0 && faceNum > 0)
+					{
+						outMesh->vertices.insert(outMesh->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
+						outMesh->faces.insert(outMesh->faces.end(), mesh->faces.begin(), mesh->faces.end());
+
+						int endFaceIndex = startFaceIndex + faceNum;
+						if (startVertexIndex > 0)
+						{
+							for (int ii = startFaceIndex; ii < endFaceIndex; ++ii)
+							{
+								trimesh::TriMesh::Face& face = outMesh->faces.at(ii);
+								for (int j = 0; j < 3; ++j)
+									face[j] += startVertexIndex;
+							}
+						}
+
+						startFaceIndex += faceNum;
+						startVertexIndex += vertexNum;
+					}
+				}
+			}
+		}
+	}
+
 	void reverseTriMesh(trimesh::TriMesh* Mesh)
 	{
 		for (size_t i = 0; i < Mesh->faces.size(); i++)

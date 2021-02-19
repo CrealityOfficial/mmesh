@@ -1,5 +1,6 @@
 #include "compute_normals_sm.h"
 
+#if defined(WIN32) && defined(USE_CGAL)
 namespace ComputeNormalsSM
 {
     namespace PMP = CGAL::Polygon_mesh_processing;
@@ -60,3 +61,5 @@ namespace ComputeNormalsSM
 
 
 }
+
+#endif

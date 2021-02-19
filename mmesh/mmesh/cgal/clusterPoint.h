@@ -5,7 +5,7 @@
 namespace ClusterPoint
 {
 
-    std::vector<trimesh::vec3> ClusterAllPoints(std::vector<trimesh::vec3>& pointsF, std::vector<trimesh::vec3>& pointsL, std::vector<trimesh::vec3>& pointsP );
+    std::vector<std::vector<trimesh::vec3>> ClusterAllPoints(std::vector<trimesh::vec3>& points);
 }
 #endif
 

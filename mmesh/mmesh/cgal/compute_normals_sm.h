@@ -1,5 +1,7 @@
 #ifndef __COMPUTE_NORMALS_SM_H__
 #define __COMPUTE_NORMALS_SM_H__
+
+#if defined(WIN32) && defined(USE_CGAL)
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
@@ -24,5 +26,6 @@ namespace ComputeNormalsSM
 
 	void getFaceNormals(Surface_mesh* meshPtr, fnormalsMap & fnormals);
 }    
+#endif
 
 #endif

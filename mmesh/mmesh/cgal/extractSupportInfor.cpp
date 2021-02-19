@@ -3,6 +3,7 @@
 #include "compute_normals_sm.h"
 #include "AABBtreeModle.h"
 
+#if defined(WIN32) && defined(USE_CGAL)
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Timer.h>
 #include <CGAL/AABB_tree.h>
@@ -19,9 +20,14 @@
 using namespace CGAL;
 namespace params = CGAL::parameters;
 
+static bool subdivideloopflg = false;
+
 namespace extractSupportInfor
 {
-
+#define TRIANGLE_AREA_MIN 0.5
+#define TRIANGLE_BORDER_LEN_MIN 1.2
+#define TRIANGLE_FACE_ANGLE_THRES 53.0
+#define TRIANGLE_LINE_ANGLE_THRES 45.0
 typedef CGAL::AABB_face_graph_triangle_primitive<ComputeNormalsSM::Surface_mesh> Primitive;
 typedef CGAL::AABB_traits<ComputeNormalsSM::K, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> Tree;
@@ -72,9 +78,10 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         typedef typename boost::property_map<PolygonMesh, CGAL::vertex_point_t>::type Vertex_pmap;
         typedef typename boost::property_traits<Vertex_pmap>::value_type Point;
         typedef typename boost::property_traits<Vertex_pmap>::reference Point_ref;
-
+    public:
         PolygonMesh& pmesh;
         Vertex_pmap vpm;
+        bool m_continue;
 
     public:
         WLoop_mask_3(PolygonMesh& pmesh)
@@ -82,24 +89,60 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         {}
 
         void edge_node(halfedge_descriptor hd, Point& pt) {
+
             Point_ref p1 = get(vpm, target(hd, pmesh));
             Point_ref p2 = get(vpm, target(opposite(hd, pmesh), pmesh));
 
+            //pt = Point((p1[0] + p2[0]) / 2,
+            //    (p1[1] + p2[1]) / 2 ,
+            //    (p1[2] + p2[2]) / 2);
+            ComputeNormalsSM::K::FT face_area = CGAL::Polygon_mesh_processing::face_area(face(hd, pmesh), pmesh);
+            if (face_area >(TRIANGLE_AREA_MIN))
+            {
             pt = Point((p1[0] + p2[0]) / 2,
-                (p1[1] + p2[1]) / 2 ,
+               (p1[1] + p2[1]) / 2,
                 (p1[2] + p2[2]) / 2);
+            //    pt = CGAL::centroid(pmesh.point(source(hd, pmesh)),
+            //        pmesh.point(target(hd, pmesh)),
+            //        pmesh.point(target(next(hd, pmesh), pmesh)));
+
+            subdivideloopflg = true;
+
+            }
+            else
+            {
+                pt = p1;
+            }
+            //pt = p1;
         }
         void vertex_node(vertex_descriptor vd, Point& pt) {
             Point_ref p1 = get(vpm, vd);
             pt = Point(p1[0] , p1[1], p1[2]);
+
+            //halfedge_descriptor hd=halfedge(vd, pmesh);
+            //pt = CGAL::centroid(pmesh.point(source(hd, pmesh)),
+            //    pmesh.point(target(hd, pmesh)),
+            //    pmesh.point(target(next(hd, pmesh), pmesh)));
 
         }
 
         void border_node(halfedge_descriptor hd, Point& ept, Point& vpt) {
             Point_ref ep1 = get(vpm, target(hd, pmesh));
             Point_ref ep2 = get(vpm, target(opposite(hd, pmesh), pmesh));
-            ept = Point((ep1[0] + ep2[0]) / 2, (ep1[1] + ep2[1]) / 2, (ep1[2] + ep2[2]) / 2);
-            vpt = Point(ep1[0] , ep1[1], ep1[2]);
+            ComputeNormalsSM::K::FT face_area = CGAL::Polygon_mesh_processing::face_area(face(hd, pmesh), pmesh);
+            if (face_area > (TRIANGLE_AREA_MIN))
+            {
+                ept = Point((ep1[0] + ep2[0]) / 2, (ep1[1] + ep2[1]) / 2, (ep1[2] + ep2[2]) / 2);
+                vpt = Point(ep1[0], ep1[1], ep1[2]);
+                subdivideloopflg = true;
+
+            }
+            else
+            {
+                ept = Point(ep2[0], ep2[1], ep2[2]);
+                vpt = Point(ep1[0], ep1[1], ep1[2]);
+
+            }
         }
 
     };
@@ -111,10 +154,9 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
     # define PI          3.1415927f
     static Tree* gTreeObjPtr = NULL;
-
     static surfaceMeshInfor* gSMinforPtr = NULL;
     ////////////////////////////////////////////////////////////////
-    void getOverhangface(surfaceMeshInfor* smInforPtr,  std::vector<trimesh::vec3>& pointsOut)
+    void getOverhangface(surfaceMeshInfor* smInforPtr, SupportFaceConf *faceCfgPtr,  std::vector<trimesh::vec3>& pointsOut)
     {
         int index = 0;
         CGAL::Timer t;
@@ -126,64 +168,135 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         }
         ComputeNormalsSM::Surface_mesh& mesh = *smInforPtr->surfaceMeshPtr;
         ComputeNormalsSM::fnormalsMap& fnormals = *smInforPtr->fnormalsPtr;
+        FaceSupportMap &faceSupportMap= smInforPtr->faceSupportMap;
         std::vector<ComputeNormalsSM::face_descriptor> facesDescriptorV;
-
+        float thresAngle = faceCfgPtr->ThresAngle;
         for (ComputeNormalsSM::face_descriptor fd : faces(mesh))
         {
 
 
             // std::cout <<"gSMinforPtr->fnormals==="<< (*gSMinforPtr->fnormals)[fd] << std::endl;
-            bool faceDownflg = false;
-            bool faceUpdflg = false;
-            float faceCosValue = ZNORMAL_DOWN * fnormals[fd];
-            float faceThresCosValue = std::cos(20 * PI / 180.0);
-            faceDownflg = !!((faceCosValue > 0) && (faceCosValue > faceThresCosValue));
-            // faceUpdflg = !!((faceCosValue < 0) && (std::abs(faceCosValue) > faceThresCosValue));
-            if (faceDownflg || faceUpdflg)// angle >45 relate to z_down
+            float faceCosValue =acos( ZNORMAL_UP * fnormals[fd])*180.0/PI;
+            float faceThresCosValue = 180.0 - thresAngle;
+            if (faceCosValue> faceThresCosValue)
             {
-                gSMinforPtr->faceSupportMap[fd] = true;
                 ComputeNormalsSM::halfedge_descriptor hd = halfedge(fd, mesh);
+                ComputeNormalsSM::halfedge_descriptor hdnext = next(hd, mesh);
+                ComputeNormalsSM::halfedge_descriptor hdnextnext = next(hdnext, mesh);
 
                 ComputeNormalsSM::Point point0 = mesh.point(target(hd, mesh));
-                ComputeNormalsSM::Point point1 = mesh.point(target(next(hd, mesh), mesh));
-                ComputeNormalsSM::Point point2 = mesh.point(target(next(next(hd, mesh), mesh), mesh));
+                ComputeNormalsSM::Point point1 = mesh.point(target(hdnext, mesh));
+                ComputeNormalsSM::Point point2 = mesh.point(target(hdnextnext, mesh));
+
                 ComputeNormalsSM::K::FT face_area = CGAL::Polygon_mesh_processing::face_area(fd, mesh);
 
                 ComputeNormalsSM::K::FT borderLength = CGAL::Polygon_mesh_processing::face_border_length(hd, mesh);
 
-                if (face_area < 0.12|| borderLength<1.2)//PI*R*R,确保面积大于挤出点面积
+                if (borderLength < TRIANGLE_BORDER_LEN_MIN)//周长大于一定值
                     continue;
+                //if (0)//PI*R*R,确保面积大于挤出点面积
+                if (face_area < faceCfgPtr->faceArea)//PI*R*R,确保面积大于挤出点面积
+                {
+                    //goto FACE_NEED_SUPPORT;
+                    ComputeNormalsSM::halfedge_descriptor hdOp = opposite(hd, mesh);
+                    ComputeNormalsSM::face_descriptor fdOp = face(hdOp, mesh);
+                    ComputeNormalsSM::halfedge_descriptor hdNextOp = opposite(hdnext, mesh);
+                    ComputeNormalsSM::face_descriptor fdNextOp = face(hdNextOp, mesh);
+                    ComputeNormalsSM::halfedge_descriptor hdNextNextOp = opposite(hdnextnext, mesh);
+                    ComputeNormalsSM::face_descriptor fdNextNextOp = face(hdNextNextOp, mesh);
+                   // if (faceSupportMap[fdOp] == true|| faceSupportMap[fdNextOp] == true|| faceSupportMap[fdNextNextOp] == true)
+                   //     goto FACE_NEED_SUPPORT;
+                    if (!is_border(hdOp, mesh))
+                    {
+                        float fdOpCosValue = acos(ZNORMAL_UP * fnormals[fdOp]) * 180.0 / PI;
+                        if (fdOpCosValue > faceThresCosValue)//相邻面是支撑面
+                        {
+                            ComputeNormalsSM::K::FT face_areatemp = CGAL::Polygon_mesh_processing::face_area(fdOp, mesh);
+                            //float fdBetweenCosValue = acos(fnormals[fd] * fnormals[fdOp]) * 180.0 / PI;
+
+                            //if (fdBetweenCosValue <  1.0)//对于面积小，且与垂直方向角度小于5度的面
+                            //    goto FACE_NEED_SUPPORT;
+                            //if(face_areatemp > faceCfgPtr->faceArea)
+                                goto FACE_NEED_SUPPORT;
+                        }
+                    }
+                    if (!is_border(hdNextOp, mesh))
+                    {
+
+                        float fdOpCosValue = acos(ZNORMAL_UP * fnormals[fdNextOp]) * 180.0 / PI;
+                        if (fdOpCosValue > faceThresCosValue)//相邻面是支撑面
+                        {
+                            ComputeNormalsSM::K::FT face_areatemp = CGAL::Polygon_mesh_processing::face_area(fdNextOp, mesh);
+                            //float fdBetweenCosValue = acos(fnormals[fd] * fnormals[fdNextOp]) * 180.0 / PI;
+
+                            //if (fdBetweenCosValue < 1.0)//对于面积小，且与垂直方向角度小于5度的面
+                            //    goto FACE_NEED_SUPPORT;
+                           // if (face_areatemp > faceCfgPtr->faceArea)
+                                goto FACE_NEED_SUPPORT;
+                        }
+                    }
+                    if (!is_border(hdNextNextOp, mesh))
+                    {
+
+                        float fdOpCosValue = acos(ZNORMAL_UP * fnormals[fdNextNextOp]) * 180.0 / PI;
+                        if (fdOpCosValue > faceThresCosValue)//相邻面是支撑面
+                        {
+                            ComputeNormalsSM::K::FT face_areatemp = CGAL::Polygon_mesh_processing::face_area(fdNextNextOp, mesh);
+                            //float fdBetweenCosValue = acos(fnormals[fd] * fnormals[fdNextNextOp]) * 180.0 / PI;
+
+                            //if (fdBetweenCosValue < 1.0)//对于面积小，且与垂直方向角度小于5度的面
+                            //    goto FACE_NEED_SUPPORT;
+                            //if (face_areatemp > faceCfgPtr->faceArea)
+                                goto FACE_NEED_SUPPORT;
+                        }
+                    }
+                    continue;
+                }
+                FACE_NEED_SUPPORT:
+                 faceSupportMap[fd] = true;
+
 #if 0
                 pointsOut.emplace_back(trimesh::vec3(point0.x(), point0.y(), point0.z()));
                 pointsOut.emplace_back(trimesh::vec3(point1.x(), point1.y(), point1.z()));
                 pointsOut.emplace_back(trimesh::vec3(point2.x(), point2.y(), point2.z()));
-#if 1
-                ComputeNormalsSM::Surface_mesh testmesh;
-                ComputeNormalsSM::vertex_descriptor u = testmesh.add_vertex(point0);
-                ComputeNormalsSM::vertex_descriptor v = testmesh.add_vertex(point1);
-                ComputeNormalsSM::vertex_descriptor w = testmesh.add_vertex(point2);
-                ComputeNormalsSM::face_descriptor f = testmesh.add_face(u, v, w);
+#if 1       //测试代码
+                static bool savetimes = true;
+                if (savetimes)
+                {
+                    savetimes = false;
+                    ComputeNormalsSM::Surface_mesh testmesh;
+                    ComputeNormalsSM::vertex_descriptor u = testmesh.add_vertex(point0);
+                    ComputeNormalsSM::vertex_descriptor v = testmesh.add_vertex(point1);
+                    ComputeNormalsSM::vertex_descriptor w = testmesh.add_vertex(point2);
+                    ComputeNormalsSM::face_descriptor f = testmesh.add_face(u, v, w);
 
 
-                std::cout << "keep_largest_connected_components was successfully computed\n";
-                std::ofstream outputbefore("Subdivisionbefore.off");
-                outputbefore.precision(17);
-                outputbefore << testmesh;
-                outputbefore.close();
+                    std::cout << "keep_largest_connected_components was successfully computed\n";
+                    std::ofstream outputbefore("Subdivisionbefore.off");
+                    outputbefore.precision(17);
+                    outputbefore << testmesh;
+                    outputbefore.close();
 
-                //Subdivision_method_3::CatmullClark_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
-                //CGAL::Subdivision_method_3::PTQ(testmesh, WLoop_mask_3<ComputeNormalsSM::Surface_mesh>(testmesh), CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
-                CGAL::Subdivision_method_3::PTQ(testmesh, WLoop_mask_3<ComputeNormalsSM::Surface_mesh>(testmesh), CGAL::Subdivision_method_3::parameters::number_of_iterations(2));
-                //CGAL::Subdivision_method_3::Loop_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::vertex_point_map(get(CGAL::vertex_point, testmesh))
-                //    .number_of_iterations(1));
-                //CGAL::Subdivision_method_3::CatmullClark_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::vertex_point_map(get(CGAL::vertex_point, testmesh))
-                //    .number_of_iterations(3));
+                    //Subdivision_method_3::CatmullClark_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
+                    //CGAL::Subdivision_method_3::PTQ(testmesh, WLoop_mask_3<ComputeNormalsSM::Surface_mesh>(testmesh), CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
+                    //CGAL::Subdivision_method_3::Loop_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::vertex_point_map(get(CGAL::vertex_point, testmesh))
+                    //    .number_of_iterations(1));
+                    //CGAL::Subdivision_method_3::CatmullClark_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::vertex_point_map(get(CGAL::vertex_point, testmesh))
+                    //    .number_of_iterations(3));
+                    do
+                    {
+                        //std::cout << "Subdivision_method_3 PTO" << std::endl;
+                        WLoop_mask_3<ComputeNormalsSM::Surface_mesh> subloopmask(testmesh);
+                        subdivideloopflg = false;
+                        CGAL::Subdivision_method_3::PTQ(testmesh, subloopmask, CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
+                    } while (subdivideloopflg == true);
 
-                std::cout << "keep_largest_connected_components was successfully computed\n";
-                std::ofstream output("Subdivision.off");
-                output.precision(17);
-                output << testmesh;
-                output.close();
+                    std::cout << "keep_largest_connected_components was successfully computed\n";
+                    std::ofstream output("Subdivision.off");
+                    output.precision(17);
+                    output << testmesh;
+                    output.close();
+                }
 #endif
 #else
                 ComputeNormalsSM::Surface_mesh testmesh;
@@ -194,7 +307,13 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
                 //Subdivision_method_3::CatmullClark_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
                 //CGAL::Subdivision_method_3::PTQ(testmesh, WLoop_mask_3<ComputeNormalsSM::Surface_mesh>(testmesh), CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
-                CGAL::Subdivision_method_3::PTQ(testmesh, WLoop_mask_3<ComputeNormalsSM::Surface_mesh>(testmesh), CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
+                do
+                {
+                    //std::cout << "Subdivision_method_3 PTO" << std::endl;
+                    WLoop_mask_3<ComputeNormalsSM::Surface_mesh> subloopmask(testmesh);
+                    subdivideloopflg = false;
+                    CGAL::Subdivision_method_3::PTQ(testmesh, subloopmask, CGAL::Subdivision_method_3::parameters::number_of_iterations(1));
+                } while (subdivideloopflg == true);
                 //CGAL::Subdivision_method_3::Loop_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::vertex_point_map(get(CGAL::vertex_point, testmesh))
                 //    .number_of_iterations(1));
                 //CGAL::Subdivision_method_3::CatmullClark_subdivision(testmesh, CGAL::Subdivision_method_3::parameters::vertex_point_map(get(CGAL::vertex_point, testmesh))
@@ -228,7 +347,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
     }
     //////////////////////////////////////////////////////////////////
-    void getOverhangLineBaseface(surfaceMeshInfor* smInforPtr, ComputeNormalsSM::face_descriptor fd, std::vector<trimesh::vec3>& pointsOut)
+    void getOverhangLineBaseface(surfaceMeshInfor* smInforPtr,SupportLineConf *lineCfgPtr, ComputeNormalsSM::face_descriptor fd, std::vector<trimesh::vec3>& pointsOut)
     {
         if (smInforPtr == NULL)
         {
@@ -239,7 +358,9 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         ComputeNormalsSM::fnormalsMap& fnormals = *smInforPtr->fnormalsPtr;
         ComputeNormalsSM::Vector faceNor = fnormals[fd];
         ComputeNormalsSM::halfedge_descriptor hd = halfedge(fd, mesh);
-
+        float thresAngle = lineCfgPtr->ThresAngle;
+        float ThresAngleBetweenFace = lineCfgPtr->ThresAngleBetweenFace;
+       float threslineLength = lineCfgPtr->lineLength;
         if (!is_border(hd, mesh))
         {
            ComputeNormalsSM::halfedge_descriptor hOpposite = opposite(hd, mesh);
@@ -250,7 +371,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
                ComputeNormalsSM::Vector totalFaceNor = faceNor + faceNorOpposite;
                float norbetweenAngle = acos(faceNor * faceNorOpposite);
-               if (PI - norbetweenAngle > 45.0 * PI / 180.0)//确保悬吊线两个面的夹角小45度，因为两个面本身不是支撑面，当悬吊线足够突出才支撑
+               if ((PI - norbetweenAngle )> (ThresAngleBetweenFace * PI / 180.0))//确保悬吊线两个面的夹角小45度，因为两个面本身不是支撑面，当悬吊线足够突出才支撑
                    return;
                if (ZNORMAL_DOWN * totalFaceNor > 0)//两个相邻面面法线之和要向下
                {
@@ -268,8 +389,8 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
 
                           ComputeNormalsSM::K::FT distanceValue         =CGAL::Polygon_mesh_processing::edge_length(hd, mesh);
-                          ComputeNormalsSM::K::FT face_area             = CGAL::Polygon_mesh_processing::face_area(fd, mesh);
-                          ComputeNormalsSM::K::FT face_areaOpposite     = CGAL::Polygon_mesh_processing::face_area(fdOpposite, mesh);
+                         // ComputeNormalsSM::K::FT face_area             = CGAL::Polygon_mesh_processing::face_area(fd, mesh);
+                         // ComputeNormalsSM::K::FT face_areaOpposite     = CGAL::Polygon_mesh_processing::face_area(fdOpposite, mesh);
 
                           //std::cout << "line face_area ===" << face_area << std::endl;
                           //std::cout << "line face_areaOpposite ===" << face_areaOpposite << std::endl;
@@ -278,9 +399,9 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                          // if (ComputeNormalsSM::K::Compute_area_3()(point0, point1, pointOp2) < 0.05)
                          //     return;
                            //std::cout << "distanceValue===="<< distanceValue <<std::endl;
-                          if (face_area < 0.12)
-                              return;
-                           if (distanceValue < 0.4)
+                         // if (face_area < 0.12)
+                         //     return;
+                           if (distanceValue < threslineLength)
                            {
                                return;
                            }
@@ -292,8 +413,8 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                            bool lineValible0 = !!((coselinevalue > 0) && (coseAngle < (0.25 * PI)));
                            bool lineValible1 = !!((coselinevalue < 0) && ((coseAngle-0.5*PI) < (0.25 * PI)));
                             #else
-                           bool lineValible0 = !!((coselinevalue >= 0) && (((90.0 * PI / 180.0 - coseAngle) < (45.0 * PI / 180.0 * PI))));
-                           bool lineValible1 = !!((coselinevalue < 0) && ((coseAngle - 90.0 * PI / 180.0) < (45.0 * PI / 180.0 * PI)));
+                           bool lineValible0 = !!((coselinevalue >= 0) && (((90.0 * PI / 180.0 - coseAngle) < (thresAngle * PI / 180.0 * PI))));
+                           bool lineValible1 = !!((coselinevalue < 0) && ((coseAngle - 90.0 * PI / 180.0) < (thresAngle * PI / 180.0 * PI)));
                            //bool lineValible1 = !!((coselinevalue < 0) && ((180.0 * PI / 180.0 - coseAngle) < (20 * PI / 180.0 * PI)));
 
                             #endif
@@ -353,7 +474,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
        // std::cout << "getOverhangLine finish" << std::endl;
 
     }
-    void getOverhangSinglePoint(surfaceMeshInfor* smInforPtr, std::vector<trimesh::vec3>& pointsOut)
+    void getOverhangSinglePoint(surfaceMeshInfor* smInforPtr, SupportSinglePtConf *ptCfgPtr, std::vector<trimesh::vec3>& pointsOut)
     {
         if (smInforPtr == NULL)
         {
@@ -366,6 +487,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         FaceSupportMap& faceSupportMap = smInforPtr->faceSupportMap;
         EdgeSupportMap& edgeSupportMap = smInforPtr->edgeSupportMap;
         VertexSupportMap& vertexSupportMap = smInforPtr->vertexSupportMap;
+        float ThresAngleBetweenFace = ptCfgPtr->ThresAngleBetweenFace;
 
 
         for (const ComputeNormalsSM::vertex_descriptor vd : vertices(mesh))
@@ -409,7 +531,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                    */
                     if (lowpos.z() > lowpostemp.z()|| 
                         nearFaceNormals* ZNORMAL_DOWN>0||
-                        (PI - norbetweenAngle > 45.0 * PI / 180.0)
+                        (PI - norbetweenAngle > ThresAngleBetweenFace * PI / 180.0)
                         )
                     {
                         lowposflg = false;
@@ -420,25 +542,26 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                 } while (hdtemp != done);
                 if (lowposflg == true)
                 {
-                    Ray ray(lowpos,ZNORMAL_DOWN);
+                    ComputeNormalsSM::Point lowpostemp(lowpos.x(), lowpos.y(), lowpos.z() + 0.001);
+                    Ray ray(lowpostemp,ZNORMAL_DOWN);
                     Skip skip(fd);
                     std::cout<<"*********************************number_of_intersected_primitives====="<< gTreeObjPtr->number_of_intersected_primitives(ray)<<std::endl;
                      Ray_faceIntersect intersection = gTreeObjPtr->first_intersected_primitive(ray, skip);
                    if (intersection)
                     {
                         ComputeNormalsSM::face_descriptor tempfd = intersection.value();
-                        for (ComputeNormalsSM::face_descriptor faceindex : nearfdV)
-                        {
-                            if (faceindex == fd)
-                                return;
-                        }
+                        //for (ComputeNormalsSM::face_descriptor faceindex : nearfdV)
+                        //{
+                        //    if (faceindex == fd)
+                        //        return;
+                        //}
                         if (fnormals[tempfd] * ZNORMAL_DOWN < 0)//第一个相交面的法线向上
                         {
                             ComputeNormalsSM::Point point0 = mesh.point(target(halfedge(tempfd, mesh),mesh));
-                            //std::cout << "fd, tempfd ==" << fd<<","<< tempfd << std::endl;
-                            //std::cout << "single point ==" << lowpos << std::endl;
-                            //std::cout << "face point   ==" << point0 << std::endl;
-                            //std::cout << "single point facefnormals==" << fnormals[tempfd] << std::endl;
+                            std::cout << "fd, tempfd ==" << fd<<","<< tempfd << std::endl;
+                            std::cout << "single point ==" << lowpos << std::endl;
+                            std::cout << "face point   ==" << point0 << std::endl;
+                            std::cout << "single point facefnormals==" << fnormals[tempfd] << std::endl;
                             vertexSupportMap[vd] = true;
                             pointsOut.emplace_back((trimesh::vec3(lowpos.x(), lowpos.y(), lowpos.z())));
                         }
@@ -454,7 +577,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
             }
 
         }
-        std::cout << "getOverhangPoint finish" << std::endl;
+        //std::cout << "getOverhangPoint finish" << std::endl;
 
     }
 
@@ -509,12 +632,30 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
     extractSupportInfor::extractSupportInfor()
     {
+        m_faceCfg.ThresAngle= TRIANGLE_FACE_ANGLE_THRES;
+        m_faceCfg.faceArea = TRIANGLE_AREA_MIN;//PI*R*R
+
+        m_lineCfg.ThresAngle= TRIANGLE_LINE_ANGLE_THRES;
+        m_lineCfg.ThresAngleBetweenFace =45.0;
+        m_lineCfg.lineLength =2;//2mm
+
+        m_singlePtCfg.ThresAngle=45.0;
+        m_singlePtCfg.ThresAngleBetweenFace =45.0;
+
     }
     extractSupportInfor::~extractSupportInfor()
     {
         if (gSMinforPtr)
             delete gSMinforPtr;
         gSMinforPtr = NULL;
+        if (gTreeObjPtr)
+        {
+            gTreeObjPtr->clear();
+            delete gTreeObjPtr;
+            gTreeObjPtr = NULL;
+
+        }
+
     }
     void extractSupportInfor::setNeedSupportMesh(trimesh::TriMesh* meshObj)
     {
@@ -558,8 +699,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
     void extractSupportInfor::getSupportFace(std::vector<trimesh::vec3>& points)
     {
-        getOverhangface(gSMinforPtr, points);
-
+        getOverhangface(gSMinforPtr,&m_faceCfg, points);
 
     }
     void extractSupportInfor::getSupportLine(std::vector<trimesh::vec3>& points)
@@ -570,20 +710,22 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         {
             if (gSMinforPtr->faceSupportMap[fd] == false)
             {
-                getOverhangLineBaseface(gSMinforPtr, fd, points);
+                getOverhangLineBaseface(gSMinforPtr,&m_lineCfg, fd, points);
             }
         }
     
     }
     void extractSupportInfor::getSupportPoint(std::vector<trimesh::vec3>& points)
     {
-        getOverhangSinglePoint(gSMinforPtr, points);
+        getOverhangSinglePoint(gSMinforPtr,&m_singlePtCfg, points);
     }
-    std::vector<trimesh::vec3>  extractSupportInfor::ClusterSupportPoint(std::vector<trimesh::vec3>& pointsF, std::vector<trimesh::vec3>& pointsL, std::vector<trimesh::vec3>& pointsP)
+    std::vector<std::vector<trimesh::vec3>>  extractSupportInfor::ClusterSupportPoint(std::vector<trimesh::vec3>& points)
     {
-        return ClusterPoint::ClusterAllPoints(pointsF, pointsL, pointsP);
+        return ClusterPoint::ClusterAllPoints(points);
     
     }
 
 
 }//end extractSupportInfor
+
+#endif
