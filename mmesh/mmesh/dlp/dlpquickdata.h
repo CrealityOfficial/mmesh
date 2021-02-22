@@ -11,6 +11,13 @@ namespace mmesh
 	class MeshTopo;
 	struct AutoDLPSupportParam;
 	struct DLPSupportParam;
+	enum SupportType
+	{
+		SUPPORT_NO=0,
+		SUPPORT_VERTEX=1,
+		SUPPORT_EDGE=1<<1,
+		SUPPORT_FACE=1<<2,
+	};
 	class DLPQuickData
 	{
 	public:
@@ -26,9 +33,9 @@ namespace mmesh
 
 		bool dirty() const;
 
-		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, DLPSupportParam* supportParam, int flag = 7);
-		void autoDlpVertexSource(std::vector<DLPISource>& sources);
-		void autoDlpEdgeSource(std::vector<DLPISource>& sources);
+		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, DLPSupportParam* supportParam, int flag = 4);//7
+		void autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
+		void autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 		void autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 	protected:
 		bool autoTest(const trimesh::vec3& point);
@@ -52,6 +59,17 @@ namespace mmesh
 		int m_width;
 		int m_height;
 		std::vector<bool> m_flags;
+		std::vector<std::vector<trimesh::vec3>> m_FaceSampleInCell;
+		std::vector<std::vector<trimesh::vec3>> m_FaceNormalsInCell;
+
+		std::vector<std::vector<trimesh::vec3>> m_VertexSampleInCell;
+		std::vector<std::vector<int>> m_SupportFaces;
+		std::vector<bool> m_SupportFacesFlg;
+		std::vector<bool> m_SupportVertexFlg;
+		std::vector<DLPISource> m_SupportFaceSources;
+		std::vector<DLPISource> m_SupportEdgeSources;
+		std::vector<DLPISource> m_SupportVertexSources;
+
 	};
 }
 

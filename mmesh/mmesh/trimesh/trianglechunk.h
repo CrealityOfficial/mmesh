@@ -43,14 +43,14 @@ namespace mmesh
 			return idx.x >= 0 && idx.x < m_width&& idx.y >= 0 && idx.y < m_height;
 		}
 
-	protected:
+	public:
 		trimesh::box3 m_globalBox;
 
 		int m_width;
 		int m_height;
 		float m_gridSize;
 
-		std::vector<std::vector<int>> m_cells;
+		std::vector<std::vector<int>> m_cells;//存储XY栅格化后模型面投影在栅格中的索引值
 	};
 }
 #endif // CREATIVE_KERNEL_TRIANGLECHUNK_1595984973500_H

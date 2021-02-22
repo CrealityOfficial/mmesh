@@ -50,13 +50,13 @@ namespace mmesh
 					std::vector<int>& halfs1 = m_outHalfEdges.at(v1);
 
 					int nh = halfcode(i, j);
-					if (old[start] && old[end])
+					if (old[start] && old[end])//两个相邻顶点都有向外的半边数据
 					{
 						int hsize = (int)halfs1.size();
 						for (int k = 0; k < hsize; ++k)
 						{
 							int h = halfs1.at(k);
-							if (endvertexid(h) == v2)
+							if (endvertexid(h) == v2)//如果半边数据未点与V2相等
 							{
 								halfnew.at(j) = h;
 
@@ -106,69 +106,191 @@ namespace mmesh
 			}
 		}
 	}
+#if 0
+void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
+{
+int faceNum = (int)m_mesh->faces.size();
+std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
+float edgeCosValue = cosf(M_PIf * 70.0f / 180.0f);
+float edgeFaceCosValue = cosf(M_PIf * 60.0f / 180.0f);
+for (int faceID = 0; faceID < faceNum; ++faceID)
+{
+	ivec3& oppoHalfs = m_oppositeHalfEdges.at(faceID);
+	ivec3& edgeFlag = edgesFlags.at(faceID);
+	TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+	vec3& faceNormal = normals.at(faceID);
 
-	void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, std::vector<trimesh::ivec2>& supportEdges)
+	bool faceSupport = dotValues.at(faceID) < (-edgeFaceCosValue);
+	for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
 	{
-		int faceNum = (int)m_mesh->faces.size();
-		std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
-		float edgeCosValue = cosf(M_PIf * 70.0f / 180.0f);
-		float edgeFaceCosValue = cosf(M_PIf * 60.0f / 180.0f);
-		for (int faceID = 0; faceID < faceNum; ++faceID)
+		if (edgeFlag[edgeIndex] == 0)
 		{
-			ivec3& oppoHalfs = m_oppositeHalfEdges.at(faceID);
-			ivec3& edgeFlag = edgesFlags.at(faceID);
-			TriMesh::Face& tFace = m_mesh->faces.at(faceID);
-			vec3& faceNormal = normals.at(faceID);
+			edgeFlag[edgeIndex] = 1;
 
-			bool faceSupport = dotValues.at(faceID) < (-edgeFaceCosValue);
-			for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
+			int vertexID1 = tFace[edgeIndex];
+			int vertexID2 = tFace[(edgeIndex + 1) % 3];
+			vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
+			vec3 nedge = normalized(edge);
+
+			if (abs(trimesh::dot(nedge, vec3(0.0f, 0.0f, 1.0f))) < edgeCosValue)
 			{
-				if (edgeFlag[edgeIndex] == 0)
+				int oppoHalf = oppoHalfs.at(edgeIndex);
+				bool shouldAdd = false;
+				if (oppoHalf >= 0)
 				{
-					edgeFlag[edgeIndex] = 1;
+					int oppoFaceID;
+					int edgeID;
+					halfdecode(oppoHalf, oppoFaceID, edgeID);
+					edgesFlags.at(oppoFaceID)[edgeID] = 1;
 
-					int vertexID1 = tFace[edgeIndex];
-					int vertexID2 = tFace[(edgeIndex + 1) % 3];
-					vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
-					vec3 nedge = normalized(edge);
-
-					if (abs(trimesh::dot(nedge, vec3(0.0f, 0.0f, 1.0f))) < edgeCosValue)
+					vec3& oppoFaceNormal = normals.at(oppoFaceID);
+					bool oppoFaceSupport = dotValues.at(oppoFaceID) < (-edgeFaceCosValue);
+					if (oppoFaceSupport && faceSupport)
 					{
-						int oppoHalf = oppoHalfs.at(edgeIndex);
-						bool shouldAdd = false;
-						if (oppoHalf >= 0)
+
+						if (trimesh::dot(faceNormal, oppoFaceNormal) < 0.0f)
 						{
-							int oppoFaceID;
-							int edgeID;
-							halfdecode(oppoHalf, oppoFaceID, edgeID);
-							edgesFlags.at(oppoFaceID)[edgeID] = 1;
+							shouldAdd = true;
+						}
+					}
+				}
+				else  // hole edge
+				{
+					shouldAdd = faceSupport;
+				}
 
-							vec3& oppoFaceNormal = normals.at(oppoFaceID);
+				if (shouldAdd)
+				{
+					ivec2 edgeID(vertexID1, vertexID2);
+					supportEdges.push_back(edgeID);
+				}
+			}
+		}
+	}
+}
+	}
+#else
+void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
+{
+	int faceNum = (int)m_mesh->faces.size();
+	std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
+	float edgeCosValue = cosf(M_PIf * 45.0f / 180.0f);
+	float edgeFaceCosValue = faceCosValue;// cosf(M_PIf * 45.0f / 180.0f);
+	for (int faceID = 0; faceID < faceNum; ++faceID)
+	{
+		ivec3& oppoHalfs = m_oppositeHalfEdges.at(faceID);
+		TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+		ivec3& edgeFlag = edgesFlags.at(faceID);
+
+		for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
+		{
+			if (edgeFlag[edgeIndex] == 0)
+			{
+				edgeFlag[edgeIndex] = 1;
+				int vertexID1 = tFace[edgeIndex];
+				int vertexID2 = tFace[(edgeIndex + 1) % 3];
+				vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
+				vec3 nedge = normalized(edge);
+				//float testangle = trimesh::dot(nedge, vec3(nedge.x, nedge.y, 0.0f));
+				//std::cout << "testangle==" << acos(testangle) * 180.0 / M_PIf << std::endl;
+
+
+				if (abs(trimesh::dot(nedge, vec3(nedge.x, nedge.y, 0.0f))) >edgeCosValue)//悬吊线与XY平面夹角小于某一角度
+				{
+					int oppoHalf =-1;
+					bool shouldAdd = false;
+					int oppoFaceID;
+					int oppoEdgeVertexID;
+					int connectfaceVetexn = 0;
+					for (int offedgeIndex = 0; offedgeIndex < 3; offedgeIndex++)
+					{
+						oppoHalf = oppoHalfs.at(offedgeIndex);
+
+						halfdecode(oppoHalf, oppoFaceID, oppoEdgeVertexID);
+						oppoEdgeVertexID=startvertexid(oppoHalf);
+						if (oppoEdgeVertexID == vertexID2)//相邻面
+						{
+							connectfaceVetexn += 1;
+							//break;
+						}
+
+					}
+					if (connectfaceVetexn > 1)
+					{
+						std::cout << "connectfaceVetexn==" << connectfaceVetexn << std::endl;
+					}
+					if (oppoHalf >= 0)
+					{
+						if (oppoEdgeVertexID == vertexID2)//相邻面
+						{
 							bool oppoFaceSupport = dotValues.at(oppoFaceID) < (-edgeFaceCosValue);
-							if (oppoFaceSupport && faceSupport)
-							{
+							bool faceSupport = dotValues.at(faceID) < (-edgeFaceCosValue);
 
-								if (trimesh::dot(faceNormal, oppoFaceNormal) < 0.0f)
+							if ((oppoFaceSupport == false) && (faceSupport == false))//相邻非支撑面
+							{
+								vec3& faceNormal = normals.at(faceID);
+								vec3& oppoFaceNormal = normals.at(oppoFaceID);
+								if (dotValues.at(faceID) < 0.0 || dotValues.at(oppoFaceID) < 0.0)//至少有一个三角面法向量与Z轴负方向的夹角为90度
 								{
-									shouldAdd = true;
+									if (trimesh::dot(faceNormal, oppoFaceNormal) < 0.0f)//两个面法向量一个向上，一个向下
+									{
+										if (dotValues.at(faceID) < 0.0)//面法向量向下
+										{
+											if (acos(dotValues.at(faceID)) > acos(dotValues.at(oppoFaceID)))
+											{
+												vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
+												if (trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0)
+												{
+													shouldAdd = true;
+												}
+											}
+										}
+										else
+										{
+											if (acos(dotValues.at(oppoFaceID)) > acos(dotValues.at(faceID)))
+											{
+												vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
+												if (trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0)
+												{
+													shouldAdd = true;
+												}
+											}
+
+										}
+									}
+									else//两个面法向量同时向下
+									{
+										vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
+										if (trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0)
+										{
+											shouldAdd = false;
+										}
+									}
+
+
 								}
 							}
-						}
-						else  // hole edge
-						{
-							shouldAdd = faceSupport;
+
 						}
 
-						if (shouldAdd)
-						{
-							ivec2 edgeID(vertexID1, vertexID2);
-							supportEdges.push_back(edgeID);
-						}
+
+					}
+					else  // hole edge
+					{
+						shouldAdd = true;
+					}
+
+					if (shouldAdd)
+					{
+						ivec2 edgeID(vertexID1, vertexID2);
+						supportEdges.push_back(edgeID);
 					}
 				}
 			}
 		}
 	}
+}
+#endif
 
 	void MeshTopo::chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& supportFaces, float faceCosValue)
 	{
@@ -178,7 +300,7 @@ namespace mmesh
 		std::vector<int> nextStack;
 		for (int faceID = 0; faceID < faceNum; ++faceID)
 		{
-			if (dotValues.at(faceID) < -faceCosValue && visitFlags.at(faceID) == false)
+			if ((dotValues.at(faceID) < -faceCosValue) && (visitFlags.at(faceID) == false))
 			{
 				visitFlags.at(faceID) = true;
 				visitStack.push_back(faceID);
@@ -198,7 +320,7 @@ namespace mmesh
 							if (oppoHalf >= 0)
 							{
 								int oppoFaceID = faceid(oppoHalf);
-								if (dotValues.at(oppoFaceID) < -faceCosValue && (visitFlags.at(oppoFaceID) == false))
+								if ((dotValues.at(oppoFaceID) < -faceCosValue) && (visitFlags.at(oppoFaceID) == false))
 								{
 									nextStack.push_back(oppoFaceID);
 									facesChunk.push_back(oppoFaceID);
