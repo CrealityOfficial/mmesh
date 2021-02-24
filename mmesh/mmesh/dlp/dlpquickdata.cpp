@@ -193,7 +193,30 @@ namespace mmesh
 				sources.emplace_back(src);
 			}
 		}
+		if(0)
+		{
+			std::vector<std::vector<trimesh::vec3>> edgeSectVertexs;
+			sources.clear();
+			extractFaceSectEdge(m_SupportFaces, edgeSectVertexs);
+			int testtimes = 0;
+			for (std::vector<trimesh::vec3>vertexesV : edgeSectVertexs)
+			{
+				if (testtimes == 0)
+				{
+					for (trimesh::vec3 vertextemp : vertexesV)
+					{
+						DLPISource srctemp;
+						srctemp.position = vertextemp;
+						srctemp.position.z = 0;
+						sources.emplace_back(srctemp);
+					}
+				}
+				testtimes += 1;
+				std::cout << "testtimes==" << testtimes << std::endl;
+			}
 
+		
+		}
 		m_flags.clear();
 	}
 
@@ -527,8 +550,8 @@ void DLPQuickData::autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSu
 		trimesh::vec3 vertexCenter(0.0, 0.0, 0.0);
 		for (size_t vIndex = 0; vIndex < vertexes.size(); vIndex++)
 		{
-			trimesh::vec3 vertex = vertexes.at(vIndex);
-			trimesh::vec3 normal = normals.at(vIndex);
+			trimesh::vec3 &vertex = vertexes.at(vIndex);
+			trimesh::vec3 &normal = normals.at(vIndex);
 			samplePoints.push_back(vertex);
 			sampleNormals.push_back(normal);
 			//break;
@@ -573,6 +596,51 @@ void DLPQuickData::autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSu
 			int iindex = nx + ny * m_width;
 			m_flags.at(iindex) = false;
 		}
+	}
+
+
+	void DLPQuickData::extractFaceSectEdge(std::vector<std::vector<int>> SupportFaces, std::vector<std::vector<trimesh::vec3>> &edgeSectVertexs)
+	{
+		edgeSectVertexs.resize(SupportFaces.size());
+		for (int faceChunkIndex =0; faceChunkIndex<SupportFaces.size(); faceChunkIndex++)
+		{
+			std::vector<int> edgeFaces;
+			std::vector<int>& faceChunk = SupportFaces.at(faceChunkIndex);
+			for (int faceID : faceChunk)
+			{
+				ivec3& oppoHalfs = m_meshTopo->m_oppositeHalfEdges.at(faceID);
+				for (int halfID = 0; halfID < 3; ++halfID)
+				{
+					int oppoHalf = oppoHalfs.at(halfID);
+					if (oppoHalf>=0)
+					{
+						int edgeface = 0, edgeVertex = 0;
+						m_meshTopo->halfdecode(oppoHalf, edgeface, edgeVertex);
+						if (std::find(faceChunk.begin(), faceChunk.end(), edgeface) == faceChunk.end())
+						{
+							int edgeFacestemp = m_meshTopo->halfcode(faceID, halfID);
+							edgeFaces.emplace_back(edgeFacestemp);
+						}
+					}
+				}
+
+			}
+			for (int halfedge : edgeFaces)
+			{
+				int edgeface = 0, edgeVertex = 0;
+				m_meshTopo->halfdecode(halfedge, edgeface, edgeVertex);
+				TriMesh::Face& tFace = m_mesh->faces.at(edgeface);
+				vec3& vertex1 = m_vertexes.at(m_meshTopo->startvertexid(halfedge));
+				vec3& vertex2 = m_vertexes.at(m_meshTopo->endvertexid(halfedge));
+				//vec3& vertex3 = m_vertexes.at(tFace[2]);
+				edgeSectVertexs.at(faceChunkIndex).push_back(vertex1);
+				edgeSectVertexs.at(faceChunkIndex).push_back(vertex2);
+			}
+		}
+		///////////////////////////////////
+
+
+
 	}
 
 }
