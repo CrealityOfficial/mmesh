@@ -504,6 +504,13 @@ namespace mmesh
 			check(collides, start, CheckDir::eUp, -1);
 
 			size_t resultSize = collides.size();
+
+			if (m_logCallback)
+			{
+				m_logCallback->log("samples .[x %f, y %f] %d", vv.x, vv.y, (int)collides.size());
+				for (VerticalCollide& vc : collides)
+					m_logCallback->log("samples .[z %f, faceid %d]", vc.z, vc.faceid);
+			}
 			if (resultSize == 0)
 				return;
 
@@ -522,12 +529,6 @@ namespace mmesh
 			size_t startIndex = 0;
 			float cosValue = cosf(M_PIf * (90.0f - angle) / 180.0f);
 
-			if (m_logCallback)
-			{
-				m_logCallback->log("samples .[x %f, y %f] %d", vv.x, vv.y, (int)collides.size());
-				for(VerticalCollide& vc : collides)
-					m_logCallback->log("samples .[z %f, faceid %d]", vc.z, vc.faceid);
-			}
 			while (startIndex < resultSize)
 			{
 				VerticalCollide& cResult = collides.at(startIndex);
