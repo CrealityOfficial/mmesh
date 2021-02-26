@@ -71,11 +71,11 @@ namespace mmesh
 					m_faceNormals.at(i) = n;
 					m_dotValues.at(i) = trimesh::dot(n, vec3(0.0f, 0.0f, 1.0f));
 
-					if (m_logCallback)
-					{
-						m_logCallback->log("faceNormal %f %f %f", n.x, n.y, n.z);
-						m_logCallback->log("%d dotValue %f", i, m_dotValues.at(i));
-					}
+					//if (m_logCallback)
+					//{
+					//	m_logCallback->log("faceNormal %f %f %f", n.x, n.y, n.z);
+					//	m_logCallback->log("%d dotValue %f", i, m_dotValues.at(i));
+					//}
 				}
 
 				m_boxes.resize(faceNum);
@@ -382,10 +382,10 @@ namespace mmesh
 		vec2 xy = vec2(c.x, c.y);
 		ivec2 idx = index(xy);
 
-		if (m_logCallback)
-		{
-			m_logCallback->log("idx [%d , %d]", idx.x, idx.y);
-		}
+		//if (m_logCallback)
+		//{
+		//	m_logCallback->log("idx [%d , %d]", idx.x, idx.y);
+		//}
 
 		vec3 n = vec3(0.0f, 0.0f, 1.0f);
 		if (dir == CheckDir::eDown) n = vec3(0.0f, 0.0f, -1.0f);
@@ -423,10 +423,10 @@ namespace mmesh
 						}
 					}
 
-					if (m_logCallback)
-					{
-						m_logCallback->log("test cell %d : dotValue %f", i, m_dotValues.at(i));
-					}
+					//if (m_logCallback)
+					//{
+					//	m_logCallback->log("test cell %d : dotValue %f", i, m_dotValues.at(i));
+					//}
 
 					if (abs(m_dotValues.at(i)) > 0.001f)
 					{
@@ -444,10 +444,10 @@ namespace mmesh
 							collides.push_back(result);
 						}
 
-						if (m_logCallback)
-						{
-							m_logCallback->log("test cell %d : %f %f %f", i, t, u, v);
-						}
+						//if (m_logCallback)
+						//{
+						//	m_logCallback->log("test cell %d : %f %f %f", i, t, u, v);
+						//}
 					}
 				}
 			}
