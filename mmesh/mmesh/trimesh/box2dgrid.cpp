@@ -418,7 +418,7 @@ namespace mmesh
 
 					if (m_logCallback)
 					{
-						m_logCallback->log("test cell %d", i);
+						m_logCallback->log("test cell %d : dotValue", i, abs(m_dotValues.at(i)));
 					}
 
 					if (abs(m_dotValues.at(i)) > 0.001f)
@@ -437,10 +437,10 @@ namespace mmesh
 							collides.push_back(result);
 						}
 
-						//if (m_logCallback)
-						//{
-						//	m_logCallback->log("test cell %d : %f %f %f", i, t, u, v);
-						//}
+						if (m_logCallback)
+						{
+							m_logCallback->log("test cell %d : %f %f %f", i, t, u, v);
+						}
 					}
 				}
 			}
