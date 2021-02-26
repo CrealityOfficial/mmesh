@@ -121,6 +121,11 @@ namespace mmesh
 				}
 			}
 		}
+
+		if (m_logCallback)
+		{
+			m_logCallback->log("cells [width %d , height %d, size %d]", m_width, m_height, (int)m_cells.size());
+		}
 	}
 
 	void Box2DGrid::buildGlobalProperties()
@@ -380,6 +385,11 @@ namespace mmesh
 			int iindex = idx.x + idx.y * m_width;
 			std::vector<int>& cells = m_cells.at(iindex);
 			if (cells.size() > 0) collides.reserve(cells.size());
+
+			if (m_logCallback)
+			{
+				m_logCallback->log("cells in %d", (int)cells.size());
+			}
 			for (int i : cells)
 			{
 				box2& b = m_boxes.at(i);
