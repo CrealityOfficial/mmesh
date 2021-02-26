@@ -368,6 +368,11 @@ namespace mmesh
 		vec2 xy = vec2(c.x, c.y);
 		ivec2 idx = index(xy);
 
+		if (m_logCallback)
+		{
+			m_logCallback->log("idx [%d , %d]", idx.x, idx.y);
+		}
+
 		vec3 n = vec3(0.0f, 0.0f, 1.0f);
 		if (dir == CheckDir::eDown) n = vec3(0.0f, 0.0f, -1.0f);
 		if (idx.x >= 0 && idx.x < m_width && idx.y >= 0 && idx.y < m_height)
