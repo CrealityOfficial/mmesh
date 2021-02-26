@@ -524,9 +524,10 @@ namespace mmesh
 
 			if (m_logCallback)
 			{
-				m_logCallback->log("cosf .[angle %f, cosValue %f]", angle, cosValue);
+				m_logCallback->log("samples .[x %f, y %f] %d", vv.x, vv.y, (int)collides.size());
+				for(VerticalCollide& vc : collides)
+					m_logCallback->log("samples .[z %f, faceid %d]", vc.z, vc.faceid);
 			}
-
 			while (startIndex < resultSize)
 			{
 				VerticalCollide& cResult = collides.at(startIndex);
