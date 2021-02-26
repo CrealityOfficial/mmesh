@@ -69,6 +69,12 @@ namespace mmesh
 
 					m_faceNormals.at(i) = n;
 					m_dotValues.at(i) = trimesh::dot(n, vec3(0.0f, 0.0f, 1.0f));
+
+					if (m_logCallback)
+					{
+						m_logCallback->log("faceNormal %f %f %f", n.x, n.y, n.z);
+						m_logCallback->log("%d dotValue %f", i, m_dotValues.at(i));
+					}
 				}
 
 				m_boxes.resize(faceNum);
