@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <float.h>
 #include <stack>
+#include <math.h>
 
 using namespace trimesh;
 
