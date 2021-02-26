@@ -14,11 +14,17 @@ namespace mmesh
 		, m_width(0)
 		, m_height(0)
 		, m_globalBuilded(false)
+		, m_logCallback(nullptr)
 	{
 	}
 
 	Box2DGrid::~Box2DGrid()
 	{
+	}
+
+	void Box2DGrid::setLogCallback(LogCallback* callback)
+	{
+		m_logCallback = callback;
 	}
 
 	void Box2DGrid::build(TriMesh* mesh, fxform xf, bool isFanZhuan)
@@ -455,11 +461,17 @@ namespace mmesh
 
 	void Box2DGrid::autoSupport(std::vector<VerticalSeg>& supports, float size, float angle, bool platform)
 	{
+		if (m_logCallback)
+		{
+			m_logCallback->logs("Start auto supports.");
+			m_logCallback->log("size %f, angle %f", size, angle);
+		}
 		supports.clear();
 
 		float delta = size;
 		float start = size / 2.0f;
 		vec2 globalSize = m_globalBox.size();
+
 		std::vector<vec2> samples;
 		vec2 dmin = m_globalBox.min + vec2(start, start);
 		ivec4 clamps(0, 0, 0, 0);
@@ -472,6 +484,14 @@ namespace mmesh
 				vec2 offset = delta * vec2((float)x, (float)y);
 				samples.push_back(dmin + offset);
 			}
+		}
+
+		if (m_logCallback)
+		{
+			m_logCallback->log("XY min.[%f %f]", m_globalBox.min.x, m_globalBox.min.y);
+			m_logCallback->log("XY max.[%f %f]", m_globalBox.max.x, m_globalBox.max.y);
+			//m_logCallback->log("Z.[%f %f]", m_globalBox.min.z, m_globalBox.max.y);
+			m_logCallback->log("samples.[%d]", (int)samples.size());
 		}
 
 		auto testOneSample = [this, &angle, &platform](vec2& vv, std::vector<VerticalSeg>& supps) {
@@ -531,9 +551,6 @@ namespace mmesh
 		size_t sampleSize = samples.size();
 		for (size_t i = 0; i < sampleSize; ++i)
 		{
-			//if (i != 790)
-			//	continue;
-
 			vec2 v = samples.at(i);
 
 			std::vector<VerticalSeg> supps;
@@ -542,6 +559,11 @@ namespace mmesh
 			{
 				supports.insert(supports.end(), supps.begin(), supps.end());
 			}
+		}
+
+		if (m_logCallback)
+		{
+			m_logCallback->log("End auto supports. size %d", (int)supports.size());
 		}
 	}
 
