@@ -120,11 +120,13 @@ namespace mmesh
 					}
 				}
 			}
-		}
 
-		if (m_logCallback)
-		{
-			m_logCallback->log("cells [width %d , height %d, size %d]", m_width, m_height, (int)m_cells.size());
+			if (m_logCallback)
+			{
+				m_logCallback->log("cells [width %d , height %d, size %d]", m_width, m_height, (int)m_cells.size());
+				for (int i = 0; i < faceNum; ++i)
+					m_logCallback->log("dotValue %f", m_dotValues.at(i));
+			}
 		}
 	}
 
