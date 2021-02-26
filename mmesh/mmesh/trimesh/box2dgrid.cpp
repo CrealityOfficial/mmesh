@@ -522,6 +522,11 @@ namespace mmesh
 			size_t startIndex = 0;
 			float cosValue = cosf(M_PIf * (90.0f - angle) / 180.0f);
 
+			if (m_logCallback)
+			{
+				m_logCallback->log("cosf .[angle %f, cosValue %f]", angle, cosValue);
+			}
+
 			while (startIndex < resultSize)
 			{
 				VerticalCollide& cResult = collides.at(startIndex);
