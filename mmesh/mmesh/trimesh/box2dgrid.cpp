@@ -124,8 +124,8 @@ namespace mmesh
 			if (m_logCallback)
 			{
 				m_logCallback->log("cells [width %d , height %d, size %d]", m_width, m_height, (int)m_cells.size());
-				for (int i = 0; i < faceNum; ++i)
-					m_logCallback->log("dotValue %f", m_dotValues.at(i));
+				//for (int i = 0; i < faceNum; ++i)
+				//	m_logCallback->log("dotValue %f", m_dotValues.at(i));
 			}
 		}
 	}
@@ -388,10 +388,6 @@ namespace mmesh
 			std::vector<int>& cells = m_cells.at(iindex);
 			if (cells.size() > 0) collides.reserve(cells.size());
 
-			if (m_logCallback)
-			{
-				m_logCallback->log("cells in %d", (int)cells.size());
-			}
 			for (int i : cells)
 			{
 				box2& b = m_boxes.at(i);
@@ -434,6 +430,11 @@ namespace mmesh
 							result.xy = xy;
 							result.z = c.z + t * n.z;
 							collides.push_back(result);
+						}
+
+						if (m_logCallback)
+						{
+							m_logCallback->log("test cell %d : %f %f %f", i, t, u, v);
 						}
 					}
 				}
