@@ -424,7 +424,7 @@ namespace mmesh
 
 					if (m_logCallback)
 					{
-						m_logCallback->log("test cell %d : dotValue %f", i, abs(m_dotValues.at(i)));
+						m_logCallback->log("test cell %d : dotValue %f", i, m_dotValues.at(i));
 					}
 
 					if (abs(m_dotValues.at(i)) > 0.001f)
