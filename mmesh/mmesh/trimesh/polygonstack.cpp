@@ -4,6 +4,7 @@
 
 #include "mmesh/trimesh/polygon.h"
 #include "mmesh/trimesh/polygon2util.h"
+#include "mmesh/trimesh/savepolygonstack.h"
 
 namespace mmesh
 {
@@ -21,6 +22,12 @@ namespace mmesh
 
 	void PolygonStack::generates(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, std::vector<trimesh::TriMesh::Face>& triangles)
 	{
+#if _DEBUG
+		static int i = 0;
+		char buffer[128];
+		sprintf(buffer, "%d.poly", i++);
+		stackSave(buffer, polygons, points);
+#endif
 		prepare(polygons, points);
 		generate(triangles);
 	}
