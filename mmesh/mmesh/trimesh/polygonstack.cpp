@@ -15,14 +15,20 @@ namespace mmesh
 	
 	PolygonStack::~PolygonStack()
 	{
+		clear();
+	}
+
+	void PolygonStack::clear()
+	{
 		for (Polygon2* poly : m_polygon2s)
 			delete poly;
 		m_polygon2s.clear();
+		m_currentPolygon = 0;
 	}
 
 	void PolygonStack::generates(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, std::vector<trimesh::TriMesh::Face>& triangles)
 	{
-#if _DEBUG
+#if 0
 		static int i = 0;
 		char buffer[128];
 		sprintf(buffer, "%d.poly", i++);
@@ -157,6 +163,8 @@ namespace mmesh
 							return infos.at(i).box.max.x < infos.at(j).box.max.x;
 							});
 
+						const double EPSON = 0.00000001;
+
 #if 0
 						size_t innserPolygonSize = indices.size();
 						while (indices.size() > innserPolygonSize - 12)
@@ -209,13 +217,7 @@ namespace mmesh
 										double cx = (vertj.x - verti.x)* (tvertex.y - verti.y) / (vertj.y - verti.y) + verti.x;
 										if (cx > tvertex.x)  // must 
 										{
-											if (cx < cmx)
-											{
-												cOuterIndex = i;
-												cOuterIndex0 = j;
-												cmx = cx;
-											}
-											else if (cx == cmx)
+											if (std::abs(cx - cmx) < EPSON)
 											{  // collide two opposite edge
 												trimesh::dvec2 xxn(1.0, 0.0);
 												trimesh::dvec2 nji = verti - vertj;
@@ -225,6 +227,11 @@ namespace mmesh
 													cOuterIndex0 = j;
 													cmx = cx;
 												}
+											}else if(cx < cmx)
+											{
+												cOuterIndex = i;
+												cOuterIndex0 = j;
+												cmx = cx;
 											}
 										}
 									}
