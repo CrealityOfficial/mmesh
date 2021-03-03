@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <float.h>
 #include <stack>
+#include <math.h>
 
 using namespace trimesh;
 
@@ -14,11 +15,17 @@ namespace mmesh
 		, m_width(0)
 		, m_height(0)
 		, m_globalBuilded(false)
+		, m_logCallback(nullptr)
 	{
 	}
 
 	Box2DGrid::~Box2DGrid()
 	{
+	}
+
+	void Box2DGrid::setLogCallback(LogCallback* callback)
+	{
+		m_logCallback = callback;
 	}
 
 	void Box2DGrid::build(TriMesh* mesh, fxform xf, bool isFanZhuan)
@@ -63,6 +70,12 @@ namespace mmesh
 
 					m_faceNormals.at(i) = n;
 					m_dotValues.at(i) = trimesh::dot(n, vec3(0.0f, 0.0f, 1.0f));
+
+					//if (m_logCallback)
+					//{
+					//	m_logCallback->log("faceNormal %f %f %f", n.x, n.y, n.z);
+					//	m_logCallback->log("%d dotValue %f", i, m_dotValues.at(i));
+					//}
 				}
 
 				m_boxes.resize(faceNum);
@@ -113,6 +126,13 @@ namespace mmesh
 						}
 					}
 				}
+			}
+
+			if (m_logCallback)
+			{
+				m_logCallback->log("cells [width %d , height %d, size %d]", m_width, m_height, (int)m_cells.size());
+				//for (int i = 0; i < faceNum; ++i)
+				//	m_logCallback->log("dotValue %f", m_dotValues.at(i));
 			}
 		}
 	}
@@ -362,6 +382,11 @@ namespace mmesh
 		vec2 xy = vec2(c.x, c.y);
 		ivec2 idx = index(xy);
 
+		//if (m_logCallback)
+		//{
+		//	m_logCallback->log("idx [%d , %d]", idx.x, idx.y);
+		//}
+
 		vec3 n = vec3(0.0f, 0.0f, 1.0f);
 		if (dir == CheckDir::eDown) n = vec3(0.0f, 0.0f, -1.0f);
 		if (idx.x >= 0 && idx.x < m_width && idx.y >= 0 && idx.y < m_height)
@@ -369,6 +394,7 @@ namespace mmesh
 			int iindex = idx.x + idx.y * m_width;
 			std::vector<int>& cells = m_cells.at(iindex);
 			if (cells.size() > 0) collides.reserve(cells.size());
+
 			for (int i : cells)
 			{
 				box2& b = m_boxes.at(i);
@@ -397,6 +423,11 @@ namespace mmesh
 						}
 					}
 
+					//if (m_logCallback)
+					//{
+					//	m_logCallback->log("test cell %d : dotValue %f", i, m_dotValues.at(i));
+					//}
+
 					if (abs(m_dotValues.at(i)) > 0.001f)
 					{
 						vec3& v0 = m_vertexes.at(f[0]);
@@ -412,6 +443,11 @@ namespace mmesh
 							result.z = c.z + t * n.z;
 							collides.push_back(result);
 						}
+
+						//if (m_logCallback)
+						//{
+						//	m_logCallback->log("test cell %d : %f %f %f", i, t, u, v);
+						//}
 					}
 				}
 			}
@@ -455,11 +491,17 @@ namespace mmesh
 
 	void Box2DGrid::autoSupport(std::vector<VerticalSeg>& supports, float size, float angle, bool platform)
 	{
+		if (m_logCallback)
+		{
+			m_logCallback->logs("Start auto supports.");
+			m_logCallback->log("size %f, angle %f", size, angle);
+		}
 		supports.clear();
 
 		float delta = size;
 		float start = size / 2.0f;
 		vec2 globalSize = m_globalBox.size();
+
 		std::vector<vec2> samples;
 		vec2 dmin = m_globalBox.min + vec2(start, start);
 		ivec4 clamps(0, 0, 0, 0);
@@ -474,6 +516,14 @@ namespace mmesh
 			}
 		}
 
+		if (m_logCallback)
+		{
+			m_logCallback->log("XY min.[%f %f]", m_globalBox.min.x, m_globalBox.min.y);
+			m_logCallback->log("XY max.[%f %f]", m_globalBox.max.x, m_globalBox.max.y);
+			//m_logCallback->log("Z.[%f %f]", m_globalBox.min.z, m_globalBox.max.y);
+			m_logCallback->log("samples.[%d]", (int)samples.size());
+		}
+
 		auto testOneSample = [this, &angle, &platform](vec2& vv, std::vector<VerticalSeg>& supps) {
 			supps.clear();
 			supps.reserve(10);
@@ -484,6 +534,13 @@ namespace mmesh
 			check(collides, start, CheckDir::eUp, -1);
 
 			size_t resultSize = collides.size();
+
+			if (m_logCallback)
+			{
+				m_logCallback->log("samples .[x %f, y %f] %d", vv.x, vv.y, (int)collides.size());
+				for (VerticalCollide& vc : collides)
+					m_logCallback->log("samples .[z %f, faceid %d]", vc.z, vc.faceid);
+			}
 			if (resultSize == 0)
 				return;
 
@@ -531,9 +588,6 @@ namespace mmesh
 		size_t sampleSize = samples.size();
 		for (size_t i = 0; i < sampleSize; ++i)
 		{
-			//if (i != 790)
-			//	continue;
-
 			vec2 v = samples.at(i);
 
 			std::vector<VerticalSeg> supps;
@@ -542,6 +596,11 @@ namespace mmesh
 			{
 				supports.insert(supports.end(), supps.begin(), supps.end());
 			}
+		}
+
+		if (m_logCallback)
+		{
+			m_logCallback->log("End auto supports. size %d", (int)supports.size());
 		}
 	}
 

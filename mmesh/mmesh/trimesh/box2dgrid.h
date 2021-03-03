@@ -3,6 +3,7 @@
 #include "trimesh2/TriMesh.h"
 #include "trimesh2/Box.h"
 #include "trimesh2/XForm.h"
+#include "mmesh/common/logcallback.h"
 
 namespace mmesh
 {
@@ -63,6 +64,7 @@ namespace mmesh
 		Box2DGrid();
 		~Box2DGrid();
 
+		void setLogCallback(LogCallback* callback);
 		void build(trimesh::TriMesh* mesh, trimesh::fxform xf, bool isFanZhuan);
 
 		void buildGlobalProperties();
@@ -153,6 +155,8 @@ namespace mmesh
 		std::vector<std::vector<int>> m_outHalfEdges;
 		std::vector<trimesh::ivec3> m_oppositeHalfEdges;
 		bool m_globalBuilded;
+
+		LogCallback* m_logCallback;
 	};
 }
 #endif // CREATIVE_KERNEL_BOX2DGRID_1594095137563_H

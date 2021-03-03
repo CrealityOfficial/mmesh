@@ -5,5 +5,4 @@
 typedef std::function<void(float)> selfProgressFunc;
 typedef std::function<bool()> selfInterruptFunc;
 typedef std::function<void(const char*)> selfFailedFunc;
-
 #endif // _NULLSPACE_SELFDEFFUNC_1591791524731_H
