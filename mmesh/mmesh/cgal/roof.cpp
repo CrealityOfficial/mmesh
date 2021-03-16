@@ -426,7 +426,7 @@ namespace mmesh
     }
 
     void roofLine(ClipperLib::PolyTree* polyTree,
-        ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace)
+        ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace, bool onePoly)
     {
     }
 }
