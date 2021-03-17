@@ -13,6 +13,7 @@ namespace mmesh
 		PolygonStack();
 		~PolygonStack();
 
+		void clear();
 		void generates(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, std::vector<trimesh::TriMesh::Face>& triangles);
 		void generatesWithoutTree(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, std::vector<trimesh::TriMesh::Face>& triangles);
 

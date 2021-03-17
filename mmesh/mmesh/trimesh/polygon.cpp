@@ -33,9 +33,7 @@ namespace mmesh
 		m_circleSize = size;
 		VNode* root = new VNode();
 
-#ifdef _DEBUG
 		m_debugNodes.push_back(root);
-#endif
 		root->prev = nullptr;
 		root->next = nullptr;
 		VNode* cur = root;
@@ -48,9 +46,7 @@ namespace mmesh
 				cur->prev = nullptr;
 				cur->next = nullptr;
 
-#ifdef _DEBUG
 				m_debugNodes.push_back(cur);
-#endif
 			}
 
 			cur->index = m_indexes.at(i);
@@ -89,16 +85,19 @@ namespace mmesh
 
 	void Polygon2::releaseNode()
 	{
-		if (!m_root) return;
+		//if (!m_root) return;
 
-		VNode* cur = m_root;
-		VNode* nxt = cur->next;
-		do
-		{
-			delete cur;
-			cur = nxt;
-			nxt = cur->next;
-		} while (cur != m_root);
+		//VNode* cur = m_root;
+		//VNode* nxt = cur->next;
+		//do
+		//{
+		//	delete cur;
+		//	cur = nxt;
+		//	nxt = cur->next;
+		//} while (cur != m_root);
+		for (VNode* n : m_debugNodes)
+			delete n;
+		m_debugNodes.clear();
 		m_root = nullptr;
 		m_circleSize = 0;
 		m_ears.clear();
@@ -168,14 +167,14 @@ namespace mmesh
 					m_ears.remove(used);
 
 #ifdef _DEBUG
-					m_debugNodes.erase(std::find(m_debugNodes.begin(), m_debugNodes.end(), used));
+					//m_debugNodes.erase(std::find(m_debugNodes.begin(), m_debugNodes.end(), used));
 #endif
 
 					if (used == m_root)
 					{
 						m_root = nn;
 					}
-					delete used;
+					//delete used;
 					--m_circleSize;
 
 					auto check = [this](VNode* node) {
