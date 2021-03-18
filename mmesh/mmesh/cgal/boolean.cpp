@@ -59,7 +59,7 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
             int index = 0;
             do
             {
-                std::cout << (*vcirc).idx() << std::endl;
+                //std::cout << (*vcirc).idx() << std::endl;
                 f[index] = (*vcirc).idx();
                 index += 1;
             } while (++vcirc != done);
@@ -154,6 +154,10 @@ namespace mmesh
         if (surfaceMesh1.is_empty() || surfaceMesh2.is_empty())
             goto END;
         //main_test();
+
+        PMP::stitch_borders(surfaceMesh1);
+        PMP::stitch_borders(surfaceMesh2);
+
         switch (typeindex)
         {
         case cxBoolean_operation_type::CX_UNION:
