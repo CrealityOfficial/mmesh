@@ -202,7 +202,7 @@ namespace mmesh
 								{
 									trimesh::dvec2& verti = points.at(outerPolygon.at(i));
 									trimesh::dvec2& vertj = points.at(outerPolygon.at(j));
-									if (verti.y == tvertex.y && vertj.y == tvertex.y)
+									if (abs(verti.y - tvertex.y) < EPSON && abs(vertj.y - tvertex.y) < EPSON)
 									{
 										double mmx = verti.x > vertj.x ? vertj.x : verti.x;
 										if (mmx > tvertex.x && mmx < cmx)
@@ -240,11 +240,11 @@ namespace mmesh
 								int mutaulIndex = -1;
 								if (cOuterIndex >= 0)
 								{
-									if (cmx == points.at(outerPolygon.at(cOuterIndex)).x
-										&& tvertex.y == points.at(outerPolygon.at(cOuterIndex)).y)
+									if (abs(cmx - points.at(outerPolygon.at(cOuterIndex)).x) < EPSON
+										&& abs(tvertex.y - points.at(outerPolygon.at(cOuterIndex)).y) < EPSON)
 										mutaulIndex = cOuterIndex;
-									else if (cmx == points.at(outerPolygon.at(cOuterIndex0)).x
-										&& tvertex.y == points.at(outerPolygon.at(cOuterIndex0)).y)
+									else if (abs(cmx - points.at(outerPolygon.at(cOuterIndex0)).x) < EPSON
+										&& abs(tvertex.y - points.at(outerPolygon.at(cOuterIndex0)).y) < EPSON)
 									{
 										mutaulIndex = cOuterIndex0;
 									}
