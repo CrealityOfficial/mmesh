@@ -30,6 +30,8 @@ namespace mmesh
 
 		bool earClipping(trimesh::TriMesh::Face& face, std::vector<int>* earIndices = nullptr);
 		void getEars(std::vector<int>* earIndices = nullptr);
+
+		std::vector<int> debugIndex();
 	protected:
 		trimesh::TriMesh::Face nodeTriangle(VNode* node);
 		void calType(VNode* node, bool testContainEdge = true);
