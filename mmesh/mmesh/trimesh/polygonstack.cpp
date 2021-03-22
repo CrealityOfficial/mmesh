@@ -168,7 +168,7 @@ namespace mmesh
 
 #if 0
 						size_t innserPolygonSize = indices.size();
-						while (indices.size() > innserPolygonSize - 23)
+						while (indices.size() > innserPolygonSize - 30)
 #else
 						while (indices.size() > 0)
 #endif
@@ -217,7 +217,7 @@ namespace mmesh
 									{
 										trimesh::dvec2 start = verti;
 										trimesh::dvec2 end = vertj;
-										if (i > j)
+										if (outerPolygon.at(i) > outerPolygon.at(j))
 											std::swap(start, end);
 
 										double cx = (end.x - start.x)* (tvertex.y - start.y) / (end.y - start.y) + start.x;
@@ -225,9 +225,7 @@ namespace mmesh
 										{
 											if (cx == cmx)
 											{  // collide two opposite edge
-												trimesh::dvec2 xxn(1.0, 0.0);
-												trimesh::dvec2 nji = verti - vertj;
-												if (crossValue(xxn, nji) >= 0.0)
+												if (verti.y > vertj.y)
 												{
 													cOuterIndex = i;
 													cOuterIndex0 = j;
@@ -248,8 +246,8 @@ namespace mmesh
 								{
 #if _DEBUG
 									MergeInfo info;
-									info.start = outerPolygon.at(cOuterIndex);
-									info.end = outerPolygon.at(cOuterIndex0);
+									info.start = outerPolygon.at(cOuterIndex0);
+									info.end = outerPolygon.at(cOuterIndex);
 									info.innerIndex = innerPolygon.at(vertexIndex);
 #endif
 									if ((cmx == points.at(outerPolygon.at(cOuterIndex)).x)
@@ -263,26 +261,15 @@ namespace mmesh
 									else
 									{
 										trimesh::dvec2 M = tvertex;
-										if (points.at(outerPolygon.at(cOuterIndex)).x < points.at(outerPolygon.at(cOuterIndex0)).x)
-										{
-											cOuterIndex = cOuterIndex0;
-										}
-										trimesh::dvec2 P = points.at(outerPolygon.at(cOuterIndex));
+										trimesh::dvec2 P = points.at(outerPolygon.at(cOuterIndex0));
 										trimesh::dvec2 I = trimesh::dvec2(cmx, M.y);
-										bool invert = false;
-										if (P.y > I.y)
-										{
-											trimesh::dvec2 T = P;
-											P = I;
-											I = T;
-											invert = true;
-										}
 
 										std::vector<int> reflexVertex;
 										for (i = 0; i < nvert; ++i)
 										{
 											trimesh::dvec2& tv = points.at(outerPolygon.at(i));
-											if ((i != cOuterIndex) && (outerPolygon.at(i) != outerPolygon.at(cOuterIndex)) && insideTriangle(M, P, I, tv))
+											if ((i != cOuterIndex0) && 
+												(points.at(outerPolygon.at(cOuterIndex0)) != tv) && insideTriangle(M, P, I, tv))
 											{
 												reflexVertex.push_back(i);
 											}
@@ -290,7 +277,7 @@ namespace mmesh
 
 										if (reflexVertex.size() == 0)
 										{
-											mutaulIndex = cOuterIndex;
+											mutaulIndex = cOuterIndex0;
 										}
 										else
 										{
@@ -298,50 +285,47 @@ namespace mmesh
 											double minLen = 1000000.0;
 											double maxDot = -10000.0;
 											int minReflexIndex = 0;
+											std::vector<int> minRefs;
 											for (i = 0; i < reflexSize; ++i)
 											{
 												trimesh::dvec2 R = points.at(outerPolygon.at(reflexVertex.at(i)));
 												trimesh::dvec2 MR = R - M;
+
 												double len = trimesh::len(MR);
 												trimesh::normalize(MR);
 												double dot = abs(dotValue(MR, trimesh::dvec2(1.0, 0.0)));
-												if (dot > maxDot)
+												if (dot > maxDot || (dot == maxDot && len < minLen))
 												{
 													minReflexIndex = i;
 													minLen = len;
 													maxDot = dot;
+													minRefs.clear();
+													minRefs.push_back(i);
 												}
-												else if(dot == maxDot)
-												{//共线
-													if (len < minLen)
-													{
-														minReflexIndex = i;
-														minLen = len;
-														maxDot = dot;
-													}
-													else if (len == minLen)
-													{//共点
-														int uniqueIndex = outerPolygon.at(reflexVertex.at(i));
-														int count = 0;
-														for (int rv = 0; rv < reflexSize; ++rv)
-														{
-															if (outerPolygon.at(reflexVertex.at(rv)) == uniqueIndex)
-															{
-																++count;
-																if (!invert && count == 2)
-																{
-																	minReflexIndex = rv;
-																	break;
-																}
-																if (invert && count == 1)
-																{
-																	minReflexIndex = rv;
-																	break;
-																}
-															}
-														}
+												else if (dot == maxDot && len == minLen)
+												{//共点
+													minRefs.push_back(i);
+												}
+											}
 
-														//assert(count == 2);
+											if (minRefs.size() > 1)
+											{// 
+												double minCos = -100.0;
+												for (int z = 0; z < minRefs.size(); ++z)
+												{
+													int iii = minRefs.at(z);
+													trimesh::dvec2 R = points.at(outerPolygon.at(reflexVertex.at(iii)));
+													trimesh::dvec2 MR = R - M;
+
+													int prevIndex = outerPolygon.at((reflexVertex.at(iii) + nvert - 1) % nvert);
+													trimesh::dvec2 V = points.at(prevIndex);
+													trimesh::dvec2 VR = R - V;
+													trimesh::normalize(VR);
+													double DVR = dotValue(MR, VR);
+													if (DVR > minCos)
+													{
+														minCos = DVR;
+														minReflexIndex = iii;
 													}
 												}
 											}
