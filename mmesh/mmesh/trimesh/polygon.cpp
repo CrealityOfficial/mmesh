@@ -114,6 +114,11 @@ namespace mmesh
 		}
 	}
 
+	std::vector<int> Polygon2::debugIndex()
+	{
+		return m_indexes;
+	}
+
 	void Polygon2::earClipping(std::vector<trimesh::TriMesh::Face>& triangles)
 	{
 		if (!m_root || !m_points) return;
