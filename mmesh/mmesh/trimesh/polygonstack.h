@@ -4,6 +4,14 @@
 #include "trimesh2/TriMesh.h"
 #include <stack>
 
+struct MergeInfo
+{
+	int innerIndex;
+	int matual;
+	int start;
+	int end;
+};
+
 namespace mmesh
 {
 	class Polygon2;
@@ -26,10 +34,13 @@ namespace mmesh
 
 		Polygon2* validIndexPolygon(int index);
 		int validPolygon();
+
+		std::vector<MergeInfo> mergeInfo();
 	protected:
 		std::vector<Polygon2*> m_polygon2s;
 
 		int m_currentPolygon;
+		std::vector<MergeInfo> m_mergeInfo;
 	};
 }
 #endif // CREATIVE_KERNEL_POLYGONSTACK_1592554738233_H
