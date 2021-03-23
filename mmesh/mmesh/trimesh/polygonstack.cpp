@@ -11,6 +11,7 @@ namespace mmesh
 {
 	PolygonStack::PolygonStack()
 		: m_currentPolygon(0)
+		, m_mregeCount(0)
 	{
 	}
 	
@@ -166,12 +167,7 @@ namespace mmesh
 
 						const double EPSON = 0.00000001;
 
-#if 0
-						size_t innserPolygonSize = indices.size();
-						while (indices.size() > innserPolygonSize - 30)
-#else
-						while (indices.size() > 0)
-#endif
+						while (indices.size() > m_mregeCount)
 						{
 							int polygonIndex = indices.back();
 							indices.pop_back();
@@ -261,15 +257,23 @@ namespace mmesh
 									else
 									{
 										trimesh::dvec2 M = tvertex;
-										trimesh::dvec2 P = points.at(outerPolygon.at(cOuterIndex0));
 										trimesh::dvec2 I = trimesh::dvec2(cmx, M.y);
+										trimesh::dvec2 P0 = points.at(outerPolygon.at(cOuterIndex0));
+										trimesh::dvec2 P = points.at(outerPolygon.at(cOuterIndex));
+										bool useUpper = true;
+										if (P.x < P0.x)
+										{
+											useUpper = false;
+											P = P0;
+										}
+										if(P.y > I.y)
+											std::swap(P, I);
 
 										std::vector<int> reflexVertex;
 										for (i = 0; i < nvert; ++i)
 										{
 											trimesh::dvec2& tv = points.at(outerPolygon.at(i));
-											if ((i != cOuterIndex0) && 
-												(points.at(outerPolygon.at(cOuterIndex0)) != tv) && insideTriangle(M, P, I, tv))
+											if (insideTriangle(M, P, I, tv))
 											{
 												reflexVertex.push_back(i);
 											}
@@ -277,7 +281,7 @@ namespace mmesh
 
 										if (reflexVertex.size() == 0)
 										{
-											mutaulIndex = cOuterIndex0;
+											mutaulIndex = useUpper ? cOuterIndex : cOuterIndex0;
 										}
 										else
 										{
@@ -310,21 +314,22 @@ namespace mmesh
 
 											if (minRefs.size() > 1)
 											{// 
-												double minCos = -100.0;
+												double A = - 4.0 * M_PI;
 												for (int z = 0; z < minRefs.size(); ++z)
 												{
 													int iii = minRefs.at(z);
 													trimesh::dvec2 R = points.at(outerPolygon.at(reflexVertex.at(iii)));
-													trimesh::dvec2 MR = R - M;
+													trimesh::dvec2 RM = M - R;
+													trimesh::normalize(RM);
 
-													int prevIndex = outerPolygon.at((reflexVertex.at(iii) + nvert - 1) % nvert);
-													trimesh::dvec2 V = points.at(prevIndex);
-													trimesh::dvec2 VR = R - V;
-													trimesh::normalize(VR);
-													double DVR = dotValue(MR, VR);
-													if (DVR > minCos)
+													int nextIndex = outerPolygon.at((reflexVertex.at(iii) + 1) % nvert);
+													trimesh::dvec2 V = points.at(nextIndex);
+													trimesh::dvec2 RV = V - R;
+													trimesh::normalize(RV);
+													double a = angle(RM, RV);
+													if (a > A)
 													{
-														minCos = DVR;
+														A = a;
 														minReflexIndex = iii;
 													}
 												}
@@ -482,5 +487,10 @@ namespace mmesh
 	std::vector<MergeInfo> PolygonStack::mergeInfo()
 	{
 		return m_mergeInfo;
+	}
+
+	void PolygonStack::setMergeCount(int count)
+	{
+		m_mregeCount = count;
 	}
 }

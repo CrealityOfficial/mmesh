@@ -15,6 +15,16 @@ namespace mmesh
 		return trimesh::dot(nv10, nv12);
 	}
 
+	double angle(const trimesh::dvec2& v10, const trimesh::dvec2& v12)
+	{
+		double D = dotValue(v10, v12);
+		double C = crossValue(v10, v12);
+		double A = std::acos(D);
+		if (C < 0.0)
+			A = 2.0 * M_PI - A;
+		return A;
+	}
+
 	bool insideTriangle(const trimesh::dvec2& va, const trimesh::dvec2& vb, const trimesh::dvec2& vc,
 		const trimesh::dvec2& vp)
 	{

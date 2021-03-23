@@ -36,11 +36,14 @@ namespace mmesh
 		int validPolygon();
 
 		std::vector<MergeInfo> mergeInfo();
+		void setMergeCount(int count);
 	protected:
 		std::vector<Polygon2*> m_polygon2s;
 
 		int m_currentPolygon;
 		std::vector<MergeInfo> m_mergeInfo;
+
+		int m_mregeCount;
 	};
 }
 #endif // CREATIVE_KERNEL_POLYGONSTACK_1592554738233_H
