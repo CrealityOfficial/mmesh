@@ -56,7 +56,8 @@ namespace mmesh
 						for (int k = 0; k < hsize; ++k)
 						{
 							int h = halfs1.at(k);
-							if (endvertexid(h) == v2)//如果半边数据未点与V2相等
+							int ev = endvertexid(h);
+							if (ev == v2)//如果半边数据未点与V2相等
 							{
 								halfnew.at(j) = h;
 
@@ -205,6 +206,10 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 					for (int offedgeIndex = 0; offedgeIndex < 3; offedgeIndex++)
 					{
 						oppoHalf = oppoHalfs.at(offedgeIndex);
+						if (oppoHalf < 0)
+						{
+							continue;
+						}
 
 						halfdecode(oppoHalf, oppoFaceID, oppoEdgeVertexID);
 						oppoEdgeVertexID=startvertexid(oppoHalf);
