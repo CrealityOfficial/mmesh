@@ -35,7 +35,6 @@ if(CGAL_ON)
 	set(Incs ${CMAKE_CURRENT_SOURCE_DIR})
 	add_definitions(-DUSE_CGAL_REPAIR_MESH)
 	add_definitions(-DCGAL_EIGEN3_ENABLED)
-	add_definitions(-DUSE_CGAL)
 endif()
 
 __enable_openmp()

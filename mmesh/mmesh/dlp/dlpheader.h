@@ -4,17 +4,20 @@
 
 namespace mmesh
 {
-	struct DLPISource
-	{
-		trimesh::vec3 position;
-		trimesh::vec3 normal;
-	};
-
 	struct VerticalC
 	{
 		trimesh::vec3 position;
 		bool platform;
+		int indexCells;
 	};
+	struct DLPISource
+	{
+		trimesh::vec3 position;
+		trimesh::vec3 normal;
+		int typeflg;
+		struct VerticalC posHit;
+	};
+
 
 	struct DLPSupportParam
 	{

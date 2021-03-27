@@ -4,7 +4,7 @@
 #include "trimesh2/TriMesh.h"
 #include "trimesh2/XForm.h"
 #include <vector>
-
+#include <functional>
 namespace mmesh
 {
 	class TriangleChunk;
@@ -18,6 +18,9 @@ namespace mmesh
 		SUPPORT_EDGE=1<<1,
 		SUPPORT_FACE=1<<2,
 	};
+	typedef struct {
+		int flage;
+	}CallBackParams;
 	class DLPQuickData
 	{
 	public:
@@ -33,7 +36,7 @@ namespace mmesh
 
 		bool dirty() const;
 
-		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, DLPSupportParam* supportParam, int flag = 4);//7
+		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag= SUPPORT_VERTEX| SUPPORT_EDGE| SUPPORT_FACE, std::function<void(CallBackParams)> callback=NULL);//7
 		void autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 		void autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 		void autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
@@ -41,6 +44,11 @@ namespace mmesh
 	protected:
 		bool autoTest(const trimesh::vec3& point);
 		void takeAutoTest(const trimesh::vec3& point);
+	private:
+		CallBackParams m_throwParams;
+		std::function<void(CallBackParams)> m_throwFunc;
+		void dlpSourceCheck(std::vector<DLPISource> &SupportSources);
+
 	protected:
 		mmesh::TriangleChunk* m_triangleChunk;
 		mmesh::MeshTopo* m_meshTopo;
@@ -59,17 +67,12 @@ namespace mmesh
 		float m_pixel;
 		int m_width;
 		int m_height;
-		std::vector<bool> m_flags;
-		std::vector<std::vector<trimesh::vec3>> m_FaceSampleInCell;
-		std::vector<std::vector<trimesh::vec3>> m_FaceNormalsInCell;
+		
 
 		std::vector<std::vector<trimesh::vec3>> m_VertexSampleInCell;
-		std::vector<std::vector<int>> m_SupportFaces;
-		std::vector<bool> m_SupportFacesFlg;
-		std::vector<bool> m_SupportVertexFlg;
-		std::vector<DLPISource> m_SupportFaceSources;
-		std::vector<DLPISource> m_SupportEdgeSources;
-		std::vector<DLPISource> m_SupportVertexSources;
+		//std::vector<DLPISource> m_SupportFaceSources;
+		//std::vector<DLPISource> m_SupportEdgeSources;
+		//std::vector<DLPISource> m_SupportVertexSources;
 
 	};
 }
