@@ -58,7 +58,8 @@ namespace mmesh
 						for (int k = 0; k < hsize; ++k)
 						{
 							int h = halfs1.at(k);
-							if (endvertexid(h) == v2)//如果半边数据未点与V2相等
+							int ev = endvertexid(h);
+							if (ev == v2)//如果半边数据未点与V2相等
 							{
 								halfnew.at(j) = h;
 
@@ -194,6 +195,8 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 				int vertexID1 = tFace[edgeIndex];
 				int vertexID2 = tFace[(edgeIndex + 1) % 3];
 				vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
+				if (trimesh::length(edge) < EPSILON)
+					continue;
 				vec3 nedge = normalized(edge);
 				//float testangle = trimesh::dot(nedge, vec3(nedge.x, nedge.y, 0.0f));
 				//std::cout << "testangle==" << acos(testangle) * 180.0 / M_PIf << std::endl;
@@ -211,6 +214,10 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 						int oppoFaceIDtemp;
 						int oppoEdgeVertexIDtemp;
 						oppoHalf = oppoHalfs.at(offedgeIndex);
+						if (oppoHalf < 0)
+						{
+							continue;
+						}
 
 						halfdecode(oppoHalf, oppoFaceIDtemp, oppoEdgeVertexIDtemp);
 						oppoEdgeVertexIDtemp =startvertexid(oppoHalf);
@@ -278,12 +285,55 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 									else//两个面法向量同时向下
 									{
 										float tempdot = trimesh::dot(faceNormal, oppoFaceNormal);
-										if (abs(tempdot) <(1-EPSILON))//只要不是共面
+										if (abs(acos(tempdot)) > EPSILON)//只要不是共面
 										{
 											vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
-											if (trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) >= 0.0)
+											float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
+											float oppofaceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
+											bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
+											 bool oppofaceThresCosflg = (oppofaceCosValue - faceThresCosValue) > EPSILON || abs(oppofaceCosValue - faceCosValue) < EPSILON;
+
+											if ((faceThresCosflg==false)&&(oppofaceThresCosflg == true))
 											{
 												shouldAdd = true;
+											}
+											else
+											{
+												typedef struct VERTEX_INFOR
+												{
+													vec3 pos;
+													int vertexID;
+												} vertexInfor;
+												auto cmp_elements_sort = [](const vertexInfor& e1, const vertexInfor& e2) -> bool {
+													return e1.pos.z < e2.pos.z;
+
+												};
+
+												std::vector<vertexInfor> vertexPos;
+												std::vector<vertexInfor> oppovertexPos;
+												for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
+												{
+													vertexInfor vertexinfor;
+													TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+													TriMesh::Face& toppoFace = m_mesh->faces.at(oppoFaceID);
+													int vertexID = tFace[edgeIndex];
+													vertexinfor.pos = vertexes.at(vertexID);
+													vertexinfor.vertexID = vertexID;
+													vertexPos.emplace_back(vertexinfor);
+													vertexID = toppoFace[edgeIndex];
+													vertexinfor.pos = vertexes.at(vertexID);
+													vertexinfor.vertexID = vertexID;
+													oppovertexPos.emplace_back(vertexinfor);
+												}
+												std::sort(vertexPos.begin(), vertexPos.end(), cmp_elements_sort);
+												std::sort(oppovertexPos.begin(), oppovertexPos.end(), cmp_elements_sort);
+												vertexInfor& lowestvertexinfor = vertexPos.at(0);
+												vertexInfor& lowestoppovertexinfor = vertexPos.at(0);
+												if ((lowestvertexinfor.vertexID == vertexID1) && (lowestoppovertexinfor.vertexID == vertexID2) || (lowestvertexinfor.vertexID == vertexID2) && (lowestvertexinfor.vertexID == vertexID1))
+												{
+													shouldAdd = true;
+												}
+
 											}
 										}
 									}

@@ -12,7 +12,22 @@ namespace mmesh
 static const trimesh::vec3 DOWN_NORMAL = trimesh::vec3(0.0, 0.0, -1.0);
 static const trimesh::vec3 UP_NORMAL = trimesh::vec3(0.0, 0.0, 1.0);
 static constexpr float EPSILON = 1e-4;
+	CallBackParamsBase::CallBackParamsBase()
+	{
+		obj = NULL;
+	}
+	CallBackParamsBase::~CallBackParamsBase()
+	{
 
+	}
+	CallBackParams::CallBackParams()
+	{
+		
+	}
+	CallBackParams::~CallBackParams()
+	{
+
+	}
 	DLPQuickData::DLPQuickData()
 		: m_dirty(true)
 		, m_mesh(nullptr)
@@ -169,13 +184,20 @@ static constexpr float EPSILON = 1e-4;
 
 		return true;
 	}
-	void DLPQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag,std::function<void(CallBackParams)> callback)
+	void DLPQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag,std::function<void(CallBackParams *)> callback, CallBackParams *cbParams)
 	{
-		m_throwFunc = callback;
-		build();
 		std::vector<DLPISource> m_SupportFaceSources;
 		std::vector<DLPISource> m_SupportEdgeSources;
 		std::vector<DLPISource> m_SupportVertexSources;
+		m_throwFunc = callback;
+		m_cbParamsPtr = cbParams;
+		build();
+		if (m_throwFunc != NULL)
+		{
+			m_cbParamsPtr->percentage = 10.0;
+			m_throwFunc(m_cbParamsPtr);
+
+		}
 		if ((flag & SUPPORT_VERTEX)== SUPPORT_VERTEX)
 		{
 			autoDlpVertexSource(m_SupportVertexSources, autoParam);
@@ -215,6 +237,7 @@ static constexpr float EPSILON = 1e-4;
 			}
 		}
 		/////
+		if(0)
 		{
 			//去除相同点、邻近点
 			auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
@@ -232,10 +255,23 @@ static constexpr float EPSILON = 1e-4;
 			sources.resize(std::distance(sources.begin(), it));
 		}
 		/////将支撑点进行网格映射
-		dlpSourceCheck(sources);
+		DLPISources clusteredSource;
+		dlpSourceCheck(sources, clusteredSource);
 		///
+		 sources.clear();
+		//ClusterEl filtered_indices;
+		for (auto& a : clusteredSource.clusteredSrcID) {
+			// Here we keep only the front point of the cluster.
+			//filtered_indices.emplace_back(a.front());
+			sources.emplace_back(clusteredSource.sources[a.front()]);
+		}
+
 		if (m_throwFunc != NULL)
-			m_throwFunc(m_throwParams);
+		{
+			m_cbParamsPtr->percentage = 100.0;
+			m_throwFunc(m_cbParamsPtr);
+
+		}
 	}
 
 	void DLPQuickData::autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam)
@@ -243,7 +279,7 @@ static constexpr float EPSILON = 1e-4;
 		std::vector<int> supportVertexes;
 		float faceCosValue = cosf(autoParam->autoAngle * M_PIf / 180.0f);
 		m_meshTopo->lowestVertex(m_vertexes, supportVertexes);
-
+		int  percentage_Count = 0;
 		for (int vertexID : supportVertexes)
 		{
 			std::vector<int>& vertexHalfs = m_meshTopo->m_outHalfEdges.at(vertexID);
@@ -296,6 +332,13 @@ static constexpr float EPSILON = 1e-4;
 
 			}
 		}
+		percentage_Count++;
+
+		if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+		{
+			m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportVertexes.size() * 10;
+			m_throwFunc(m_cbParamsPtr);
+		}
 
 	}
 
@@ -308,7 +351,7 @@ static constexpr float EPSILON = 1e-4;
 
 		float minDelta = m_triangleChunk->m_gridSize;
 
-		size_t count = sources.size();
+		int percentage_Count = 0;
 		for (ivec2 vertexesID : supportEdges)
 		{
 			int vertexID1 = vertexesID.x;
@@ -353,6 +396,15 @@ static constexpr float EPSILON = 1e-4;
 			//	}
 
 			//}
+
+			percentage_Count++;
+
+			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+			{
+				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportEdges.size() * 10;
+				m_throwFunc(m_cbParamsPtr);
+			}
+
 		}
 	}
 
@@ -363,7 +415,7 @@ void DLPQuickData::autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSu
 
 	std::vector<std::vector<int>> supportFaces;
 	m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
-	int testindex = 0;
+	int percentage_Count = 0;
 	for (std::vector<int>& faceChunk : supportFaces)
 	{
 		//std::sort(faceChunk.begin(), faceChunk.end(), [this](int r1, int r2)->bool {
@@ -432,6 +484,15 @@ void DLPQuickData::autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSu
 			}
 
 		}
+
+		percentage_Count++;
+
+		if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+		{
+			m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportFaces.size() * 50;
+			m_throwFunc(m_cbParamsPtr);
+		}
+
 	}
 }
 
@@ -509,15 +570,18 @@ void DLPQuickData::extractFaceSectEdge(std::vector<std::vector<int>> SupportFace
 
 
 // collision check
-void DLPQuickData::dlpSourceCheck(std::vector<DLPISource> & SupportSources)
+void DLPQuickData::dlpSourceCheck(std::vector<DLPISource> & SupportSources, DLPISources &clusteredSources)
 {
+	std::vector< trimesh::vec3> srcPts;
 	for(int index=0;index< SupportSources.size();index++)
 	{
 		DLPISource &source = SupportSources[index];
 		vec3& vertex = source.position;
 		check(source.posHit, vertex);
+		srcPts.emplace_back(vertex);
+		clusteredSources.sources.emplace_back(source);
 	}
-
+	clusteredSources.clusteredSrcID = cluster(srcPts, 0.1, 2);
 }
 
 }

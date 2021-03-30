@@ -18,9 +18,22 @@ namespace mmesh
 		SUPPORT_EDGE=1<<1,
 		SUPPORT_FACE=1<<2,
 	};
-	typedef struct {
-		int flage;
-	}CallBackParams;
+
+	class CallBackParamsBase{
+	public:
+		CallBackParamsBase();
+		 ~CallBackParamsBase();
+	public:
+		void* obj;
+	};
+	class CallBackParams:public  CallBackParamsBase {
+	public:
+		CallBackParams();
+		~CallBackParams();
+	public:
+		float percentage;
+	};
+
 	class DLPQuickData
 	{
 	public:
@@ -36,7 +49,7 @@ namespace mmesh
 
 		bool dirty() const;
 
-		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag= SUPPORT_VERTEX| SUPPORT_EDGE| SUPPORT_FACE, std::function<void(CallBackParams)> callback=NULL);//7
+		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag= SUPPORT_VERTEX| SUPPORT_EDGE| SUPPORT_FACE, std::function<void(CallBackParams *)> callback=NULL, CallBackParams* cbParams=NULL);//7
 		void autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 		void autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 		void autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
@@ -45,9 +58,9 @@ namespace mmesh
 		bool autoTest(const trimesh::vec3& point);
 		void takeAutoTest(const trimesh::vec3& point);
 	private:
-		CallBackParams m_throwParams;
-		std::function<void(CallBackParams)> m_throwFunc;
-		void dlpSourceCheck(std::vector<DLPISource> &SupportSources);
+		CallBackParams* m_cbParamsPtr;
+		std::function<void(CallBackParams*)> m_throwFunc;
+		void dlpSourceCheck(std::vector<DLPISource> &SupportSources, DLPISources& clusteredSources);
 
 	protected:
 		mmesh::TriangleChunk* m_triangleChunk;
@@ -73,6 +86,7 @@ namespace mmesh
 		//std::vector<DLPISource> m_SupportFaceSources;
 		//std::vector<DLPISource> m_SupportEdgeSources;
 		//std::vector<DLPISource> m_SupportVertexSources;
+
 
 	};
 }

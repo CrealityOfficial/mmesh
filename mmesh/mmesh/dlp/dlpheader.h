@@ -1,6 +1,7 @@
 #ifndef MMESH_DLPHEADER_1613700735852_H
 #define MMESH_DLPHEADER_1613700735852_H
 #include "trimesh2/Vec.h"
+#include "mmesh/trimesh/Clustering.h"
 
 namespace mmesh
 {
@@ -16,6 +17,12 @@ namespace mmesh
 		trimesh::vec3 normal;
 		int typeflg;
 		struct VerticalC posHit;
+		ClusteredPoints clusteredPts;
+	};
+	struct DLPISources
+	{
+		std::vector<DLPISource> sources;
+		ClusteredPoints clusteredSrcID;
 	};
 
 
