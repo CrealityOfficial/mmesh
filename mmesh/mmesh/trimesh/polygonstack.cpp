@@ -33,7 +33,7 @@ namespace mmesh
 #if 0
 		static int i = 0;
 		char buffer[128];
-		sprintf(buffer, "%d_%d.poly", layer, i++);
+		sprintf(buffer, "poly/%d_%d.poly", layer, i++);
 		stackSave(buffer, polygons, points);
 #endif
 		prepare(polygons, points);
