@@ -44,13 +44,13 @@ namespace mmesh
 		void build(trimesh::TriMesh* mesh);
 
 		void lowestVertex(std::vector<trimesh::vec3>& vertexes, std::vector<int>& indices);
-		void hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, std::vector<trimesh::ivec2>& edges);
+		void hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& edges);
 		void chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& faces, float faceCosValue);
 
 		trimesh::TriMesh* m_mesh;
 
-		std::vector<std::vector<int>> m_outHalfEdges;
-		std::vector<trimesh::ivec3> m_oppositeHalfEdges;
+		std::vector<std::vector<int>> m_outHalfEdges;//存储某点相关联的面以及第三个点，其中int 组合成面和三个点值
+		std::vector<trimesh::ivec3> m_oppositeHalfEdges;//存储某个面相关的三个顶组合成的int值
 		bool m_topoBuilded;
 	};
 }
