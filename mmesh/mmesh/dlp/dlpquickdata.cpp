@@ -237,7 +237,7 @@ static constexpr float EPSILON = 1e-4;
 			}
 		}
 		/////
-		if(0)
+		if(1)
 		{
 			//去除相同点、邻近点
 			auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {

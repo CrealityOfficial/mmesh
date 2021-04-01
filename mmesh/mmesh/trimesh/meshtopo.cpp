@@ -194,13 +194,13 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 				edgeFlag[edgeIndex] = 1;//标示该边已检测处理过
 				int vertexID1 = tFace[edgeIndex];
 				int vertexID2 = tFace[(edgeIndex + 1) % 3];
+				int vertexID3 = tFace[(edgeIndex + 2) % 3];
 				vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
 				if (trimesh::length(edge) < EPSILON)
 					continue;
 				vec3 nedge = normalized(edge);
 				//float testangle = trimesh::dot(nedge, vec3(nedge.x, nedge.y, 0.0f));
 				//std::cout << "testangle==" << acos(testangle) * 180.0 / M_PIf << std::endl;
-
 
 				if (abs(trimesh::dot(nedge, vec3(nedge.x, nedge.y, 0.0f))) >edgeCosValue)//悬吊线与XY平面夹角小于某一角度
 				{
@@ -238,9 +238,51 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 					{
 						if (oppoEdgeVertexID == vertexID2)//相邻面
 						{
+							auto middlePt = [vertexes](int vertexID1, int vertexID2, int vertexID3) {
+#if 0
+								vec3 A(1, 1, 1);
+								vec3 B(3, 1, 1);
+								vec3 C(3, 3, 1);
+#else
+								vec3 A = vertexes.at(vertexID1);
+								vec3 B = vertexes.at(vertexID2);
+								vec3 C = vertexes.at(vertexID3);
+#endif
+
+								vec3 E = (A + B) / 2;
+								//vec3 G = A * (1 - t) + C * t;
+								//vec3 GE = (A - B) / 2+(C-A)*t;
+								//vec3 BA=(A-B);
+								//GE* BA = 0;//x1*x2+y1*y2+z1*z3=0
+
+								vec3 GEtemp = (A - B) / 2;
+								vec3 CAtemp = (C - A);
+								vec3 BA = (A - B);
+								float xtemp = BA.x * BA.x / 2;
+								float ytemp = BA.y * BA.y / 2;
+								float ztemp = BA.z * GEtemp.z / 2;
+								float xtemp_t = BA.x * CAtemp.x;
+								float ytemp_t = BA.y * CAtemp.y;
+								float ztemp_t = BA.z * CAtemp.z;
+								float t = -(xtemp + ytemp + ztemp) / (xtemp_t + ytemp_t + ztemp_t);
+								vec3 middlept = A * (1 - t) + C * t;
+								return middlept;
+							};
 							//bool oppoFaceSupport = dotValues.at(oppoFaceID) < (-edgeFaceCosValue);
 							//bool faceSupport = dotValues.at(faceID) < (-edgeFaceCosValue);
 							//if ((oppoFaceSupport == false) && (faceSupport == false))//相邻非支撑面
+							TriMesh::Face& oppoFace = m_mesh->faces.at(oppoFaceID);
+							int oppovertexID3 = -1;
+							if (oppoFace[0] == oppoEdgeVertexID)
+								oppovertexID3 = oppoFace[2];
+							else if (oppoFace[1] == oppoEdgeVertexID)
+								oppovertexID3 = oppoFace[0];
+							else if (oppoFace[2] == oppoEdgeVertexID)
+								oppovertexID3 = oppoFace[1];
+							vec3 G = middlePt(vertexID1, vertexID2, vertexID3);
+							vec3 H = middlePt(vertexID1, vertexID2, oppovertexID3);
+							vec3 E = (vertexes.at(vertexID1) + vertexes.at(vertexID2))/2;
+							if((G.z-E.z>EPSILON)&& (H.z - E.z > EPSILON))
 							{
 								vec3& faceNormal = normals.at(faceID);
 								vec3& oppoFaceNormal = normals.at(oppoFaceID);
@@ -260,7 +302,8 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 												float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
 												bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
 
-												if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0)&& (faceThresCosflg ==false))
+												//if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0)&& (faceThresCosflg ==false))
+												if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0))
 												{
 													shouldAdd = true;
 												}
@@ -274,7 +317,8 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 												float faceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
 												bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
 
-												if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0) && (faceThresCosflg==false))
+												//if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0) && (faceThresCosflg==false))
+												if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0) )
 												{
 													shouldAdd = true;
 												}
@@ -285,7 +329,8 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 									else//两个面法向量同时向下
 									{
 										float tempdot = trimesh::dot(faceNormal, oppoFaceNormal);
-										if (abs(acos(tempdot)) > EPSILON)//只要不是共面
+										float tempdotAngle = acos(tempdot) * 180.0 / M_PIf;
+										if (tempdotAngle > EPSILON)//只要不是共面
 										{
 											vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
 											float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
@@ -293,11 +338,6 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 											bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
 											 bool oppofaceThresCosflg = (oppofaceCosValue - faceThresCosValue) > EPSILON || abs(oppofaceCosValue - faceCosValue) < EPSILON;
 
-											if ((faceThresCosflg==false)&&(oppofaceThresCosflg == true))
-											{
-												shouldAdd = true;
-											}
-											else
 											{
 												typedef struct VERTEX_INFOR
 												{
@@ -327,12 +367,23 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 												}
 												std::sort(vertexPos.begin(), vertexPos.end(), cmp_elements_sort);
 												std::sort(oppovertexPos.begin(), oppovertexPos.end(), cmp_elements_sort);
-												vertexInfor& lowestvertexinfor = vertexPos.at(0);
-												vertexInfor& lowestoppovertexinfor = vertexPos.at(0);
-												if ((lowestvertexinfor.vertexID == vertexID1) && (lowestoppovertexinfor.vertexID == vertexID2) || (lowestvertexinfor.vertexID == vertexID2) && (lowestvertexinfor.vertexID == vertexID1))
+												//vertexInfor& lowestvertexinfor = vertexPos.at(0);
+												//vertexInfor& lowestoppovertexinfor = oppovertexPos.at(0);
+												//if ((lowestvertexinfor.vertexID == vertexID1) && (lowestoppovertexinfor.vertexID == vertexID2) || (lowestvertexinfor.vertexID == vertexID2) && (lowestoppovertexinfor.vertexID == vertexID1))
+												vertexInfor& lowestvertexinfor = vertexPos.at(2);
+												vertexInfor& lowestoppovertexinfor = oppovertexPos.at(2);
+												if ((lowestvertexinfor.vertexID != vertexID1) && (lowestvertexinfor.vertexID != vertexID2) && (lowestoppovertexinfor.vertexID != vertexID2) && (lowestoppovertexinfor.vertexID != vertexID1))
 												{
+													std::cout << acos(tempdot) * 180.0 / M_PIf<<std::endl;
+
 													shouldAdd = true;
 												}
+												if (tempdotAngle < 0.1)//排除已是支撑双面
+												{
+													if ((faceThresCosflg == true) && (oppofaceThresCosflg == true))
+														shouldAdd = false;
+												}
+
 
 											}
 										}
