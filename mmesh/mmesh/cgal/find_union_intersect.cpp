@@ -2,8 +2,10 @@
 //
 
 #include "find_union_intersect.h"
+#ifdef USE_CGAL
 namespace UNION_FIND_FUNC
 {
+	
 	using namespace std;
 	setNode* Make_Set(face_descriptor k)
 	{
@@ -125,3 +127,4 @@ namespace UNION_FIND_FUNC
 		return 0;
 	}
 }
+#endif
