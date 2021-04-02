@@ -17,12 +17,16 @@ namespace mmesh
 		trimesh::vec3 normal;
 		int typeflg;
 		struct VerticalC posHit;
+		#ifdef CX_BOOST_CLUSTER
 		ClusteredPoints clusteredPts;
+		#endif
 	};
 	struct DLPISources
 	{
 		std::vector<DLPISource> sources;
+		#ifdef CX_BOOST_CLUSTER
 		ClusteredPoints clusteredSrcID;
+		#endif
 	};
 
 

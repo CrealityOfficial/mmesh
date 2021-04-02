@@ -1,8 +1,7 @@
 #include "Clustering.h"
-#include "boost/geometry/index/rtree.hpp"
 #include "trimesh2/Vec.h"
-
-
+#ifdef CX_BOOST_CLUSTER
+#include "boost/geometry/index/rtree.hpp"
 #include <boost/geometry.hpp>
 namespace mmesh 
 {
@@ -215,5 +214,5 @@ ClusteredPoints cluster(std::vector< trimesh::vec3>& pts, double dist, unsigned 
                        return distance_queryfn(sidx, p, dist, max_points);
                    });
 }
-
 }
+#endif

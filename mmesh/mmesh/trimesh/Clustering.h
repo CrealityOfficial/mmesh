@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "trimesh2/TriMesh.h"
+#ifdef CX_BOOST_CLUSTER
 namespace mmesh { 
 
 using ClusterEl = std::vector<unsigned>;
@@ -11,5 +12,6 @@ ClusteredPoints cluster(std::vector< trimesh::vec3>& points,
     double dist,
     unsigned max_points);
 }
+#endif
 
 #endif // CX_CLUSTERING_H

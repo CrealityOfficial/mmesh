@@ -255,17 +255,23 @@ static constexpr float EPSILON = 1e-4;
 			sources.resize(std::distance(sources.begin(), it));
 		}
 		/////将支撑点进行网格映射
-		DLPISources clusteredSource;
-		dlpSourceCheck(sources, clusteredSource);
-		///
-		 sources.clear();
-		//ClusterEl filtered_indices;
-		for (auto& a : clusteredSource.clusteredSrcID) {
-			// Here we keep only the front point of the cluster.
-			//filtered_indices.emplace_back(a.front());
-			sources.emplace_back(clusteredSource.sources[a.front()]);
-		}
-
+		#ifdef CX_BOOST_CLUSTER
+		int whileTimes = 0;
+		while (whileTimes<0)
+		{
+			DLPISources clusteredSource;
+			dlpSourceCheck(sources, clusteredSource);
+			///
+			sources.clear();
+			//ClusterEl filtered_indices;
+			for (auto& a : clusteredSource.clusteredSrcID) {
+				// Here we keep only the front point of the cluster.
+				//filtered_indices.emplace_back(a.front());
+				sources.emplace_back(clusteredSource.sources[a.front()]);
+			}
+			whileTimes++;
+		} 
+		#endif
 		if (m_throwFunc != NULL)
 		{
 			m_cbParamsPtr->percentage = 100.0;
@@ -440,8 +446,8 @@ void DLPQuickData::autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSu
 		vec2 xypointMin;
 		xypointMin.x = connectSectBox.min.x;
 		xypointMin.y = connectSectBox.min.y;
-		int sampleXn = ceilf((connectSectBox.max.x - connectSectBox.min.x) / gridSize) + 1;
-		int sampleYn = ceilf((connectSectBox.max.y - connectSectBox.min.y) / gridSize) + 1;
+		int sampleXn = ceilf((connectSectBox.max.x - connectSectBox.min.x) / gridSize) ;
+		int sampleYn = ceilf((connectSectBox.max.y - connectSectBox.min.y) / gridSize) ;
 		float deltx = (connectSectBox.max.x - connectSectBox.min.x) / sampleXn;
 		float delty = (connectSectBox.max.y - connectSectBox.min.y) / sampleYn;
 		//if ((abs(SectBoxSize.x- SectBoxSize.y)< gridSize*2)&&(sampleXn<3|| sampleYn <3))
@@ -581,7 +587,9 @@ void DLPQuickData::dlpSourceCheck(std::vector<DLPISource> & SupportSources, DLPI
 		srcPts.emplace_back(vertex);
 		clusteredSources.sources.emplace_back(source);
 	}
-	clusteredSources.clusteredSrcID = cluster(srcPts, 0.1, 2);
+	#ifdef CX_BOOST_CLUSTER
+	clusteredSources.clusteredSrcID = cluster(srcPts, m_triangleChunk->m_width, 2);
+	#endif
 }
 
 }
