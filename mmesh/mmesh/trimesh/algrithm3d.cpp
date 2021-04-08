@@ -3,6 +3,43 @@
 namespace mmesh
 {
 	bool rayIntersectTriangle(const trimesh::vec3& orig, const trimesh::vec3& dir,
+        trimesh::vec3& v0, trimesh::vec3& v1, trimesh::vec3& v2, trimesh::vec3& baryPosition)
+	{
+        auto E1 = v1 - v0;
+        auto E2 = v2 - v0;
+
+        auto P = trimesh::cross(dir, E2);
+        auto det = trimesh::dot(E1, P);
+        auto s = orig - v0;
+
+        if(det < 0)
+        {
+            det = -det;
+            s = v0 - orig;
+        }
+        if (det < 0.0001f)
+            return false;
+
+        auto f = 1.0f / det;
+        auto dSP = trimesh::dot(s, P);
+        baryPosition.at(0) = f * dSP;
+        if (baryPosition.at(0) < 0.0f)
+            return false;
+        if (baryPosition.at(0) > 1.0f)
+            return false;
+        auto q = trimesh::cross(s, E1);
+        auto dDQ = trimesh::dot(dir, q);
+        baryPosition.y = f * dDQ;
+        if (baryPosition.at(1) < 0.0f)
+            return false;
+        if (baryPosition.at(1) + baryPosition.at(0) > 1.0f)
+            return false;
+        auto dEQ = trimesh::dot(E2, q);
+        baryPosition.at(2) = f * dEQ;
+        return baryPosition.at(2) >= 0.0f;
+	}
+
+	bool rayIntersectTriangle(const trimesh::vec3& orig, const trimesh::vec3& dir,
 		trimesh::vec3& v0, trimesh::vec3& v1, trimesh::vec3& v2, float* t, float* u, float* v)
 	{
 		trimesh::vec3 E1 = v1 - v0;
