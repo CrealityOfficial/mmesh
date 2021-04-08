@@ -109,72 +109,79 @@ namespace mmesh
 			}
 		}
 	}
-#if 0
+#if 1
 void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
 {
-int faceNum = (int)m_mesh->faces.size();
-std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
-float edgeCosValue = cosf(M_PIf * 70.0f / 180.0f);
-float edgeFaceCosValue = cosf(M_PIf * 60.0f / 180.0f);
-for (int faceID = 0; faceID < faceNum; ++faceID)
-{
-	ivec3& oppoHalfs = m_oppositeHalfEdges.at(faceID);
-	ivec3& edgeFlag = edgesFlags.at(faceID);
-	TriMesh::Face& tFace = m_mesh->faces.at(faceID);
-	vec3& faceNormal = normals.at(faceID);
+	static int run_num = 0;
 
-	bool faceSupport = dotValues.at(faceID) < (-edgeFaceCosValue);
-	for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
+	int faceNum = (int)m_mesh->faces.size();
+	std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
+	float edgeCosValue = cosf(M_PIf * 70.0f / 180.0f);
+	float edgeFaceCosValue = cosf(M_PIf * 60.0f / 180.0f);
+	for (int faceID = 0; faceID < faceNum; ++faceID)
 	{
-		if (edgeFlag[edgeIndex] == 0)
+		ivec3& oppoHalfs = m_oppositeHalfEdges.at(faceID);
+		ivec3& edgeFlag = edgesFlags.at(faceID);
+		TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+		vec3& faceNormal = normals.at(faceID);
+
+		bool faceSupport = dotValues.at(faceID) < (-edgeFaceCosValue);
+		for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
 		{
-			edgeFlag[edgeIndex] = 1;
-
-			int vertexID1 = tFace[edgeIndex];
-			int vertexID2 = tFace[(edgeIndex + 1) % 3];
-			vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
-			vec3 nedge = normalized(edge);
-
-			if (abs(trimesh::dot(nedge, vec3(0.0f, 0.0f, 1.0f))) < edgeCosValue)
+			if (edgeFlag[edgeIndex] == 0)
 			{
-				int oppoHalf = oppoHalfs.at(edgeIndex);
-				bool shouldAdd = false;
-				if (oppoHalf >= 0)
+				edgeFlag[edgeIndex] = 1;
+
+				int vertexID1 = tFace[edgeIndex];
+				int vertexID2 = tFace[(edgeIndex + 1) % 3];
+				vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
+				vec3 nedge = normalized(edge);
+
+				if (abs(trimesh::dot(nedge, vec3(0.0f, 0.0f, 1.0f))) < edgeCosValue)
 				{
-					int oppoFaceID;
-					int edgeID;
-					halfdecode(oppoHalf, oppoFaceID, edgeID);
-					edgesFlags.at(oppoFaceID)[edgeID] = 1;
+					run_num++;
 
-					vec3& oppoFaceNormal = normals.at(oppoFaceID);
-					bool oppoFaceSupport = dotValues.at(oppoFaceID) < (-edgeFaceCosValue);
-					if (oppoFaceSupport && faceSupport)
+					int oppoHalf = oppoHalfs.at(edgeIndex);
+					bool shouldAdd = false;
+					if (oppoHalf >= 0)
 					{
+						int oppoFaceID;
+						int edgeID;
+						halfdecode(oppoHalf, oppoFaceID, edgeID);
+						edgesFlags.at(oppoFaceID)[edgeID] = 1;
 
-						if (trimesh::dot(faceNormal, oppoFaceNormal) < 0.0f)
+						vec3& oppoFaceNormal = normals.at(oppoFaceID);
+						bool oppoFaceSupport = dotValues.at(oppoFaceID) < (-edgeFaceCosValue);
+						if (oppoFaceSupport && faceSupport)
 						{
-							shouldAdd = true;
+
+							if (trimesh::dot(faceNormal, oppoFaceNormal) < 0.0f)
+							{
+								shouldAdd = true;
+							}
 						}
 					}
-				}
-				else  // hole edge
-				{
-					shouldAdd = faceSupport;
-				}
+					else  // hole edge
+					{
+						shouldAdd = faceSupport;
+					}
 
-				if (shouldAdd)
-				{
-					ivec2 edgeID(vertexID1, vertexID2);
-					supportEdges.push_back(edgeID);
+					if (shouldAdd)
+					{
+						ivec2 edgeID(vertexID1, vertexID2);
+						supportEdges.push_back(edgeID);
+					}
 				}
 			}
 		}
 	}
+	printf("hangEdge run %d\n", run_num);
 }
-	}
 #else
 void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
 {
+	static int run_num = 0;
+
 	int faceNum = (int)m_mesh->faces.size();
 	std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
 	float edgeCosValue = faceCosValue;//cosf(M_PIf * 45.0f / 180.0f);
@@ -204,6 +211,13 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 
 				if (abs(trimesh::dot(nedge, vec3(nedge.x, nedge.y, 0.0f))) >edgeCosValue)//悬吊线与XY平面夹角小于某一角度
 				{
+					run_num++;
+
+					if (run_num >= 251088)
+					{
+						printf("run_num = %d\n", run_num);
+					}
+
 					int oppoHalf =-1;
 					bool shouldAdd = false;
 					int oppoFaceID;
@@ -279,10 +293,11 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 								oppovertexID3 = oppoFace[0];
 							else if (oppoFace[2] == oppoEdgeVertexID)
 								oppovertexID3 = oppoFace[1];
-							vec3 G = middlePt(vertexID1, vertexID2, vertexID3);
-							vec3 H = middlePt(vertexID1, vertexID2, oppovertexID3);
-							vec3 E = (vertexes.at(vertexID1) + vertexes.at(vertexID2))/2;
-							if((G.z-E.z>EPSILON)&& (H.z - E.z > EPSILON))
+
+							//vec3 G = middlePt(vertexID1, vertexID2, vertexID3);
+							//vec3 H = middlePt(vertexID1, vertexID2, oppovertexID3);
+							//vec3 E = (vertexes.at(vertexID1) + vertexes.at(vertexID2))/2;
+							//if((G.z-E.z>EPSILON)&& (H.z - E.z > EPSILON))
 							{
 								vec3& faceNormal = normals.at(faceID);
 								vec3& oppoFaceNormal = normals.at(oppoFaceID);
@@ -337,8 +352,8 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 											float oppofaceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
 											bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
 											 bool oppofaceThresCosflg = (oppofaceCosValue - faceThresCosValue) > EPSILON || abs(oppofaceCosValue - faceCosValue) < EPSILON;
-
 											{
+#if 0
 												typedef struct VERTEX_INFOR
 												{
 													vec3 pos;
@@ -378,6 +393,8 @@ void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimes
 
 													shouldAdd = true;
 												}
+#endif
+												shouldAdd = true;
 												if (tempdotAngle < 0.1)//排除已是支撑双面
 												{
 													if ((faceThresCosflg == true) && (oppofaceThresCosflg == true))
