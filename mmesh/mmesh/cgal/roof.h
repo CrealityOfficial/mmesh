@@ -11,6 +11,7 @@ struct PolyPair
 	std::vector<ClipperLib::PolyNode*> inner;
 };
 void seperate1423(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPairs);
+void seperate1234(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPairs);
 
 namespace mmesh
 {
