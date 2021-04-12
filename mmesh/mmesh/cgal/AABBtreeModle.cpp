@@ -112,19 +112,21 @@ namespace AABBTreeModle
     typedef CGAL::AABB_tree<My_AABB_traits> Tree;
     const std::vector<My_point>* My_triangle_primitive::point_container = 0;
     static Tree* gTreeObjPtr = NULL;
+    static trimesh::TriMesh* meshPtrBefore = NULL;
+    static trimesh::fxform xfPtrBefore;
 
     int CreateAABBTree(const trimesh::TriMesh* meshPtr, const trimesh::fxform *xfPtr)
     {
         // generates point set
         static std::vector<My_point> points;
         static std::vector<size_t> triangles;
-       static trimesh::TriMesh* meshPtrBefore = NULL;
         if (meshPtr == NULL)
             return EXIT_FAILURE;
-        if (meshPtrBefore == meshPtr)
-            return EXIT_SUCCESS;
+        if (meshPtrBefore == meshPtr && xfPtrBefore == *xfPtr)
+           return EXIT_SUCCESS;
         int verticeSize = (int)meshPtr->vertices.size();
         meshPtrBefore =(trimesh::TriMesh*) meshPtr;
+        xfPtrBefore = *xfPtr;
         points.clear();
         points.resize(verticeSize);
         #ifdef _OPENMP
@@ -280,6 +282,7 @@ namespace AABBTreeModle
             gTreeObjPtr->clear();
             delete gTreeObjPtr;
             gTreeObjPtr = NULL;
+            meshPtrBefore = NULL;
         }
     }
 }
