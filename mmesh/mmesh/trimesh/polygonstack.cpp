@@ -169,6 +169,10 @@ namespace mmesh
 
 						while (indices.size() > m_mregeCount)
 						{
+#if _DEBUG
+							if (indices.size() == m_mregeCount + 1)
+								std::cout << "break";
+#endif
 							int polygonIndex = indices.back();
 							indices.pop_back();
 
@@ -217,7 +221,7 @@ namespace mmesh
 											std::swap(start, end);
 
 										double cx = (end.x - start.x)* (tvertex.y - start.y) / (end.y - start.y) + start.x;
-										if (cx > tvertex.x)  // must 
+										if (cx >= tvertex.x)  // must 
 										{
 											if (cx == cmx)
 											{  // collide two opposite edge
@@ -246,13 +250,18 @@ namespace mmesh
 									info.end = outerPolygon.at(cOuterIndex);
 									info.innerIndex = innerPolygon.at(vertexIndex);
 #endif
+									bool findUnique = false;
 									if ((cmx == points.at(outerPolygon.at(cOuterIndex)).x)
 										&& (tvertex.y == points.at(outerPolygon.at(cOuterIndex)).y))
+									{
 										mutaulIndex = cOuterIndex;
+										findUnique = true;
+									}
 									else if ((cmx == points.at(outerPolygon.at(cOuterIndex0)).x)
 										&& (tvertex.y == points.at(outerPolygon.at(cOuterIndex0)).y))
 									{
 										mutaulIndex = cOuterIndex0;
+										findUnique = true;
 									}
 									else
 									{
@@ -342,6 +351,43 @@ namespace mmesh
 										info.matual = outerPolygon.at(mutaulIndex);
 										m_mergeInfo.push_back(info);
 #endif 
+									}
+
+									if (findUnique)
+									{
+										int uIndex = outerPolygon.at(mutaulIndex);
+										std::vector<int> minRefs;
+										for (int oIndex = 0; oIndex < nvert; ++oIndex)
+											if (outerPolygon.at(oIndex) == uIndex)
+												minRefs.push_back(oIndex);
+
+										if (minRefs.size() > 1)
+										{
+											trimesh::dvec2 M = tvertex;
+											int minReflexIndex = -1;
+											double A = -4.0 * M_PI;
+											for (int z = 0; z < minRefs.size(); ++z)
+											{
+												int iii = minRefs.at(z);
+												trimesh::dvec2 R = points.at(outerPolygon.at(iii));
+												trimesh::dvec2 RM = M - R;
+												trimesh::normalize(RM);
+
+												int nextIndex = outerPolygon.at((iii + 1) % nvert);
+												trimesh::dvec2 V = points.at(nextIndex);
+												trimesh::dvec2 RV = V - R;
+												trimesh::normalize(RV);
+												double a = angle(RM, RV);
+												if (a > A)
+												{
+													A = a;
+													minReflexIndex = iii;
+												}
+											}
+
+											if(minReflexIndex >= 0)
+												mutaulIndex = minReflexIndex;
+										}
 									}
 								}
 
@@ -450,6 +496,11 @@ namespace mmesh
 	{
 		if (m_currentPolygon >= (int)m_polygon2s.size() || m_currentPolygon < 0)
 			return false;
+
+#if 0
+		if (m_currentPolygon >= 1)
+			return false;
+#endif
 
 		Polygon2* poly = m_polygon2s.at(m_currentPolygon);
 		if (!poly->earClipping(face, earIndices))
