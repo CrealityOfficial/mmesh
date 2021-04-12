@@ -11,13 +11,14 @@ struct PolyPair
 	std::vector<ClipperLib::PolyNode*> inner;
 };
 void seperate1423(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPairs);
+void seperate1234(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPairs);
 
 namespace mmesh
 {
 	void buildRoofs(ClipperLib::PolyTree* polyTree, std::vector<std::vector<trimesh::vec3>*>& patches, double roofHeight, double thickness);
 
 	void roofLine(ClipperLib::PolyTree* polyTree,
-	ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace,bool onePoly=false);
+		ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace, bool onePoly = false);
 }
 
 #endif // FMESH_ROOF_1605318972342_H
