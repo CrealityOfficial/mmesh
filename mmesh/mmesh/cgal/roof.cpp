@@ -151,12 +151,12 @@ namespace mmesh
         return valid;
     }
 
-	void buildRoofs(ClipperLib::PolyTree* polyTree, std::vector<std::vector<trimesh::vec3>*>& patches, double roofHeight, double thickness)
-	{
+    void buildRoofs(ClipperLib::PolyTree* polyTree, std::vector<std::vector<trimesh::vec3>*>& patches, double roofHeight, double thickness)
+    {
         std::vector<PolyPair*> pairs;
         seperate1423(polyTree, pairs);
 
-        for (PolyPair*  pair : pairs)
+        for (PolyPair* pair : pairs)
         {
             Polygon_with_holes input;
             build_polygon_with_holes(&input, pair);
@@ -179,7 +179,7 @@ namespace mmesh
             delete pair;
         }
         pairs.clear();
-	}
+    }
 
     ClipperLib::IntPoint cgal_to_point(const Point& point)
     {
@@ -196,7 +196,7 @@ namespace mmesh
             vit != skeleton->vertices_end(); ++vit)
         {
             Vertex_const_handle h = vit;
-            if(h->is_contour() || h->is_skeleton())
+            if (h->is_contour() || h->is_skeleton())
                 roofPoint->Contour.push_back(cgal_to_point(h->point()));
         }
     }
@@ -207,18 +207,18 @@ namespace mmesh
             hit != skeleton->halfedges_end(); ++hit)
         {
             Halfedge_const_handle h = hit;
-            
+
             roofLine->Contour.push_back(cgal_to_point(h->vertex()->point()));
             roofLine->Contour.push_back(cgal_to_point(h->opposite()->vertex()->point()));
         }
     }
 
-    void traitSkeletonFace(ClipperLib::Paths* roofFace, Straight_skeleton_ptr skeleton,bool clockwise=false)
+    void traitSkeletonFace(ClipperLib::Paths* roofFace, Straight_skeleton_ptr skeleton, bool clockwise = false)
     {
         size_t faceSize = skeleton->size_of_faces();
         size_t roofFase = roofFace->size();
         if (faceSize > 0)
-            roofFace->resize(roofFase +faceSize);
+            roofFace->resize(roofFase + faceSize);
 
         int index = roofFase;
         for (Face_const_iterator fit = skeleton->faces_begin();
@@ -231,14 +231,14 @@ namespace mmesh
                 Halfedge_const_handle h = he;
                 do
                 {
-                    ClipperLib::IntPoint p= cgal_to_point(h->vertex()->point());
+                    ClipperLib::IntPoint p = cgal_to_point(h->vertex()->point());
                     if (h->vertex()->is_skeleton())
                     {
                         p.Z = 500;
-						if (clockwise)
-						{
+                        if (clockwise)
+                        {
                             p.Z = 300;
-						}
+                        }
                     }
                     path.push_back(p);
                     h = h->next();
