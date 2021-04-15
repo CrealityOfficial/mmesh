@@ -1,5 +1,7 @@
-﻿// UNION_INTERSECTION.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+// UNION_INTERSECTION.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
+
+#if 0
 
 #include "find_union_intersect.h"
 #ifdef USE_CGAL
@@ -127,4 +129,6 @@ namespace UNION_FIND_FUNC
 		return 0;
 	}
 }
+#endif
+
 #endif

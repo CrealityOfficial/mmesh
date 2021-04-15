@@ -1,4 +1,4 @@
-﻿// UNION_INTERSECTION.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+// UNION_INTERSECTION.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 
 
@@ -8,6 +8,8 @@
 #include<vector>
 #ifdef USE_CGAL
 #include "compute_normals_sm.h"
+
+#if 0
 
 namespace UNION_FIND_FUNC
 {
@@ -41,4 +43,7 @@ namespace UNION_FIND_FUNC
 	int main();
 	//void Print_conComponents(Set forestSet[], char vertex[], int vNum);
 }
+
+#endif
+
 #endif
