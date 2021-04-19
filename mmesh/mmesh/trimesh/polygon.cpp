@@ -3,15 +3,26 @@
 
 namespace mmesh
 {
+	int Polygon2::m_test = 0;
 	Polygon2::Polygon2()
 		:m_close(false)
 		, m_root(nullptr)
 		, m_circleSize(0)
 	{
+#if _DEBUG
+		++m_test;
+		std::cout << "allocate" << m_test << std::endl;
+#endif
 	}
 	
 	Polygon2::~Polygon2()
 	{
+#if _DEBUG
+		std::cout << "deallocate" << m_test << std::endl;
+		--m_test;
+#endif
+
+		releaseNode();
 	}
 
 	void Polygon2::setup(const std::vector<int>& polygon, std::vector<trimesh::dvec2>& points)
