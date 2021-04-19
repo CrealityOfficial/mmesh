@@ -237,8 +237,8 @@ namespace mmesh
 					{
 						int oppoHalf = -1;
 						bool shouldAdd = false;
-						int oppoFaceID;
-						int oppoEdgeVertexID;
+						int oppoFaceID=-1;
+						int oppoEdgeVertexID=-1;
 						int connectfaceVetexn = 0;
 						for (int offedgeIndex = 0; offedgeIndex < 3; offedgeIndex++)
 						{
