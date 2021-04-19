@@ -1,6 +1,6 @@
 __files_group(${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ SRCS)
 
-if(CGAL_ON)
+if(CGAL_ENABLE)
 	include(CGAL)
 	
 	__cgal_include_package(Straight_skeleton_2)

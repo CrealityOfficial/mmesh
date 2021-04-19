@@ -47,6 +47,8 @@ namespace mmesh
 		std::list<VNode*> m_ears;
 
 		std::vector<VNode*> m_debugNodes;
+
+		static int m_test;
 	};
 }
 #endif // CREATIVE_KERNEL_POLYGON_1592554738233_H

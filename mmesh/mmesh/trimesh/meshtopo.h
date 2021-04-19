@@ -49,8 +49,8 @@ namespace mmesh
 
 		trimesh::TriMesh* m_mesh;
 
-		std::vector<std::vector<int>> m_outHalfEdges;//存储某点相关联的面以及第三个点，其中int 组合成面和三个点值
-		std::vector<trimesh::ivec3> m_oppositeHalfEdges;//存储某个面相关的三个顶组合成的int值
+		std::vector<std::vector<int>> m_outHalfEdges;//第一层表示模型顶点索引，其大小为模型顶点数，第二层索引存储某点出发，共享该点的面和顶点组成的三个int值，其中int 组合Face<<2|index&3
+		std::vector<trimesh::ivec3> m_oppositeHalfEdges;//第一层表示面索引，其大小为模型面数，存储某面相连的三个面信息(一个三角形有三个面)，其中相连面其边的表达方式为Face<<2|index&3
 		bool m_topoBuilded;
 	};
 }
