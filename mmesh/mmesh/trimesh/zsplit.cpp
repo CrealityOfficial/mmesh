@@ -430,7 +430,7 @@ namespace mmesh
 		}
 
 		mmesh::PolygonStack pstack;
-		pstack.generates(m_polygons, polygons2, mesh->faces);
+		pstack.generates(m_polygons, polygons2, mesh->faces, 0);
 		return mesh;
 	}
 }
