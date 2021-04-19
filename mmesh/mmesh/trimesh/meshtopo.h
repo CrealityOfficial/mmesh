@@ -44,13 +44,13 @@ namespace mmesh
 		void build(trimesh::TriMesh* mesh);
 
 		void lowestVertex(std::vector<trimesh::vec3>& vertexes, std::vector<int>& indices);
-		void hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, std::vector<trimesh::ivec2>& edges);
+		void hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& edges);
 		void chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& faces, float faceCosValue);
 
 		trimesh::TriMesh* m_mesh;
 
-		std::vector<std::vector<int>> m_outHalfEdges;
-		std::vector<trimesh::ivec3> m_oppositeHalfEdges;
+		std::vector<std::vector<int>> m_outHalfEdges;//第一层表示模型顶点索引，其大小为模型顶点数，第二层索引存储某点出发，共享该点的面和顶点组成的三个int值，其中int 组合Face<<2|index&3
+		std::vector<trimesh::ivec3> m_oppositeHalfEdges;//第一层表示面索引，其大小为模型面数，存储某面相连的三个面信息(一个三角形有三个面)，其中相连面其边的表达方式为Face<<2|index&3
 		bool m_topoBuilded;
 	};
 }

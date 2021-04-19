@@ -5,11 +5,13 @@
 #include "mmesh/trimesh/polygon.h"
 #include "mmesh/trimesh/polygon2util.h"
 #include "mmesh/trimesh/savepolygonstack.h"
+#include <assert.h>
 
 namespace mmesh
 {
 	PolygonStack::PolygonStack()
 		: m_currentPolygon(0)
+		, m_mregeCount(0)
 	{
 	}
 	
@@ -26,12 +28,12 @@ namespace mmesh
 		m_currentPolygon = 0;
 	}
 
-	void PolygonStack::generates(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, std::vector<trimesh::TriMesh::Face>& triangles)
+	void PolygonStack::generates(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, std::vector<trimesh::TriMesh::Face>& triangles, int layer)
 	{
 #if 0
 		static int i = 0;
 		char buffer[128];
-		sprintf(buffer, "%d.poly", i++);
+		sprintf(buffer, "poly/%d_%d.poly", layer, i++);
 		stackSave(buffer, polygons, points);
 #endif
 		prepare(polygons, points);
@@ -147,7 +149,7 @@ namespace mmesh
 				}
 				return count != 0;
 			};
-			merge = [&merge, &polygons, &simplePolygons, &infos, &points](TreeNode& node) {
+			merge = [&merge, &polygons, &simplePolygons, &infos, &points, this](TreeNode& node) {
 				int index = node.index;
 				if (index >= 0 && infos.at(index).area > 0.0)
 				{
@@ -165,13 +167,12 @@ namespace mmesh
 
 						const double EPSON = 0.00000001;
 
-#if 0
-						size_t innserPolygonSize = indices.size();
-						while (indices.size() > innserPolygonSize - 12)
-#else
-						while (indices.size() > 0)
-#endif
+						while (indices.size() > m_mregeCount)
 						{
+#if _DEBUG
+							if (indices.size() == m_mregeCount + 1)
+								std::cout << "break";
+#endif
 							int polygonIndex = indices.back();
 							indices.pop_back();
 
@@ -202,7 +203,7 @@ namespace mmesh
 								{
 									trimesh::dvec2& verti = points.at(outerPolygon.at(i));
 									trimesh::dvec2& vertj = points.at(outerPolygon.at(j));
-									if (verti.y == tvertex.y && vertj.y == tvertex.y)
+									if ((verti.y == tvertex.y) && (vertj.y == tvertex.y))
 									{
 										double mmx = verti.x > vertj.x ? vertj.x : verti.x;
 										if (mmx > tvertex.x && mmx < cmx)
@@ -214,14 +215,17 @@ namespace mmesh
 									}
 									else if ((verti.y > tvertex.y) != (vertj.y > tvertex.y))
 									{
-										double cx = (vertj.x - verti.x)* (tvertex.y - verti.y) / (vertj.y - verti.y) + verti.x;
-										if (cx > tvertex.x)  // must 
+										trimesh::dvec2 start = verti;
+										trimesh::dvec2 end = vertj;
+										if (outerPolygon.at(i) > outerPolygon.at(j))
+											std::swap(start, end);
+
+										double cx = (end.x - start.x)* (tvertex.y - start.y) / (end.y - start.y) + start.x;
+										if (cx >= tvertex.x)  // must 
 										{
-											if (std::abs(cx - cmx) < EPSON)
+											if (cx == cmx)
 											{  // collide two opposite edge
-												trimesh::dvec2 xxn(1.0, 0.0);
-												trimesh::dvec2 nji = verti - vertj;
-												if (crossValue(xxn, nji) >= 0.0)
+												if (verti.y > vertj.y)
 												{
 													cOuterIndex = i;
 													cOuterIndex0 = j;
@@ -240,35 +244,45 @@ namespace mmesh
 								int mutaulIndex = -1;
 								if (cOuterIndex >= 0)
 								{
-									if (cmx == points.at(outerPolygon.at(cOuterIndex)).x
-										&& tvertex.y == points.at(outerPolygon.at(cOuterIndex)).y)
+#if _DEBUG
+									MergeInfo info;
+									info.start = outerPolygon.at(cOuterIndex0);
+									info.end = outerPolygon.at(cOuterIndex);
+									info.innerIndex = innerPolygon.at(vertexIndex);
+#endif
+									bool findUnique = false;
+									if ((cmx == points.at(outerPolygon.at(cOuterIndex)).x)
+										&& (tvertex.y == points.at(outerPolygon.at(cOuterIndex)).y))
+									{
 										mutaulIndex = cOuterIndex;
-									else if (cmx == points.at(outerPolygon.at(cOuterIndex0)).x
-										&& tvertex.y == points.at(outerPolygon.at(cOuterIndex0)).y)
+										findUnique = true;
+									}
+									else if ((cmx == points.at(outerPolygon.at(cOuterIndex0)).x)
+										&& (tvertex.y == points.at(outerPolygon.at(cOuterIndex0)).y))
 									{
 										mutaulIndex = cOuterIndex0;
+										findUnique = true;
 									}
 									else
 									{
 										trimesh::dvec2 M = tvertex;
-										if (points.at(outerPolygon.at(cOuterIndex)).x < points.at(outerPolygon.at(cOuterIndex0)).x)
-										{
-											cOuterIndex = cOuterIndex0;
-										}
-										trimesh::dvec2 P = points.at(outerPolygon.at(cOuterIndex));
 										trimesh::dvec2 I = trimesh::dvec2(cmx, M.y);
-										if (P.y > I.y)
+										trimesh::dvec2 P0 = points.at(outerPolygon.at(cOuterIndex0));
+										trimesh::dvec2 P = points.at(outerPolygon.at(cOuterIndex));
+										bool useUpper = true;
+										if (P.x < P0.x)
 										{
-											trimesh::dvec2 T = P;
-											P = I;
-											I = T;
+											useUpper = false;
+											P = P0;
 										}
+										if(P.y > I.y)
+											std::swap(P, I);
 
 										std::vector<int> reflexVertex;
 										for (i = 0; i < nvert; ++i)
 										{
 											trimesh::dvec2& tv = points.at(outerPolygon.at(i));
-											if ((i != cOuterIndex) && (outerPolygon.at(i) != outerPolygon.at(cOuterIndex)) && insideTriangle(M, P, I, tv))
+											if (insideTriangle(M, P, I, tv))
 											{
 												reflexVertex.push_back(i);
 											}
@@ -276,7 +290,7 @@ namespace mmesh
 
 										if (reflexVertex.size() == 0)
 										{
-											mutaulIndex = cOuterIndex;
+											mutaulIndex = useUpper ? cOuterIndex : cOuterIndex0;
 										}
 										else
 										{
@@ -284,22 +298,95 @@ namespace mmesh
 											double minLen = 1000000.0;
 											double maxDot = -10000.0;
 											int minReflexIndex = 0;
+											std::vector<int> minRefs;
 											for (i = 0; i < reflexSize; ++i)
 											{
 												trimesh::dvec2 R = points.at(outerPolygon.at(reflexVertex.at(i)));
 												trimesh::dvec2 MR = R - M;
+
 												double len = trimesh::len(MR);
 												trimesh::normalize(MR);
 												double dot = abs(dotValue(MR, trimesh::dvec2(1.0, 0.0)));
-												if (dot > maxDot && len < minLen)
+												if (dot > maxDot || (dot == maxDot && len < minLen))
 												{
 													minReflexIndex = i;
 													minLen = len;
 													maxDot = dot;
+													minRefs.clear();
+													minRefs.push_back(i);
+												}
+												else if (dot == maxDot && len == minLen)
+												{//¹²µã
+													minRefs.push_back(i);
+												}
+											}
+
+											if (minRefs.size() > 1)
+											{// 
+												double A = - 4.0 * M_PI;
+												for (int z = 0; z < minRefs.size(); ++z)
+												{
+													int iii = minRefs.at(z);
+													trimesh::dvec2 R = points.at(outerPolygon.at(reflexVertex.at(iii)));
+													trimesh::dvec2 RM = M - R;
+													trimesh::normalize(RM);
+
+													int nextIndex = outerPolygon.at((reflexVertex.at(iii) + 1) % nvert);
+													trimesh::dvec2 V = points.at(nextIndex);
+													trimesh::dvec2 RV = V - R;
+													trimesh::normalize(RV);
+													double a = angle(RM, RV);
+													if (a > A)
+													{
+														A = a;
+														minReflexIndex = iii;
+													}
 												}
 											}
 
 											mutaulIndex = reflexVertex.at(minReflexIndex);
+										}
+
+#if _DEBUG
+										info.matual = outerPolygon.at(mutaulIndex);
+										m_mergeInfo.push_back(info);
+#endif 
+									}
+
+									if (findUnique)
+									{
+										int uIndex = outerPolygon.at(mutaulIndex);
+										std::vector<int> minRefs;
+										for (int oIndex = 0; oIndex < nvert; ++oIndex)
+											if (outerPolygon.at(oIndex) == uIndex)
+												minRefs.push_back(oIndex);
+
+										if (minRefs.size() > 1)
+										{
+											trimesh::dvec2 M = tvertex;
+											int minReflexIndex = -1;
+											double A = -4.0 * M_PI;
+											for (int z = 0; z < minRefs.size(); ++z)
+											{
+												int iii = minRefs.at(z);
+												trimesh::dvec2 R = points.at(outerPolygon.at(iii));
+												trimesh::dvec2 RM = M - R;
+												trimesh::normalize(RM);
+
+												int nextIndex = outerPolygon.at((iii + 1) % nvert);
+												trimesh::dvec2 V = points.at(nextIndex);
+												trimesh::dvec2 RV = V - R;
+												trimesh::normalize(RV);
+												double a = angle(RM, RV);
+												if (a > A)
+												{
+													A = a;
+													minReflexIndex = iii;
+												}
+											}
+
+											if(minReflexIndex >= 0)
+												mutaulIndex = minReflexIndex;
 										}
 									}
 								}
@@ -307,6 +394,8 @@ namespace mmesh
 								if (mutaulIndex >= 0)
 								{// merge mutaulIndex in outer and vertexIndex in inner
 									std::vector<int> mergedPolygon;
+#if _DEBUG
+#endif
 									for (i = 0; i < nvert; ++i) 
 									{
 										mergedPolygon.push_back(outerPolygon.at(i));
@@ -408,6 +497,11 @@ namespace mmesh
 		if (m_currentPolygon >= (int)m_polygon2s.size() || m_currentPolygon < 0)
 			return false;
 
+#if 0
+		if (m_currentPolygon >= 1)
+			return false;
+#endif
+
 		Polygon2* poly = m_polygon2s.at(m_currentPolygon);
 		if (!poly->earClipping(face, earIndices))
 		{
@@ -439,5 +533,15 @@ namespace mmesh
 	int PolygonStack::validPolygon()
 	{
 		return (int)m_polygon2s.size();
+	}
+
+	std::vector<MergeInfo> PolygonStack::mergeInfo()
+	{
+		return m_mergeInfo;
+	}
+
+	void PolygonStack::setMergeCount(int count)
+	{
+		m_mregeCount = count;
 	}
 }

@@ -8,6 +8,7 @@ namespace mmesh
 		DLPISource source;
 		source.position = position;
 		source.normal = normal;
+#if 0
 		float smallTheta = 25.0f * M_PIf / 180.0f;
 		if (trimesh::dot(normal, trimesh::vec3(0.0f, 0.0f, -1.0f)) < sinf(smallTheta))
 		{
@@ -17,7 +18,7 @@ namespace mmesh
 			dir.z = -z;
 			source.normal = trimesh::normalized(dir);
 		}
-
+#endif
 		return source;
 	}
 }

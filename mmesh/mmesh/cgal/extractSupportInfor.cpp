@@ -28,6 +28,7 @@ namespace extractSupportInfor
 #define TRIANGLE_BORDER_LEN_MIN 1.2
 #define TRIANGLE_FACE_ANGLE_THRES 53.0
 #define TRIANGLE_LINE_ANGLE_THRES 45.0
+static constexpr float EPSILON = 1e-4;
 typedef CGAL::AABB_face_graph_triangle_primitive<ComputeNormalsSM::Surface_mesh> Primitive;
 typedef CGAL::AABB_traits<ComputeNormalsSM::K, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> Tree;
@@ -176,9 +177,10 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
 
             // std::cout <<"gSMinforPtr->fnormals==="<< (*gSMinforPtr->fnormals)[fd] << std::endl;
-            float faceCosValue =acos( ZNORMAL_UP * fnormals[fd])*180.0/PI;
+            float faceCosValue =acos( ZNORMAL_UP * fnormals[fd])*180.0/PI;//法线量向下，与垂直方向所成角度一定大于180
             float faceThresCosValue = 180.0 - thresAngle;
-            if (faceCosValue> faceThresCosValue)
+            bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
+            if (faceThresCosflg == true)
             {
                 ComputeNormalsSM::halfedge_descriptor hd = halfedge(fd, mesh);
                 ComputeNormalsSM::halfedge_descriptor hdnext = next(hd, mesh);
@@ -192,10 +194,10 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
                 ComputeNormalsSM::K::FT borderLength = CGAL::Polygon_mesh_processing::face_border_length(hd, mesh);
 
-                if (borderLength < TRIANGLE_BORDER_LEN_MIN)//周长大于一定值
-                    continue;
-                //if (0)//PI*R*R,确保面积大于挤出点面积
-                if (face_area < faceCfgPtr->faceArea)//PI*R*R,确保面积大于挤出点面积
+                //if (borderLength < TRIANGLE_BORDER_LEN_MIN)//周长大于一定值
+                //    continue;
+                if (0)
+                //if (face_area < faceCfgPtr->faceArea)//由于面积过小，若周边三角形是需要的支撑面，则该面不能忽略
                 {
                     //goto FACE_NEED_SUPPORT;
                     ComputeNormalsSM::halfedge_descriptor hdOp = opposite(hd, mesh);
@@ -224,7 +226,8 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                     {
 
                         float fdOpCosValue = acos(ZNORMAL_UP * fnormals[fdNextOp]) * 180.0 / PI;
-                        if (fdOpCosValue > faceThresCosValue)//相邻面是支撑面
+                        faceThresCosflg = (fdOpCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - fdOpCosValue) < EPSILON;
+                        if (faceThresCosflg == true)
                         {
                             ComputeNormalsSM::K::FT face_areatemp = CGAL::Polygon_mesh_processing::face_area(fdNextOp, mesh);
                             //float fdBetweenCosValue = acos(fnormals[fd] * fnormals[fdNextOp]) * 180.0 / PI;
@@ -259,7 +262,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                 pointsOut.emplace_back(trimesh::vec3(point0.x(), point0.y(), point0.z()));
                 pointsOut.emplace_back(trimesh::vec3(point1.x(), point1.y(), point1.z()));
                 pointsOut.emplace_back(trimesh::vec3(point2.x(), point2.y(), point2.z()));
-#if 1       //测试代码
+#if 0       //测试代码
                 static bool savetimes = true;
                 if (savetimes)
                 {
@@ -334,11 +337,6 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 #endif
 
             }
-            //else
-            //{
-            //    getOverhangLineBaseface(gSMinforPtr, fd);
-
-            //}
 
         }
         std::cout << "get support infor times====" << t.time() << " sec." << std::endl;
@@ -371,8 +369,8 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
                ComputeNormalsSM::Vector totalFaceNor = faceNor + faceNorOpposite;
                float norbetweenAngle = acos(faceNor * faceNorOpposite);
-               if ((PI - norbetweenAngle )> (ThresAngleBetweenFace * PI / 180.0))//确保悬吊线两个面的夹角小45度，因为两个面本身不是支撑面，当悬吊线足够突出才支撑
-                   return;
+              // if ((PI - norbetweenAngle )> (ThresAngleBetweenFace * PI / 180.0))//确保悬吊线两个面的夹角小45度，因为两个面本身不是支撑面，当悬吊线足够突出才支撑
+              //     return;
                if (ZNORMAL_DOWN * totalFaceNor > 0)//两个相邻面面法线之和要向下
                {
                    if (gSMinforPtr->faceSupportMap[fdOpposite] == false)//相邻面也是非支撑面
@@ -428,26 +426,25 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                                    float faceNorCoseValueUP = ZNORMAL_UP * faceNor;
                                    float faceNorOpCoseValueUP = ZNORMAL_UP * faceNorOpposite;
 
-                                  // if (faceNorCoseValueUP < 0)
-                                  // {
-                                       //(angle1-90)-(90-angle2)>0
-                                       if ((acos(faceNorCoseValueUP) + acos(faceNorOpCoseValueUP)-180.0*PI/180.0) > 0)
+                                   if (faceNorCoseValueUP < 0)
+                                   {
+                                       if ((acos(faceNorCoseValueUP) - acos(faceNorOpCoseValueUP)) > 0)
                                        {
                                            gSMinforPtr->edgeSupportMap[hd] = true;
                                            pointsOut.emplace_back(trimesh::vec3(point0.x(), point0.y(), point0.z()));
                                            pointsOut.emplace_back(trimesh::vec3(point1.x(), point1.y(), point1.z()));
                                        }
-                                  // }
-                                 //  else
-                                 //  {
-                                   //    if (acos(faceNorOpCoseValueUP)-(acos(faceNorCoseValueUP)) > 0)
-                                   //    {
-                                   //        gSMinforPtr->edgeSupportMap[hd] = true;
-                                   //        pointsOut.emplace_back(trimesh::vec3(point0.x(), point0.y(), point0.z()));
-                                   //        pointsOut.emplace_back(trimesh::vec3(point1.x(), point1.y(), point1.z()));
-                                   //    }
+                                   }
+                                   else
+                                   {
+                                       if (acos(faceNorOpCoseValueUP)-(acos(faceNorCoseValueUP)) > 0)
+                                       {
+                                           gSMinforPtr->edgeSupportMap[hd] = true;
+                                           pointsOut.emplace_back(trimesh::vec3(point0.x(), point0.y(), point0.z()));
+                                           pointsOut.emplace_back(trimesh::vec3(point1.x(), point1.y(), point1.z()));
+                                       }
 
-                                   //}
+                                   }
                                }
                                else
                                {
@@ -508,7 +505,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
             //}
 
-            if ((faceSupportMap[fd] == false) && (edgeSupportMap[hd] == false))
+            //if ((faceSupportMap[fd] == false) && (edgeSupportMap[hd] == false))
             {
                 ComputeNormalsSM::halfedge_descriptor hdtemp = hd;
                 ComputeNormalsSM::halfedge_descriptor done = hdtemp;
@@ -529,9 +526,9 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                     * 2、相领面法线向下
                     * 3、确保悬吊线两个面的夹角小45度，因为两个面本身不是支撑面，当悬吊点足够突出才支撑
                    */
-                    if (lowpos.z() > lowpostemp.z()|| 
-                        nearFaceNormals* ZNORMAL_DOWN>0||
-                        (PI - norbetweenAngle > ThresAngleBetweenFace * PI / 180.0)
+                    if (lowpos.z() -lowpostemp.z()> EPSILON
+                        ||nearFaceNormals* ZNORMAL_DOWN<0
+                        //||(PI - norbetweenAngle > ThresAngleBetweenFace * PI / 180.0)
                         )
                     {
                         lowposflg = false;
@@ -542,12 +539,14 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                 } while (hdtemp != done);
                 if (lowposflg == true)
                 {
-                    ComputeNormalsSM::Point lowpostemp(lowpos.x(), lowpos.y(), lowpos.z() + 0.001);
+                    ComputeNormalsSM::Point lowpostemp(lowpos.x(), lowpos.y(), lowpos.z());
+                    lowpostemp += FaceNormals * EPSILON;
                     Ray ray(lowpostemp,ZNORMAL_DOWN);
                     Skip skip(fd);
                     std::cout<<"*********************************number_of_intersected_primitives====="<< gTreeObjPtr->number_of_intersected_primitives(ray)<<std::endl;
                      Ray_faceIntersect intersection = gTreeObjPtr->first_intersected_primitive(ray, skip);
                    if (intersection)
+                   //if (0)
                     {
                         ComputeNormalsSM::face_descriptor tempfd = intersection.value();
                         //for (ComputeNormalsSM::face_descriptor faceindex : nearfdV)
@@ -568,6 +567,8 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
                     }
                    else
                    {
+                            std::cout << "vertexSupportMap ray upto bottom"  << std::endl;
+
                             vertexSupportMap[vd] = true;
                             pointsOut.emplace_back((trimesh::vec3(lowpos.x(), lowpos.y(), lowpos.z())));
 
@@ -674,6 +675,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
         if (gSMinforPtr)
         {
             delete gSMinforPtr;
+            gSMinforPtr = NULL;
         }
         gSMinforPtr = new surfaceMeshInfor;
         gSMinforPtr->surfaceMeshPtr = &surfaceMesh;

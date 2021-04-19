@@ -1,20 +1,34 @@
 #ifndef MMESH_DLPHEADER_1613700735852_H
 #define MMESH_DLPHEADER_1613700735852_H
 #include "trimesh2/Vec.h"
+#include "mmesh/trimesh/Clustering.h"
 
 namespace mmesh
 {
-	struct DLPISource
-	{
-		trimesh::vec3 position;
-		trimesh::vec3 normal;
-	};
-
 	struct VerticalC
 	{
 		trimesh::vec3 position;
 		bool platform;
+		int indexCells;
 	};
+	struct DLPISource
+	{
+		trimesh::vec3 position;
+		trimesh::vec3 normal;
+		int typeflg;
+		struct VerticalC posHit;
+		#ifdef CX_BOOST_CLUSTER
+		ClusteredPoints clusteredPts;
+		#endif
+	};
+	struct DLPISources
+	{
+		std::vector<DLPISource> sources;
+		#ifdef CX_BOOST_CLUSTER
+		ClusteredPoints clusteredSrcID;
+		#endif
+	};
+
 
 	struct DLPSupportParam
 	{
