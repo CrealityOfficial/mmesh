@@ -709,7 +709,8 @@ namespace mmesh
 		{
 			std::vector<int> edgeFaces;
 			std::vector<int>& faceChunk = SupportFaces.at(faceChunkIndex);
-			searchSectionFaceEdgeFace(faceChunk, edgeFaces);
+			float sectionFaceArea = 0.0;
+			searchSectionFaceEdgeFace(faceChunk, edgeFaces, sectionFaceArea);
 			for (int halfedge : edgeFaces)
 			{
 				int edgeface = 0, edgeVertex = 0;
@@ -787,7 +788,8 @@ namespace mmesh
 		std::vector<int> edgeFaces;
 		std::vector<trimesh::vec3> edgeSectVertexsNearDown;
 		std::vector<trimesh::vec3> edgeSectVertexsNearUp;
-		searchSectionFaceEdgeFace(SupportFaces, edgeFaces);
+		float sectionFaceArea = 0.0;
+		searchSectionFaceEdgeFace(SupportFaces, edgeFaces, sectionFaceArea);
 
 		for (int edgeFacesIndex = 0; edgeFacesIndex < edgeFaces.size(); edgeFacesIndex++)
 		{
@@ -851,7 +853,7 @@ namespace mmesh
 		std::cout << "nearFaceUp==" << nearFaceUp << std::endl;
 		std::cout << std::endl;
 
-		if (nearFaceDown==0|| far_point.first > m_triangleChunk->m_gridSize)
+		if (nearFaceDown==0|| far_point.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::powf(m_triangleChunk->m_gridSize / 2.0, 2.0))
 		{
 			supportflag = true;
 		}

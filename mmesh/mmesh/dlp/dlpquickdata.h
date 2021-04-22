@@ -55,7 +55,7 @@ namespace mmesh
 		void autoDlpFaceSource(std::vector<std::vector<DLPISource>> &sectionSources, AutoDLPSupportParam* autoParam);
 		void extractFaceSectEdge(std::vector<std::vector<int>> SupportFaces, std::vector<std::vector<trimesh::vec3>>& edgeSectVertexs);
 		bool smallSectionFaceNeedSupport(std::vector<int> SupportFaces);
-		void searchSectionFaceEdgeFace(std::vector<int> SupportFaces, std::vector<int> & edgeFaces);
+		void searchSectionFaceEdgeFace(std::vector<int> SupportFaces, std::vector<int> & edgeFaces, float& sectionFaceArea);
 
 	protected:
 		bool autoTest(const trimesh::vec3& point);
