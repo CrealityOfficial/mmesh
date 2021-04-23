@@ -120,10 +120,11 @@ namespace mmesh
 			}
 
 			//m_triangleChunk->build(m_boxes, globalBox, 2.0f);		
-			if (m_autoParam.space < 0.1)
-				m_autoParam.space = 2.0;
+			//if (m_autoParam.space < 0.1)
+			//	m_autoParam.space = 2.0;
 
-			m_triangleChunk->build(m_boxes, globalBox, m_autoParam.space);
+			m_triangleChunk->build(m_boxes, globalBox, 2.0f);		
+			//m_triangleChunk->build(m_boxes, globalBox, m_autoParam.space);
 			m_meshTopo->build(m_mesh);
 
 			trimesh::vec3 size = globalBox.size();
@@ -229,6 +230,43 @@ namespace mmesh
 				m_SupportFaceSources.clear();
 				for (std::vector<DLPISource> sources : sectionSources)
 				{
+					if (1)
+					{
+						//去除相同点、邻近点
+						auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
+							return e1.position < e2.position;
+
+						};
+						auto cmp_elements_unique = [this](DLPISource& e1, DLPISource& e2)->bool {
+
+							//float faceCosValue = cosf(m_autoParam.autoAngle * M_PIf / 180.0f);
+							float filterValue = m_autoParam.space;
+							float distanceValue = trimesh::dist(e1.position, e2.position);
+							bool ret = distanceValue < filterValue;
+							//std::cout << "cmp_elements_unique=== " << trimesh::dist(e1.position, e2.position) << std::endl;
+							if (ret)
+							{
+								if (e2.typeflg & (SUPPORT_VERTEX | SUPPORT_EDGE))
+								{
+									if (e1.typeflg & SUPPORT_FACE)
+									{
+										e1 = e2;//由于是引用变量，可以动态更改
+										ret = false;
+									}
+									else if (e1.typeflg & (SUPPORT_VERTEX | SUPPORT_EDGE))
+									{
+										ret = distanceValue < EPSILON ? true : false;
+									}
+								}
+							}
+							return ret;
+						};
+						std::vector<DLPISource>::iterator iterator;
+						std::sort(sources.begin(), sources.end(), cmp_elements_sort);
+						iterator = std::unique(sources.begin(), sources.end(), cmp_elements_unique);
+						sources.resize(std::distance(sources.begin(), iterator));
+					}
+					/////////////
 					if (sources.size())
 						m_SupportFaceSources.insert(m_SupportFaceSources.end(), sources.begin(), sources.end());
 				}
@@ -505,14 +543,16 @@ namespace mmesh
 			//if ((abs(SectBoxSize.x- SectBoxSize.y)< gridSize*2)&&(sampleXn<3|| sampleYn <3))
 			//	continue;
 			std::vector<DLPISource> sources;
-			if (sampleXn == 1 || sampleYn == 1)
+			//if (sampleXn == 1 || sampleYn == 1)
 			{
 				//std::cout << "connectSectBox" << std::endl;
 				//std::cout << connectSectBox.max.x - connectSectBox.min.x<<std::endl;
 				//std::cout << connectSectBox.max.y - connectSectBox.min.y << std::endl;
 				//faceChunkArea=(connectSectBox.max.x - connectSectBox.min.x)* (connectSectBox.max.y - connectSectBox.min.y);
 				bool supportFlag = smallSectionFaceNeedSupport(faceChunk);
-				if ((faceChunkArea < M_PIf * std::powf(m_triangleChunk->m_gridSize / 2.0, 2.0)) && (supportFlag == false))
+				//if ((faceChunkArea < M_PIf * std::powf(m_triangleChunk->m_gridSize / 2.0, 2.0)) && (supportFlag == false))
+				//if ((faceChunkArea < M_PIf * std::powf(2.0, 2.0)) && (supportFlag == false))
+				if  (supportFlag == false)
 					supportEnable = false;
 			}
 
@@ -567,9 +607,10 @@ namespace mmesh
 				}
 
 			}
-			if ((sources.size() == 0) && (supportEnable == true))
+			//if ((sources.size() == 0) && (supportEnable == true))
+			if ((sources.size() < 1) && (supportEnable == true))
 			{
-				vec3 xypoint0((connectSectBox.max.x - connectSectBox.min.x) / 2, (connectSectBox.max.y - connectSectBox.min.y) / 2, 0.0);
+				vec3 xypoint0(connectSectBox.min.x+(connectSectBox.max.x - connectSectBox.min.x) / 2, connectSectBox.min.y+(connectSectBox.max.y - connectSectBox.min.y) / 2, 0.0);
 				vec3 dir = UP_NORMAL;
 				float t, u, v;
 				for (int faceIDindex = 0; faceIDindex < faceChunk.size(); faceIDindex++)
@@ -586,6 +627,10 @@ namespace mmesh
 						vec3 pointCross = xypoint0 + t * dir;
 						DLPISource dlpSource = generateSource(pointCross, normal);
 						dlpSource.typeflg = SUPPORT_FACE;
+						if (sources.size() == 1)
+						{
+							sources.clear();
+						}
 						sources.push_back(dlpSource);
 					}
 				}
@@ -599,10 +644,18 @@ namespace mmesh
 				vec3& vertex2 = m_vertexes.at(tFace[1]);
 				vec3& vertex3 = m_vertexes.at(tFace[2]);
 				vec3 normal = m_faceNormals.at(faceID);
-				vec3 pointCross = (vertex1 + vertex2 + vertex3) / 3;
-				DLPISource dlpSource = generateSource(pointCross, normal);
-				dlpSource.typeflg = SUPPORT_FACE;
-				sources.push_back(dlpSource);
+				vec3 pointCross = (vertex1 + vertex2 ) / 3;
+				vec3 xypoint0(pointCross.x, pointCross.y, 0.0);
+				vec3 dir = UP_NORMAL;
+				float t, u, v;
+				if (rayIntersectTriangle(xypoint0, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+				{
+					vec3 pointCross = xypoint0 + t * dir;
+					DLPISource dlpSource = generateSource(pointCross, normal);
+					dlpSource.typeflg = SUPPORT_FACE;
+					sources.push_back(dlpSource);
+				}
+
 			}
 
 			if (sources.size())
@@ -656,7 +709,8 @@ namespace mmesh
 		{
 			std::vector<int> edgeFaces;
 			std::vector<int>& faceChunk = SupportFaces.at(faceChunkIndex);
-			searchSectionFaceEdgeFace(faceChunk, edgeFaces);
+			float sectionFaceArea = 0.0;
+			searchSectionFaceEdgeFace(faceChunk, edgeFaces, sectionFaceArea);
 			for (int halfedge : edgeFaces)
 			{
 				int edgeface = 0, edgeVertex = 0;
@@ -689,6 +743,42 @@ namespace mmesh
 		clusteredSources.clusteredSrcID = cluster(srcPts, m_triangleChunk->m_width, 2);
 #endif
 	}
+	static std::pair <float, int> far_NearUp_index(std::vector<trimesh::vec3> VertexsDown, std::vector<trimesh::vec3> VertexsUp)
+	{
+		int idx = -1;
+		std::pair <float,int> ret(-1.0,-1);
+		std::vector<std::pair <float, int>> distanceIndex;
+		auto cmp_elements_sort = [](const std::pair <float, int>& e1, const std::pair <float, int>& e2) -> bool {
+			return e1.first < e2.first;
+
+		};
+
+		for (int upIndex=0; upIndex< VertexsUp.size(); upIndex++)
+		{
+			trimesh::vec3 VertexUp = VertexsUp[upIndex];
+			std::vector<std::pair <float, int>> distanceIndexIndex;
+
+			for (int downIndex = 0; downIndex < VertexsDown.size(); downIndex++)
+			{
+				trimesh::vec3 VertexDown = VertexsDown[downIndex];
+				float distance=trimesh::dist(VertexUp, VertexDown);
+				distanceIndexIndex.emplace_back(std::make_pair(distance, upIndex));
+			}
+			if (distanceIndexIndex.size())
+			{
+				std::sort(distanceIndexIndex.begin(), distanceIndexIndex.end(), cmp_elements_sort);
+				std::pair <float, int> retInner = *(distanceIndexIndex.begin());
+				distanceIndex.emplace_back(retInner);
+			}
+
+		}
+		if (distanceIndex.size())
+		{
+			std::sort(distanceIndex.begin(), distanceIndex.end(), cmp_elements_sort);
+			ret = *(distanceIndex.end()-1);
+		}
+		return ret;
+	}
 	//this function is just used for small section face
 	bool DLPQuickData::smallSectionFaceNeedSupport(std::vector<int> SupportFaces)
 	{
@@ -696,7 +786,11 @@ namespace mmesh
 		int nearFaceUp = 0;
 		int nearFaceDown = 0;
 		std::vector<int> edgeFaces;
-		searchSectionFaceEdgeFace(SupportFaces, edgeFaces);
+		std::vector<trimesh::vec3> edgeSectVertexsNearDown;
+		std::vector<trimesh::vec3> edgeSectVertexsNearUp;
+		float sectionFaceArea = 0.0;
+		searchSectionFaceEdgeFace(SupportFaces, edgeFaces, sectionFaceArea);
+
 		for (int edgeFacesIndex = 0; edgeFacesIndex < edgeFaces.size(); edgeFacesIndex++)
 		{
 			int edgefaceID = 0, edgeVertex = 0;
@@ -715,7 +809,7 @@ namespace mmesh
 
 				m_meshTopo->halfdecode(oppoHalfs[oppoHalfsIndex], oppofaceID, oppoVertex);
 
-				if ((vertexIndexStart == oppovertexIndexEnd)&&(vertexIndexEnd == oppovertexIndexStart))//检测到相邻边
+				if ((vertexIndexStart == oppovertexIndexEnd)&&(vertexIndexEnd == oppovertexIndexStart))//检测到共边相邻三角形
 				{
 					TriMesh::Face& oppoFaces = m_mesh->faces.at(oppofaceID);
 					trimesh::vec3& edgeVertexFirst = m_mesh->vertices[edgeFaces[(edgeVertex ) % 3]];
@@ -724,27 +818,42 @@ namespace mmesh
 					trimesh::vec3 oppoVertexThird = m_mesh->vertices[oppoFaces[(oppoVertex + 2) % 3]];
 					//if (oppoVertexThird.z < edgeVertexThird.z)//支撑区域是悬空区
 					//	supportflag = true;
-					//if ((edgeVertexFirst.z- oppoVertexThird.z >0)&&(edgeVertexSecond.z - oppoVertexThird.z > 0))//支撑区域是悬空区
+					//if ((edgeVertexFirst.z - oppoVertexThird.z > EPSILON) && (edgeVertexSecond.z - oppoVertexThird.z > EPSILON))//支撑区域是悬空区
 					if ((edgeVertexFirst.z - oppoVertexThird.z > EPSILON) && (edgeVertexSecond.z - oppoVertexThird.z > EPSILON))//支撑区域是悬空区
 					{
 						nearFaceDown += 1;
 					}
-					else
+					else if ((edgeVertexFirst.z - oppoVertexThird.z < EPSILON) || (edgeVertexSecond.z - oppoVertexThird.z < EPSILON))
 					{
 						nearFaceUp += 1;
 
 					}
-						
+					/////////////////////////////////////////////////
+					 if ((oppoVertexThird.z-edgeVertexFirst.z >0.0) || (oppoVertexThird.z-edgeVertexSecond.z > 0.0))
+					{
+						edgeSectVertexsNearUp.emplace_back(edgeVertexFirst);
 
-					std::cout << "edgeFaces[3]" << edgeFaces << std::endl;
-					std::cout << "oppoFaces[3]" << oppoFaces << std::endl;
-					std::cout << "supportflag==" << supportflag << std::endl;
-					std::cout << std::endl;
+					}
+					else
+					{
+						edgeSectVertexsNearDown.emplace_back(edgeVertexFirst);
+					}
+
+					//std::cout << "edgeFaces[3]" << edgeFaces << std::endl;
+					//std::cout << "oppoFaces[3]" << oppoFaces << std::endl;
+					//std::cout << "supportflag==" << supportflag << std::endl;
+					//std::cout << std::endl;
 				}
 
 			}
 		}
-		if (nearFaceDown==0)
+		std::pair <float, int>far_point= far_NearUp_index( edgeSectVertexsNearDown, edgeSectVertexsNearUp);
+		std::cout << "far_point.distance==" << far_point.first << std::endl;
+		std::cout << "nearFaceDown==" << nearFaceDown << std::endl;
+		std::cout << "nearFaceUp==" << nearFaceUp << std::endl;
+		std::cout << std::endl;
+
+		if (nearFaceDown==0|| far_point.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::powf(m_triangleChunk->m_gridSize / 2.0, 2.0))
 		{
 			supportflag = true;
 		}
