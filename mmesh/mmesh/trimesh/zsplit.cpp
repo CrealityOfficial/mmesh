@@ -1,6 +1,7 @@
 #include "zsplit.h"
 #include <map>
 #include <list>
+#include <float.h>
 #include "mmesh/trimesh/polygonstack.h"
 
 namespace mmesh
