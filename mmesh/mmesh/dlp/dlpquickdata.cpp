@@ -859,11 +859,18 @@ namespace mmesh
 		}
 		return supportflag;//supportflag;
 	}
-	void DLPQuickData::searchSectionFaceEdgeFace(std::vector<int> SupportFaces, std::vector<int>& edgeFaces)
+	void DLPQuickData::searchSectionFaceEdgeFace(std::vector<int> SupportFaces, std::vector<int>& edgeFaces, float &sectionFaceArea)
 	{
 		for (int faceID : SupportFaces)
 		{
 			ivec3& oppoHalfs = m_meshTopo->m_oppositeHalfEdges.at(faceID);
+			TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+			vec3& vertex1 = m_vertexes.at(tFace[0]);
+			vec3& vertex2 = m_vertexes.at(tFace[1]);
+			vec3& vertex3 = m_vertexes.at(tFace[2]);
+			vec3 e0 = vertex2 - vertex1;
+			vec3 e1 = vertex3 - vertex1;
+			sectionFaceArea += 0.5f * len(e0 TRICROSS e1);
 			for (int halfID = 0; halfID < 3; ++halfID)
 			{
 				int oppoHalf = oppoHalfs.at(halfID);
