@@ -89,6 +89,7 @@ namespace mmesh
 		float supportlength;
 		float startheight;
 		float manualAngle;
+		float space;
 	};
 }
 

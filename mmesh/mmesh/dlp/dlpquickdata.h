@@ -18,7 +18,13 @@ namespace mmesh
 		SUPPORT_EDGE=1<<1,
 		SUPPORT_FACE=1<<2,
 	};
-
+	typedef struct Connect_Section_infor
+	{
+		std::vector<std::vector<int>> facesIndexes;
+		std::vector<std::vector<int>> edgeFaces;
+		std::vector < trimesh::vec3> centerPoint;
+		std::vector < trimesh::box3> bBoxes;
+	}ConnectSectionInfor;
 	class CallBackParamsBase{
 	public:
 		CallBackParamsBase();
@@ -52,8 +58,10 @@ namespace mmesh
 		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag= SUPPORT_VERTEX| SUPPORT_EDGE| SUPPORT_FACE, std::function<void(CallBackParams *)> callback=NULL, CallBackParams* cbParams=NULL);//7
 		void autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 		void autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
-		void autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
+		void autoDlpFaceSource(std::vector<std::vector<DLPISource>> &sectionSources, AutoDLPSupportParam* autoParam);
 		void extractFaceSectEdge(std::vector<std::vector<int>> SupportFaces, std::vector<std::vector<trimesh::vec3>>& edgeSectVertexs);
+		bool sectionFaceNeedSupport(std::vector<int> SupportFaces, std::vector<int>& edgeFaces, trimesh::vec3& farPoint, trimesh::vec3& centerPoint);
+		void searchSectionFaceEdgeFace(std::vector<int> SupportFaces, std::vector<int> & edgeFaces, float& sectionFaceArea);
 	protected:
 		bool autoTest(const trimesh::vec3& point);
 		void takeAutoTest(const trimesh::vec3& point);
@@ -83,9 +91,12 @@ namespace mmesh
 		
 
 		std::vector<std::vector<trimesh::vec3>> m_VertexSampleInCell;
-		//std::vector<DLPISource> m_SupportFaceSources;
-		//std::vector<DLPISource> m_SupportEdgeSources;
-		//std::vector<DLPISource> m_SupportVertexSources;
+		std::vector<DLPISource> m_SupportFaceSources;
+		std::vector<DLPISource> m_SupportEdgeSources;
+		std::vector<DLPISource> m_SupportVertexSources;
+		bool m_DLPISourceInited;
+		AutoDLPSupportParam m_autoParam;
+		ConnectSectionInfor m_ConnectSectionInfor;
 
 
 	};
