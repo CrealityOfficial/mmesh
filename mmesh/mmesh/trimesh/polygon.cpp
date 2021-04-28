@@ -9,19 +9,10 @@ namespace mmesh
 		, m_root(nullptr)
 		, m_circleSize(0)
 	{
-#if _DEBUG
-		++m_test;
-		std::cout << "allocate" << m_test << std::endl;
-#endif
 	}
 	
 	Polygon2::~Polygon2()
 	{
-#if _DEBUG
-		std::cout << "deallocate" << m_test << std::endl;
-		--m_test;
-#endif
-
 		releaseNode();
 	}
 
