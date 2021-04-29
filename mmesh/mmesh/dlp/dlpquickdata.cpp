@@ -6,6 +6,8 @@
 
 #include "dlpcreatepolicy.h"
 #include <algorithm>
+#include <math.h>
+
 #ifdef USE_CGAL
 #include "mmesh/cgal/clusterPoint.h"
 #endif
@@ -917,7 +919,7 @@ namespace mmesh
 			farPoint = edgeSectVertexsNearUp[far_pointpair.second];
 		centerPoint = centerPointtemp / edgeFaces.size();
 
-		if (nearFaceDown==0|| far_pointpair.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::powf(m_triangleChunk->m_gridSize / 2.0, 2.0))
+		if (nearFaceDown==0|| far_pointpair.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::pow(m_triangleChunk->m_gridSize / 2.0, 2.0))
 		{
 			supportflag = true;
 		}
