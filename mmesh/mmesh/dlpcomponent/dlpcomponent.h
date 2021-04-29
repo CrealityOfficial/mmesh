@@ -1,6 +1,7 @@
 #ifndef MMESH_DLPCOMPONENT_1597889809542_H
 #define MMESH_DLPCOMPONENT_1597889809542_H
 #include "trimesh2/Vec.h"
+#include <memory>
 
 namespace mmesh
 {
