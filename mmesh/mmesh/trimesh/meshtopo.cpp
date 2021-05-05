@@ -480,4 +480,55 @@ namespace mmesh
 			}
 		}
 	}
+
+	void MeshTopo::flipFace(std::vector<int>& facesChunk)
+	{
+		int faceNum = (int)m_mesh->faces.size();
+		std::vector<bool> visitFlags(faceNum, false);
+		std::vector<int> visitStack;
+		std::vector<int> nextStack;
+
+		for (int faceID = 0; faceID < faceNum; ++faceID)
+		{
+			if (visitFlags.at(faceID) == false)
+			{
+				visitFlags.at(faceID) = true;
+				visitStack.push_back(faceID);
+
+				while (!visitStack.empty())
+				{
+					int seedSize = (int)visitStack.size();
+					for (int seedIndex = 0; seedIndex < seedSize; ++seedIndex)
+					{
+						int cFaceID = visitStack.at(seedIndex);
+						ivec3& oppoHalfs = m_oppositeHalfEdges.at(cFaceID);
+						for (int halfID = 0; halfID < 3; ++halfID)
+						{
+							int cStartVertex = m_mesh->faces.at(cFaceID)[halfID];
+							int oppoHalf = oppoHalfs.at(halfID);
+							if (oppoHalf >= 0)
+							{
+								int oppoFaceID = faceid(oppoHalf);
+								if (visitFlags.at(oppoFaceID) == false)
+								{
+									int oStartVertex = startvertexid(oppoHalf);
+									nextStack.push_back(oppoFaceID);
+									if(oStartVertex == cStartVertex)
+										facesChunk.push_back(oppoFaceID);
+									visitFlags.at(oppoFaceID) = true;
+								}
+								else
+								{
+									visitFlags.at(oppoFaceID) = true;
+								}
+							}
+						}
+					}
+
+					visitStack.swap(nextStack);
+					nextStack.clear();
+				}
+			}
+		}
+	}
 }
