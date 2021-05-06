@@ -11,6 +11,7 @@
 #ifdef USE_CGAL
 #include "mmesh/cgal/clusterPoint.h"
 #endif
+#include "mmesh/vcg/trimesh_sampling .h"
 using namespace trimesh;
 namespace mmesh
 {
@@ -198,6 +199,169 @@ namespace mmesh
 
 		return true;
 	}
+#ifdef USE_VCG_POISSON_SAMPLE
+	void DLPQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag, std::function<void(CallBackParams*)> callback, CallBackParams* cbParams)
+	{
+		m_throwFunc = callback;
+		m_cbParamsPtr = cbParams;
+		if (m_autoParam.space != autoParam->space)
+		{
+			m_dirty = true;
+			m_DLPISourceInited = false;
+		}
+		m_autoParam = *autoParam;
+		build();
+		sources.clear();
+		if (m_throwFunc != NULL)
+		{
+			m_cbParamsPtr->percentage = 10.0;
+			m_throwFunc(m_cbParamsPtr);
+
+		}
+		//flag = SUPPORT_EDGE|SUPPORT_VERTEX;
+		if (m_DLPISourceInited == false)
+		{
+			if ((flag & SUPPORT_VERTEX) == SUPPORT_VERTEX)
+			{
+				autoDlpVertexSource(m_SupportVertexSources, autoParam);
+			}
+			if ((flag & SUPPORT_EDGE) == SUPPORT_EDGE)
+			{
+				autoDlpEdgeSource(m_SupportEdgeSources, autoParam);
+				if (1)
+				{
+					//去除相同点、邻近点
+					auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
+						trimesh::vec3 zeropos(0.0, 0.0, 0.0);
+						float len1 = trimesh::dist2(e1.position, zeropos);
+						float len2 = trimesh::dist2(e2.position, zeropos);
+						return len1 < len2;
+
+					};
+					auto cmp_elements_unique = [this](DLPISource& e1, DLPISource& e2)->bool {
+
+						//float faceCosValue = cosf(m_autoParam.autoAngle * M_PIf / 180.0f);
+						float filterValue = m_autoParam.space;
+						float distanceValue = trimesh::dist(e1.position, e2.position);
+						bool ret = distanceValue < filterValue;
+						//std::cout << "cmp_elements_unique=== " << trimesh::dist(e1.position, e2.position) << std::endl;
+						return ret;
+					};
+					std::vector<DLPISource>::iterator iterator;
+					std::sort(m_SupportEdgeSources.begin(), m_SupportEdgeSources.end(), cmp_elements_sort);
+					iterator = std::unique(m_SupportEdgeSources.begin(), m_SupportEdgeSources.end(), cmp_elements_unique);
+					m_SupportEdgeSources.resize(std::distance(m_SupportEdgeSources.begin(), iterator));
+				}
+			}
+			if ((flag & SUPPORT_FACE) == SUPPORT_FACE)
+			{
+				std::vector<std::vector<DLPISource>> sectionSources;
+				//m_SupportFaceSources
+				autoDlpFaceSource(sectionSources, autoParam);
+				m_SupportFaceSources.clear();
+				for (int sectIndex = 0; sectIndex < sectionSources.size(); sectIndex++)
+				{
+					std::vector<DLPISource>& sectionSrcs = sectionSources[sectIndex];
+
+					if (sectionSrcs.size())
+						m_SupportFaceSources.insert(m_SupportFaceSources.end(), sectionSrcs.begin(), sectionSrcs.end());
+				}
+			}
+
+			m_DLPISourceInited = true;
+		}
+
+		if ((flag & SUPPORT_VERTEX) == SUPPORT_VERTEX)
+		{
+
+			for (DLPISource src : m_SupportVertexSources)
+			{
+				sources.emplace_back(src);
+			}
+		}
+		if ((flag & SUPPORT_EDGE) == SUPPORT_EDGE)
+		{
+
+			for (DLPISource src : m_SupportEdgeSources)
+			{
+				sources.emplace_back(src);
+			}
+		}
+		if ((flag & SUPPORT_FACE) == SUPPORT_FACE)
+		{
+
+			for (DLPISource src : m_SupportFaceSources)
+			{
+				sources.emplace_back(src);
+			}
+		}
+		/////
+		//if (1)
+		int iterations = sources.size();
+		while (iterations)
+		{
+			//去除相同点、邻近点
+			auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
+				trimesh::vec3 zeropos(0.0, 0.0, 0.0);
+				float len1 = trimesh::dist2(e1.position, zeropos);
+				float len2 = trimesh::dist2(e2.position, zeropos);
+				return len1 < len2;
+
+			};
+			auto cmp_elements_unique = [this](DLPISource& e1, DLPISource& e2)->bool {
+
+				//float faceCosValue = cosf(m_autoParam.autoAngle * M_PIf / 180.0f);
+				 //float filterValue = m_triangleChunk->m_gridSize-EPSILON ;
+				 //float filterValue = m_autoParam.space;
+				float filterValue = EPSILON;
+				float distanceValue = trimesh::dist(e1.position, e2.position);
+				bool ret = distanceValue < filterValue;
+				//std::cout << "cmp_elements_unique=== " << trimesh::dist(e1.position, e2.position) << std::endl;
+				if (ret)
+				{
+					if (e1.typeflg & SUPPORT_VERTEX)
+					{
+						ret = false;
+						if (e2.typeflg & SUPPORT_VERTEX)
+							ret = distanceValue < EPSILON ? true : false;
+
+					}
+					else if (e1.typeflg & SUPPORT_EDGE)
+					{
+						//if (e2.typeflg & SUPPORT_VERTEX )
+						//{
+						//	e1 = e2;//由于是引用变量，可以动态更改
+						//	ret = false;//标识不可移除
+						//}
+						//else 
+						//	ret = distanceValue < EPSILON ? true : false;
+
+					}
+
+				}
+				return ret;
+			};
+			std::vector<DLPISource>::iterator iterator;
+			std::sort(sources.begin(), sources.end(), cmp_elements_sort);
+			iterator = std::unique(sources.begin(), sources.end(), cmp_elements_unique);
+			sources.resize(std::distance(sources.begin(), iterator));
+			if (iterations == sources.size())
+			{
+				iterations = 0;
+			}
+			else
+				iterations = sources.size();
+
+		}
+		if (m_throwFunc != NULL)
+		{
+			m_cbParamsPtr->percentage = 100.0;
+			m_throwFunc(m_cbParamsPtr);
+
+		}
+	}
+
+#else
 	void DLPQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag, std::function<void(CallBackParams*)> callback, CallBackParams* cbParams)
 	{
 		m_throwFunc = callback;
@@ -226,6 +390,30 @@ namespace mmesh
 			if ((flag & SUPPORT_EDGE) == SUPPORT_EDGE)
 			{
 				autoDlpEdgeSource(m_SupportEdgeSources, autoParam);
+				if (1)
+				{
+					//去除相同点、邻近点
+					auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
+						trimesh::vec3 zeropos(0.0, 0.0, 0.0);
+						float len1 = trimesh::dist2(e1.position, zeropos);
+						float len2 = trimesh::dist2(e2.position, zeropos);
+						return len1 < len2;
+
+					};
+					auto cmp_elements_unique = [this](DLPISource& e1, DLPISource& e2)->bool {
+
+						//float faceCosValue = cosf(m_autoParam.autoAngle * M_PIf / 180.0f);
+						float filterValue = m_autoParam.space;
+						float distanceValue = trimesh::dist(e1.position, e2.position);
+						bool ret = distanceValue < filterValue;
+						//std::cout << "cmp_elements_unique=== " << trimesh::dist(e1.position, e2.position) << std::endl;
+						return ret;
+					};
+					std::vector<DLPISource>::iterator iterator;
+					std::sort(m_SupportEdgeSources.begin(), m_SupportEdgeSources.end(), cmp_elements_sort);
+					iterator = std::unique(m_SupportEdgeSources.begin(), m_SupportEdgeSources.end(), cmp_elements_unique);
+					m_SupportEdgeSources.resize(std::distance(m_SupportEdgeSources.begin(), iterator));
+				}
 			}
 			if ((flag & SUPPORT_FACE) == SUPPORT_FACE)
 			{
@@ -260,11 +448,16 @@ namespace mmesh
 					#endif
 #else
 
-					if (1)
+					int iterations = sectionSrcs.size();
+					//int iterations = 0;
+					while (iterations )
 					{
 						//去除相同点、邻近点
 						auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
-							return e1.position < e2.position;
+							trimesh::vec3 zeropos(0.0, 0.0, 0.0);
+							float len1 = trimesh::dist2(e1.position, zeropos);
+							float len2 = trimesh::dist2(e2.position, zeropos);
+							return len1 < len2;
 
 						};
 						auto cmp_elements_unique = [this](DLPISource& e1, DLPISource& e2)->bool {
@@ -274,27 +467,19 @@ namespace mmesh
 							float distanceValue = trimesh::dist(e1.position, e2.position);
 							bool ret = distanceValue < filterValue;
 							//std::cout << "cmp_elements_unique=== " << trimesh::dist(e1.position, e2.position) << std::endl;
-							if (ret)
-							{
-								if (e2.typeflg & (SUPPORT_VERTEX | SUPPORT_EDGE))
-								{
-									if (e1.typeflg & SUPPORT_FACE)
-									{
-										e1 = e2;//由于是引用变量，可以动态更改
-										ret = false;
-									}
-									else if (e1.typeflg & (SUPPORT_VERTEX | SUPPORT_EDGE))
-									{
-										ret = distanceValue < EPSILON ? true : false;
-									}
-								}
-							}
 							return ret;
 						};
 						std::vector<DLPISource>::iterator iterator;
 						std::sort(sectionSrcs.begin(), sectionSrcs.end(), cmp_elements_sort);
 						iterator = std::unique(sectionSrcs.begin(), sectionSrcs.end(), cmp_elements_unique);
 						sectionSrcs.resize(std::distance(sectionSrcs.begin(), iterator));
+						if (iterations == sectionSrcs.size())
+						{
+							iterations = 0;
+						}
+						else
+							iterations = sectionSrcs.size();
+						std::cout << "iterations===" << iterations << std::endl;
 					}
 					if (sectionSrcs.size() == 1)
 					{
@@ -357,11 +542,17 @@ namespace mmesh
 			}
 		}
 		/////
-		if (1)
+		//if (1)
+		int iterations = 0;
+		while(iterations<2)
 		{
+			iterations++;
 			//去除相同点、邻近点
 			auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
-				return e1.position < e2.position;
+				trimesh::vec3 zeropos(0.0,0.0,0.0);
+				float len1=trimesh::dist2(e1.position, zeropos);
+				float len2=trimesh::dist2(e2.position, zeropos);
+				return len1 < len2;
 
 			};
 			auto cmp_elements_unique = [this](DLPISource& e1, DLPISource& e2)->bool {
@@ -374,17 +565,23 @@ namespace mmesh
 				//std::cout << "cmp_elements_unique=== " << trimesh::dist(e1.position, e2.position) << std::endl;
 				if (ret)
 				{
-					if (e2.typeflg & (SUPPORT_VERTEX | SUPPORT_EDGE))
+					if (e1.typeflg & SUPPORT_VERTEX)
 					{
-						if (e1.typeflg & SUPPORT_FACE)
-						{
-							e1 = e2;//由于是引用变量，可以动态更改
-							ret = false;
-						}
-						else if (e1.typeflg & (SUPPORT_VERTEX | SUPPORT_EDGE))
-						{
+						ret = false;
+						if(e2.typeflg & SUPPORT_VERTEX)
 							ret = distanceValue < EPSILON ? true : false;
-						}
+
+					}
+					else if (e1.typeflg & SUPPORT_EDGE)
+					{
+						//if (e2.typeflg & SUPPORT_VERTEX )
+						//{
+						//	e1 = e2;//由于是引用变量，可以动态更改
+						//	ret = false;//标识不可移除
+						//}
+						//else 
+						//	ret = distanceValue < EPSILON ? true : false;
+
 					}
 				}
 				return ret;
@@ -419,7 +616,7 @@ namespace mmesh
 
 		}
 	}
-
+#endif
 	void DLPQuickData::autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam)
 	{
 		std::vector<int> supportVertexes;
@@ -555,7 +752,121 @@ namespace mmesh
 
 		}
 	}
+#ifdef USE_VCG_POISSON_SAMPLE
+	void DLPQuickData::autoDlpFaceSource(std::vector<std::vector<DLPISource>>& sectionSources, AutoDLPSupportParam* autoParam)
+	{
+		float faceCosValue = cosf(autoParam->autoAngle * M_PIf / 180.0f);
+		int percentage_Count = 0;
+		std::vector<std::vector<int>> supportFaces;
+		sectionSources.clear();
+		m_ConnectSectionInfor.facesIndexes.clear();
 
+		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
+		vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
+		poissonAlgcfg.baseSampleRad = 0.5;//m_triangleChunk->m_width;
+		poissonAlgcfg.userSampleRad = autoParam->space;
+		for (std::vector<int>& faceChunk : supportFaces)
+		{
+
+			trimesh::box3 connectSectBox;
+			float faceChunkArea = 0.0;
+			bool supportEnable = true;
+			std::vector< trimesh::vec3> inVertexs;
+			std::vector< trimesh::vec3> inNors;
+			std::vector< trimesh::vec3> outVertexs;
+			std::vector<DLPISource> sources;
+			std::vector<trimesh::TriMesh::Face> sectFacesIndex;
+			std::vector<int> edgeFaces;
+			std::vector<trimesh::vec3> edgeSectVertexsNearUp;
+			trimesh::vec3 centerPoint(0.0, 0.0, 0.0);
+			trimesh::vec3 farPoint(0.0, 0.0, 0.0);
+			for (int faceID : faceChunk)
+			{
+				TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+				sectFacesIndex.emplace_back(tFace);
+
+			}
+			bool supportFlag = sectionFaceNeedSupport(faceChunk, edgeFaces, farPoint, centerPoint);
+			//bool supportFlag = sectionFaceNeedSupport(faceChunk, edgeFaces, farPoint, centerPoint, edgeSectVertexsNearUp);
+			if(supportFlag)
+			{
+				std::vector< trimesh::vec3> outVertexs;
+				std::vector<DLPISource> sources;
+				vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
+				PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
+
+				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs);
+				std::cout << "extract_poisson_point" << outVertexs.size() << std::endl;
+				for (trimesh::vec3 pt : outVertexs)
+				{
+					DLPISource dlpSource = generateSource(pt, trimesh::vec3(0, 0, -1.0));
+					dlpSource.typeflg = SUPPORT_FACE;
+					sources.push_back(dlpSource);
+				}
+				if (sources.size() <= 1)
+				{
+					//if ((sources.size() == 1) || (supportEnable == true))
+					{
+						vec3 xypoint(centerPoint.x, centerPoint.y, 0.0);
+						vec3 dir = UP_NORMAL;
+						float t = 0.0, u = 0.0, v = 0.0;
+						for (int faceIDindex = 0; faceIDindex < faceChunk.size(); faceIDindex++)
+						{
+							int& faceID = faceChunk[faceIDindex];
+							TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+							vec3& vertex1 = m_vertexes.at(tFace[0]);
+							vec3& vertex2 = m_vertexes.at(tFace[1]);
+							vec3& vertex3 = m_vertexes.at(tFace[2]);
+							vec3& normal = m_faceNormals.at(faceID);
+
+							if (rayIntersectTriangle(xypoint, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+							{
+								vec3 pointCross = xypoint + t * dir;
+								DLPISource dlpSource = generateSource(pointCross, normal);
+								dlpSource.typeflg = SUPPORT_FACE;
+								if (sources.size() == 1)
+								{
+									sources.clear();
+								}
+								sources.push_back(dlpSource);
+							}
+						}
+					}
+					if ((sources.size() == 0) && (supportEnable == true))
+					{
+						int& faceID = faceChunk[0];//默认选中第一个
+						TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+						vec3& vertex1 = m_vertexes.at(tFace[0]);
+						vec3& vertex2 = m_vertexes.at(tFace[1]);
+						vec3& vertex3 = m_vertexes.at(tFace[2]);
+						vec3 normal = m_faceNormals.at(faceID);
+						vec3 pointCross = (vertex1 + vertex2) / 3;
+						vec3 xypoint0(pointCross.x, pointCross.y, 0.0);
+						vec3 dir = UP_NORMAL;
+						float t, u, v;
+						if (rayIntersectTriangle(xypoint0, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+						{
+							vec3 pointCross = xypoint0 + t * dir;
+							DLPISource dlpSource = generateSource(pointCross, normal);
+							dlpSource.typeflg = SUPPORT_FACE;
+							sources.push_back(dlpSource);
+						}
+					}
+
+				}
+
+				if (sources.size())
+				{
+					m_ConnectSectionInfor.facesIndexes.emplace_back();
+					m_ConnectSectionInfor.facesIndexes[m_ConnectSectionInfor.facesIndexes.size() - 1] = faceChunk;
+
+					sectionSources.emplace_back(sources);
+				}
+			}
+		}
+	}
+
+#else
 	void DLPQuickData::autoDlpFaceSource(std::vector<std::vector<DLPISource>>& sectionSources, AutoDLPSupportParam* autoParam)
 	{
 		float faceCosValue = cosf(autoParam->autoAngle * M_PIf / 180.0f);
@@ -733,7 +1044,7 @@ namespace mmesh
 			}
 		}
 	}
-
+#endif
 	bool DLPQuickData::autoTest(const trimesh::vec3& point)
 	{
 		std::vector<bool> m_flags;
@@ -886,20 +1197,22 @@ namespace mmesh
 					{
 						nearFaceDown += 1;
 					}
-					else if ((edgeVertexFirst.z - oppoVertexThird.z < EPSILON) || (edgeVertexSecond.z - oppoVertexThird.z < EPSILON))
+					else if ((edgeVertexFirst.z - oppoVertexThird.z < EPSILON) && (edgeVertexSecond.z - oppoVertexThird.z < EPSILON))
 					{
 						nearFaceUp += 1;
 
 					}
 					/////////////////////////////////////////////////
-					 if ((oppoVertexThird.z-edgeVertexFirst.z >0.0) || (oppoVertexThird.z-edgeVertexSecond.z > 0.0))
+					if ((oppoVertexThird.z - edgeVertexFirst.z > 0.0) || (oppoVertexThird.z - edgeVertexSecond.z > 0.0))
 					{
-						edgeSectVertexsNearUp.emplace_back(edgeVertexFirst);
+						trimesh::vec3 temp = edgeVertexFirst.z - edgeVertexSecond.z > 0.0 ? edgeVertexSecond : edgeVertexFirst;
+						edgeSectVertexsNearUp.emplace_back(temp);
 
 					}
 					else
 					{
-						edgeSectVertexsNearDown.emplace_back(edgeVertexFirst);
+						trimesh::vec3 temp = edgeVertexFirst.z - edgeVertexSecond.z > 0.0 ? edgeVertexSecond : edgeVertexFirst;
+						edgeSectVertexsNearDown.emplace_back(temp);
 					}
 
 					//std::cout << "edgeFaces[3]" << edgeFaces << std::endl;
@@ -919,7 +1232,9 @@ namespace mmesh
 			farPoint = edgeSectVertexsNearUp[far_pointpair.second];
 		centerPoint = centerPointtemp / edgeFaces.size();
 
-		if (nearFaceDown==0|| far_pointpair.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::pow(m_triangleChunk->m_gridSize / 2.0, 2.0))
+		bool smallsectEable = (far_pointpair.first > m_triangleChunk->m_gridSize) || (sectionFaceArea /(M_PIf * std::powf(m_triangleChunk->m_gridSize / 2.0, 2.0)*0.7 ) > 1);
+		if (nearFaceDown==0|| smallsectEable)
+		//if (nearFaceDown==0|| far_pointpair.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::pow(m_triangleChunk->m_gridSize / 2.0, 2.0))
 		{
 			supportflag = true;
 		}
@@ -950,6 +1265,11 @@ namespace mmesh
 						edgeFaces.emplace_back(edgeFacestemp);
 					}
 				}
+				else
+				{
+					std::cout << "have not neighbor face!!!!" << std::endl;
+				}
+
 			}
 		}
 	}
