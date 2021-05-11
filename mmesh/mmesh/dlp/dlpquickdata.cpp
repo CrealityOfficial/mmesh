@@ -763,7 +763,7 @@ namespace mmesh
 
 		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
 		vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
-		poissonAlgcfg.baseSampleRad = 0.5;//m_triangleChunk->m_width;
+		poissonAlgcfg.baseSampleRad = 0.25;//m_triangleChunk->m_width;
 		poissonAlgcfg.userSampleRad = autoParam->space;
 		for (std::vector<int>& faceChunk : supportFaces)
 		{
@@ -778,8 +778,8 @@ namespace mmesh
 			std::vector<trimesh::TriMesh::Face> sectFacesIndex;
 			std::vector<int> edgeFaces;
 			std::vector<trimesh::vec3> edgeSectVertexsNearUp;
-			trimesh::vec3 centerPoint(0.0, 0.0, 0.0);
-			trimesh::vec3 farPoint(0.0, 0.0, 0.0);
+			trimesh::vec3 centerPoint(-1.0, -1.0, -1.0);
+			trimesh::vec3 farPoint(-1.0, -1.0, -1.0);
 			for (int faceID : faceChunk)
 			{
 				TriMesh::Face& tFace = m_mesh->faces.at(faceID);
@@ -840,11 +840,19 @@ namespace mmesh
 						vec3& vertex2 = m_vertexes.at(tFace[1]);
 						vec3& vertex3 = m_vertexes.at(tFace[2]);
 						vec3 normal = m_faceNormals.at(faceID);
-						vec3 pointCross = (vertex1 + vertex2) / 3;
+						vec3 pointCross = (vertex1 + vertex2+ vertex3) / 3;
 						vec3 xypoint0(pointCross.x, pointCross.y, 0.0);
 						vec3 dir = UP_NORMAL;
 						float t, u, v;
-						if (rayIntersectTriangle(xypoint0, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+
+						if (farPoint.z>0.0)
+						{
+							vec3 pointCross = farPoint;
+							DLPISource dlpSource = generateSource(pointCross, normal);
+							dlpSource.typeflg = SUPPORT_FACE;
+							sources.push_back(dlpSource);
+						}
+						else if (rayIntersectTriangle(xypoint0, dir, vertex1, vertex2, vertex3, &t, &u, &v))
 						{
 							vec3 pointCross = xypoint0 + t * dir;
 							DLPISource dlpSource = generateSource(pointCross, normal);
@@ -1224,10 +1232,10 @@ namespace mmesh
 			}
 		}
 		std::pair <float, int> far_pointpair= far_NearUp_index( edgeSectVertexsNearDown, edgeSectVertexsNearUp);
-		std::cout << "far_point.distance==" << far_pointpair.first << std::endl;
-		std::cout << "nearFaceDown==" << nearFaceDown << std::endl;
-		std::cout << "nearFaceUp==" << nearFaceUp << std::endl;
-		std::cout << std::endl;
+		//std::cout << "far_point.distance==" << far_pointpair.first << std::endl;
+		//std::cout << "nearFaceDown==" << nearFaceDown << std::endl;
+		//std::cout << "nearFaceUp==" << nearFaceUp << std::endl;
+		//std::cout << std::endl;
 		if (far_pointpair.second > 0)
 			farPoint = edgeSectVertexsNearUp[far_pointpair.second];
 		centerPoint = centerPointtemp / edgeFaces.size();
