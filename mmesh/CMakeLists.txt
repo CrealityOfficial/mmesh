@@ -47,6 +47,13 @@ if(WIN32)
 endif()
 
 set(Libs trimesh2 clipper)
+if(HAVE_BOOST_ERIALIZATION)
+	__files_group(${CMAKE_CURRENT_SOURCE_DIR}/mmeshtest/ SRCS_TEST)
+	source_group(cereal FILES ${SRCS_TEST})
+	list(APPEND SRCS ${SRCS_TEST})
+	list(APPEND Libs boost_serialization gtest)
+endif()
+
 __add_real_target(mmesh lib SOURCE ${SRCS} INC ${Incs} LIB ${Libs} DEF ${DEFS} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(INSTALL_MMESH)

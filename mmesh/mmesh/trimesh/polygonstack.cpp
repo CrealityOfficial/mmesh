@@ -7,6 +7,7 @@
 #include "mmesh/trimesh/savepolygonstack.h"
 #include <assert.h>
 
+#include "ccglobal/spycc.h"
 namespace mmesh
 {
 	PolygonStack::PolygonStack()
@@ -36,8 +37,12 @@ namespace mmesh
 		sprintf(buffer, "poly/%d_%d.poly", layer, i++);
 		stackSave(buffer, polygons, points);
 #endif
+		ANALYSIS_TICK("prepare")
 		prepare(polygons, points);
+		ANALYSIS_TICK("prepare end")
+		ANALYSIS_TICK("generate")
 		generate(triangles);
+		ANALYSIS_TICK("generate end")
 	}
 
 	void PolygonStack::generatesWithoutTree(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, std::vector<trimesh::TriMesh::Face>& triangles)
@@ -469,9 +474,13 @@ namespace mmesh
 				}
 			};
 
+			ANALYSIS_TICK("split")
 			split(rootNode);
+			ANALYSIS_TICK("split end")
+			ANALYSIS_TICK("merge")
 			merge(rootNode);
-
+			ANALYSIS_TICK("merge end")
+			ANALYSIS_TICK("setup")
 			for (size_t i = 0; i < size; ++i)
 			{
 				if (simplePolygons.at(i).size() > 0)
@@ -481,6 +490,7 @@ namespace mmesh
 					m_polygon2s.push_back(poly);
 				}
 			}
+			ANALYSIS_TICK("setup end")
 		}
 	}
 

@@ -15,6 +15,7 @@ namespace mmesh
 		int index;
 		int type;  // 0 colliear 1 concave 2 convex 3 ear
 		double dot;
+		trimesh::dbox2 b;
 	};
 
 	class Polygon2
@@ -46,7 +47,7 @@ namespace mmesh
 		int m_circleSize;
 		std::list<VNode*> m_ears;
 
-		std::vector<VNode*> m_debugNodes;
+		std::vector<VNode> m_debugNodes;
 
 		static int m_test;
 	};
