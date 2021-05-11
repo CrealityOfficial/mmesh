@@ -38,6 +38,8 @@ if(CGAL_ENABLE)
 	add_definitions(-DUSE_CGAL)
 endif()
 
+include_directories(${VCG_INCLUDES})
+include_directories(${EIGEN_INCLUDES})
 __enable_openmp()
 
 if(WIN32)

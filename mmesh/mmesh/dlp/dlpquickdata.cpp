@@ -1240,7 +1240,8 @@ namespace mmesh
 			farPoint = edgeSectVertexsNearUp[far_pointpair.second];
 		centerPoint = centerPointtemp / edgeFaces.size();
 
-		bool smallsectEable = (far_pointpair.first > m_triangleChunk->m_gridSize) || (sectionFaceArea /(M_PIf * std::powf(m_triangleChunk->m_gridSize / 2.0, 2.0)*0.7 ) > 1);
+		//use pow replace powf, for linux compile
+		bool smallsectEable = (far_pointpair.first > m_triangleChunk->m_gridSize) || (sectionFaceArea /(M_PIf * std::pow(m_triangleChunk->m_gridSize / 2.0, 2.0)*0.7 ) > 1);
 		if (nearFaceDown==0|| smallsectEable)
 		//if (nearFaceDown==0|| far_pointpair.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::pow(m_triangleChunk->m_gridSize / 2.0, 2.0))
 		{
