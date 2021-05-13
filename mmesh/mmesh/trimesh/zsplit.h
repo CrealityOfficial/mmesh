@@ -4,7 +4,7 @@
 
 namespace mmesh
 {
-	class ZSplit : public SplitBase
+	class ZSplit
 	{
 	public:
 		ZSplit();
