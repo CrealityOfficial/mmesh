@@ -2,19 +2,9 @@
 
 namespace mmesh
 {
-	SplitBase::SplitBase()
-		:m_mesh(nullptr)
+	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
+		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2)
 	{
-
-	}
-
-	SplitBase::~SplitBase()
-	{
-
-	}
-
-	void SplitBase::setInputMesh(trimesh::TriMesh* mesh)
-	{
-		m_mesh = mesh;
+		return true;
 	}
 }

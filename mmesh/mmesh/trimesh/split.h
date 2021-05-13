@@ -4,16 +4,8 @@
 
 namespace mmesh
 {
-	class SplitBase
-	{
-	public:
-		SplitBase();
-		~SplitBase();
-
-		void setInputMesh(trimesh::TriMesh* mesh);
-	protected:
-		trimesh::TriMesh* m_mesh;
-	};
+	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
+		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2);
 }
 
 #endif // MMESH_SPLIT_1612341980784_H

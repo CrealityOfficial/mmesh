@@ -18,7 +18,13 @@ namespace mmesh
 		SUPPORT_EDGE=1<<1,
 		SUPPORT_FACE=1<<2,
 	};
-
+	typedef struct Connect_Section_infor
+	{
+		std::vector<std::vector<int>> facesIndexes;
+		std::vector<std::vector<int>> edgeFaces;
+		std::vector < trimesh::vec3> centerPoint;
+		std::vector < trimesh::box3> bBoxes;
+	}ConnectSectionInfor;
 	class CallBackParamsBase{
 	public:
 		CallBackParamsBase();
@@ -54,9 +60,8 @@ namespace mmesh
 		void autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 		void autoDlpFaceSource(std::vector<std::vector<DLPISource>> &sectionSources, AutoDLPSupportParam* autoParam);
 		void extractFaceSectEdge(std::vector<std::vector<int>> SupportFaces, std::vector<std::vector<trimesh::vec3>>& edgeSectVertexs);
-		bool smallSectionFaceNeedSupport(std::vector<int> SupportFaces);
+		bool sectionFaceNeedSupport(std::vector<int> SupportFaces, std::vector<int>& edgeFaces, trimesh::vec3& farPoint, trimesh::vec3& centerPoint);
 		void searchSectionFaceEdgeFace(std::vector<int> SupportFaces, std::vector<int> & edgeFaces, float& sectionFaceArea);
-
 	protected:
 		bool autoTest(const trimesh::vec3& point);
 		void takeAutoTest(const trimesh::vec3& point);
@@ -91,6 +96,8 @@ namespace mmesh
 		std::vector<DLPISource> m_SupportVertexSources;
 		bool m_DLPISourceInited;
 		AutoDLPSupportParam m_autoParam;
+		ConnectSectionInfor m_ConnectSectionInfor;
+
 
 	};
 }

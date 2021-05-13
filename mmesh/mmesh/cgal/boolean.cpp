@@ -161,16 +161,16 @@ namespace mmesh
         switch (typeindex)
         {
         case cxBoolean_operation_type::CX_UNION:
-            validvalue = PMP::corefine_and_compute_union(surfaceMesh1, surfaceMesh2, surfaceOut);
+            validvalue = PMP::corefine_and_compute_union(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
             break;
         case cxBoolean_operation_type::CX_INTERSECTION:
-            validvalue = PMP::corefine_and_compute_intersection(surfaceMesh1, surfaceMesh2, surfaceOut);
+            validvalue = PMP::corefine_and_compute_intersection(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
             break;
         case cxBoolean_operation_type::CX_TM1_MINUS_TM2:
-            validvalue = PMP::corefine_and_compute_difference(surfaceMesh1, surfaceMesh2, surfaceOut);
+            validvalue = PMP::corefine_and_compute_difference(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
             break;
         case cxBoolean_operation_type::CX_TM2_MINUS_TM1:
-            validvalue = PMP::corefine_and_compute_difference(surfaceMesh2, surfaceMesh1, surfaceOut);
+            validvalue = PMP::corefine_and_compute_difference(surfaceMesh2, surfaceMesh1, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
             break;
         }
         if (validvalue)

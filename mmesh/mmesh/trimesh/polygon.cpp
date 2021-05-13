@@ -1,27 +1,20 @@
 #include "polygon.h"
 #include "mmesh/trimesh/polygon2util.h"
+#include "ccglobal/spycc.h"
 
 namespace mmesh
 {
 	int Polygon2::m_test = 0;
 	Polygon2::Polygon2()
-		:m_close(false)
+		: m_close(false)
 		, m_root(nullptr)
 		, m_circleSize(0)
+		, m_points(nullptr)
 	{
-#if _DEBUG
-		++m_test;
-		std::cout << "allocate" << m_test << std::endl;
-#endif
 	}
 	
 	Polygon2::~Polygon2()
 	{
-#if _DEBUG
-		std::cout << "deallocate" << m_test << std::endl;
-		--m_test;
-#endif
-
 		releaseNode();
 	}
 
@@ -38,55 +31,47 @@ namespace mmesh
 
 		int size = (int)m_indexes.size();
 
-		if (!m_close || size == 0) return;
+		if (!m_close || size == 0)
+			return;
+
 		releaseNode();
 
+		ANALYSIS_TICK("setup node")
 		m_circleSize = size;
-		VNode* root = new VNode();
+		std::cout << "polygon vertex size " << m_circleSize << std::endl;
+		m_debugNodes.resize(m_circleSize);
+		m_root = &m_debugNodes.at(0);
 
-		m_debugNodes.push_back(root);
-		root->prev = nullptr;
-		root->next = nullptr;
-		VNode* cur = root;
-		VNode* prv = nullptr;
 		for (int i = 0; i < size; ++i)
 		{
-			if (!cur)
-			{
-				cur = new VNode();
-				cur->prev = nullptr;
-				cur->next = nullptr;
-
-				m_debugNodes.push_back(cur);
-			}
-
-			cur->index = m_indexes.at(i);
-
-			if (prv)
-			{
-				prv->next = cur;
-				cur->prev = prv;
-			}
-			prv = cur;
-			cur = cur->next;
+			VNode& n = m_debugNodes.at(i);
+			n.index = m_indexes.at(i);
+			n.prev = &m_debugNodes.at((i + size - 1) % size);
+			n.next = &m_debugNodes.at((i + 1) % size);
 		}
 
-		if (prv != root)
-		{
-			root->prev = prv;
-			prv->next = root;
-		}
-
-		m_root = root;
 		m_ears.clear();
-		cur = m_root;
-		do
+		ANALYSIS_TICK("setup ears")
+		for (int i = 0; i < size; ++i)
 		{
-			calType(cur);
+			if (i % 100 == 1)
+			{
+				ANALYSIS_TICK("ears")
+			}
+			VNode& cur = m_debugNodes.at(i);
+			trimesh::dvec2& o = m_points->at(cur.index);
+			trimesh::dvec2& next = m_points->at(cur.next->index);
+			trimesh::dvec2& prev = m_points->at(cur.prev->index);
+			trimesh::dbox2& b = cur.b;
+			b += o;
+			b += next;
+			b += prev;
 
-			if (cur->type == 3) m_ears.push_back(cur);
-			cur = cur->next;
-		} while (cur != m_root);
+			calType(&cur);
+
+			if (cur.type == 3)
+				m_ears.push_back(&cur);
+		}
 	}
 
 	std::vector<int> Polygon2::toIndices()
@@ -96,18 +81,6 @@ namespace mmesh
 
 	void Polygon2::releaseNode()
 	{
-		//if (!m_root) return;
-
-		//VNode* cur = m_root;
-		//VNode* nxt = cur->next;
-		//do
-		//{
-		//	delete cur;
-		//	cur = nxt;
-		//	nxt = cur->next;
-		//} while (cur != m_root);
-		for (VNode* n : m_debugNodes)
-			delete n;
 		m_debugNodes.clear();
 		m_root = nullptr;
 		m_circleSize = 0;
@@ -146,7 +119,7 @@ namespace mmesh
 	{
 		if (!m_root || !m_points || !m_close) return false;
 
-		if (m_circleSize >= 3)
+		if (m_circleSize >= 5)
 		{
 			if (m_circleSize == 3)
 			{
@@ -159,7 +132,6 @@ namespace mmesh
 			else
 			{
 				{ // ear clipping
-					//assert(m_ears.size() > 0);
 					if (m_ears.size() == 0)
 						return false;
 
@@ -182,10 +154,6 @@ namespace mmesh
 					
 					m_ears.remove(used);
 
-#ifdef _DEBUG
-					//m_debugNodes.erase(std::find(m_debugNodes.begin(), m_debugNodes.end(), used));
-#endif
-
 					if (used == m_root)
 					{
 						m_root = nn;
@@ -194,6 +162,15 @@ namespace mmesh
 					--m_circleSize;
 
 					auto check = [this](VNode* node) {
+						trimesh::dvec2& o = m_points->at(node->index);
+						trimesh::dvec2& next = m_points->at(node->next->index);
+						trimesh::dvec2& prev = m_points->at(node->prev->index);
+						trimesh::dbox2& b = node->b;
+						b.clear();
+						b += o;
+						b += next;
+						b += prev;
+
 						bool in = node->type == 3;
 						calType(node);
 						if (in && node->type != 3)
@@ -207,13 +184,15 @@ namespace mmesh
 
 					if (m_ears.size() == 0 && m_circleSize >= 3)
 					{// recal  // self intersection
+						std::cout << "need recal ears at ----------> " << m_circleSize << std::endl;
 						m_ears.clear();
 						VNode* cur = m_root;
 						do
 						{
 							calType(cur, false);
 
-							if (cur->type == 3) m_ears.push_back(cur);
+							if (cur->type == 3)
+								m_ears.push_back(cur);
 							cur = cur->next;
 						} while (cur != m_root);
 					}
@@ -241,18 +220,14 @@ namespace mmesh
 
 	void Polygon2::calType(VNode* node, bool testContainEdge)
 	{
-		trimesh::dvec2 o = m_points->at(node->index);
-		trimesh::dvec2 next = m_points->at(node->next->index);
-		trimesh::dvec2 prev = m_points->at(node->prev->index);
+		trimesh::dvec2& o = m_points->at(node->index);
+		trimesh::dvec2& next = m_points->at(node->next->index);
+		trimesh::dvec2& prev = m_points->at(node->prev->index);
 		trimesh::dvec2 onext = next - o;
 		trimesh::dvec2 oprev = prev - o;
 
 		double cvalue = crossValue(onext, oprev);
-		const double EPSILON = 1e-12;
-/*		if (cvalue > -EPSILON && cvalue < EPSILON) {
-			node->type = 0;
-		}
-		else */if (cvalue < 0.0) {
+		if (cvalue < 0.0) {
 			node->type = 1;
 		}
 		else
@@ -272,15 +247,19 @@ namespace mmesh
 			{
 				if ((cur->index != node->index) && (cur->index != node->next->index) && (cur->index != node->prev->index))
 				{
-					if (testContainEdge && insideTriangle(o, next, prev, m_points->at(cur->index)))
+					trimesh::dvec2& c = m_points->at(cur->index);
+					if (node->b.contains(c))
 					{
-						ear = false;
-						break;
-					}
-					else if(!testContainEdge && insideTriangleEx(o, next, prev, m_points->at(cur->index)))
-					{
-						ear = false;
-						break;
+						if (testContainEdge && insideTriangle(o, next, prev, c))
+						{
+							ear = false;
+							break;
+						}
+						else if (!testContainEdge && insideTriangleEx(o, next, prev, c))
+						{
+							ear = false;
+							break;
+						}
 					}
 				}
 				cur = cur->next;
