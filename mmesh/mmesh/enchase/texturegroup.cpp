@@ -1,6 +1,6 @@
 #include "texturegroup.h"
 
-namespace mmesh
+namespace enchase
 {
 	TextureGroup::TextureGroup()
 	{
@@ -8,15 +8,6 @@ namespace mmesh
 	}
 
 	TextureGroup::~TextureGroup()
-	{
-	}
-
-	bool TextureGroup::valid()
-	{
-		return m_indexes.size() > 0;
-	}
-
-	void TextureGroup::clear()
 	{
 		m_indexes.clear();
 		m_texcoord.clear();

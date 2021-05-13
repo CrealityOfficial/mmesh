@@ -153,7 +153,7 @@ namespace mmesh
 
 		if (createUV)
 		{
-			mesh->cornerareas.resize(vertexNum, trimesh::vec3(0.0f, 0.0f, 0.0f));
+			mesh->cornerareas.resize(vertexNum, trimesh::vec3(-100.0f, -100.0f, 0.0f));
 
 			float dx = 1.0f / (float)width;
 			float dy = 1.0f / (float)height;
