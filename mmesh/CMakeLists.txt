@@ -38,8 +38,15 @@ if(CGAL_ENABLE)
 	add_definitions(-DUSE_CGAL)
 endif()
 
-include_directories(${VCG_INCLUDES})
-include_directories(${EIGEN_INCLUDES})
+if(NOT VCG_INCLUDE_DIRS)
+	message(FATAL_ERROR "Please Specified VCG_INCLUDE_DIRS")
+endif()
+if(NOT EIGEN_INCLUDE_DIRS)
+	message(FATAL_ERROR "Please Specified EIGEN_INCLUDE_DIRS")
+endif()
+
+include_directories(${VCG_INCLUDE_DIRS})
+include_directories(${EIGEN_INCLUDE_DIRS})
 __enable_openmp()
 
 if(WIN32)
