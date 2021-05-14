@@ -57,6 +57,25 @@ namespace mmesh
 		sortBoxes(_box, _boxes, newPosition);
 	}
 
+	void sortBoxes(const trimesh::box3& box, const std::vector<trimesh::box3>& boxes
+		, float gapx, float gapy, std::vector<trimesh::vec3>& newPosition)
+	{
+		trimesh::box3 _box = box;
+		//_box.min += trimesh::vec3(gapx, gapy, 0.0f);
+		//_box.max += trimesh::vec3(-gapx, -gapy, 0.0f);
+
+		std::vector<trimesh::box3> _boxes;
+		for (const trimesh::box3& b : boxes)
+		{
+			trimesh::box3 _b = b;
+			_b.min += trimesh::vec3(-gapx, -gapy, 0.0f);
+			_b.max += trimesh::vec3(gapx, gapy, 0.0f);
+			_boxes.push_back(_b);
+		}
+
+		sortBoxes(_box, _boxes, newPosition);
+	}
+
 	void sortBoxes(const trimesh::box3& box, const std::vector<trimesh::box3>& boxes,
 		std::vector<trimesh::vec3>& newPosition)
 	{
@@ -78,6 +97,9 @@ namespace mmesh
 			spaces.reserve(100);
 			spaces.resize(1);
 			spaces.at(0).push_back(box);
+
+			//Out of range
+			std::list<trimesh::box3> newSpace;
 
 			int index = 1;
 			auto containFunc = [](const trimesh::box& box, const trimesh::box& b)->bool {
@@ -116,7 +138,7 @@ namespace mmesh
 				return false;
 			};
 
-			auto findPos = [&index, &box, &findPosInList, &spaces](const trimesh::box3& b)->trimesh::vec3 {
+			auto findPos = [&index, &box, &findPosInList, &spaces, &newSpace](const trimesh::box3& b)->trimesh::vec3 {
 				bool findOne = false;
 				trimesh::vec3 newPos;
 				for (size_t i = 0; i < spaces.size(); ++i)
@@ -129,14 +151,29 @@ namespace mmesh
 				if (findOne)
 					return newPos;
 
-				std::list<trimesh::box3> newSpace;
-				trimesh::box3 newBox = box;
-				newBox.min += trimesh::vec3(index * box.size().x, 0.0f, 0.0f);
-				newBox.max += trimesh::vec3(index * box.size().x, 0.0f, 0.0f);
-				newSpace.push_back(newBox);
+				//std::list<trimesh::box3> newSpace;
+				while (!findOne)
+				{
+					if (!newSpace.size())
+					{
+						trimesh::box3 newBox = box;
+						newBox.min += trimesh::vec3(index * box.size().x, 0.0f, 0.0f);
+						newBox.max += trimesh::vec3(index * box.size().x, index * box.size().y, 0.0f);
+						newSpace.push_back(newBox);
+					}
 
-				findOne = findPosInList(newSpace, b, newPos);
-				assert(findOne);
+					findOne = findPosInList(newSpace, b, newPos);
+					if (findOne)
+						break;
+					index++;
+					newSpace.clear();
+
+					if (index>20)
+					{
+						assert(findOne);
+						break;
+					}
+				}
 				return newPos;
 			};
 
