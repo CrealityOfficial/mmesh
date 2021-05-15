@@ -1,14 +1,11 @@
 #include "split.h"
-#include <map>
-#include "list"
-#include "trimesh2/XForm.h"
-#include "trimesh2/Vec3Utils.h"
-#include "mmesh/trimesh/polygonstack.h"
+
 
 namespace mmesh
 {
 
-	 void addFace(trimesh::TriMesh* mesh, const trimesh::vec3& v1, const trimesh::vec3& v2, const trimesh::vec3& v3)
+	//将面和对应的顶点添加到mesh 中
+	 void addFaceVertices(trimesh::TriMesh* mesh, const trimesh::vec3& v1, const trimesh::vec3& v2, const trimesh::vec3& v3)
 	 {
 		int index = (int)mesh->vertices.size();
 		mesh->vertices.push_back(v1);
@@ -34,13 +31,13 @@ namespace mmesh
 		{
 			if (dv >= 0.0f)//dv大于切割面△
 			{
-				addFace(meshUP, Point0, Point1, Point2);
+				addFaceVertices(meshUP, Point0, Point1, Point2);//分割新增的面添加到对应的mesh
 				lines.push_back(Point1);
 				lines.push_back(Point2);
 			}
 			else//dv小于切割面▽
 			{
-				addFace(meshDown, Point0, Point1, Point2);
+				addFaceVertices(meshDown, Point0, Point1, Point2);
 				lines.push_back(Point2);
 				lines.push_back(Point1);
 			}
@@ -48,18 +45,18 @@ namespace mmesh
 		else if (d1 == 0.0f && dv * d2 >= 0.0f)
 		{
 			if (dv >= 0.0f)//d1位于切割面且dv d2位于切割面上面
-				addFace(meshUP, Point0, Point1, Point2);
+				addFaceVertices(meshUP, Point0, Point1, Point2);
 			else//d1位于切割面且dv d2位于切割面下面
-				addFace(meshDown, Point0, Point1, Point2);
+				addFaceVertices(meshDown, Point0, Point1, Point2);
 		}
 		else if (d2 == 0.0f && dv * d1 >= 0.0f)
 		{
 			if (dv >= 0.0f)//d2位于切割面且dv d1位于切割面上面
-				addFace(meshUP, Point0, Point1, Point2);
+				addFaceVertices(meshUP, Point0, Point1, Point2);
 			else//d2位于切割面且dv d1位于切割面下面
-				addFace(meshDown, Point0, Point1, Point2);
+				addFaceVertices(meshDown, Point0, Point1, Point2);
 		}
-		else//排除所有的点处于切割面后， 常规切割情况
+		else//排除所有的点处于切割面的情况后， 常规切割情况
 		{
 			//c1 c2 三角面被切割后生成的点
 			trimesh::vec3 c1 = (dv / (dv - d1)) * Point1 - (d1 / (dv - d1)) * Point0;
@@ -74,18 +71,18 @@ namespace mmesh
 #endif
 			if (dv > 0.0f)//△△△
 			{
-				addFace(meshUP, Point0, c1, c2);
-				addFace(meshDown, c2, c1, Point2);
-				addFace(meshDown, c1, Point1, Point2);
+				addFaceVertices(meshUP, Point0, c1, c2);
+				addFaceVertices(meshDown, c2, c1, Point2);
+				addFaceVertices(meshDown, c1, Point1, Point2);
 
 				lines.push_back(c1);
 				lines.push_back(c2);
 			}
 			else if (dv < 0.0f)//▽▽▽ 
 			{
-				addFace(meshDown, Point0, c1, c2);
-				addFace(meshUP, c2, c1, Point2);
-				addFace(meshUP, c1, Point1, Point2);
+				addFaceVertices(meshDown, Point0, c1, c2);
+				addFaceVertices(meshUP, c2, c1, Point2);
+				addFaceVertices(meshUP, c1, Point1, Point2);
 
 				lines.push_back(c2);
 				lines.push_back(c1);
@@ -94,60 +91,18 @@ namespace mmesh
 			{
 				if (d1 > 0.0f)
 				{
-					addFace(meshUP, Point0, Point1, Point2);
+					addFaceVertices(meshUP, Point0, Point1, Point2);
 				}
 				else if (d1 < 0.0f)
 				{
-					addFace(meshDown, Point0, Point1, Point2);
+					addFaceVertices(meshDown, Point0, Point1, Point2);
 				}
 			}
 		}
 	}
 
-	struct segment
-	{
-		int start;
-		int end;
-	};
-
-	class point_cmp
-	{
-	public:
-		point_cmp(float e = FLT_MIN) :eps(e) {}
-
-		bool operator()(const trimesh::vec3& v0, const trimesh::vec3& v1) const
-		{
-			if (fabs(v0.x - v1.x) <= eps)
-			{
-				if (fabs(v0.y - v1.y) <= eps)
-				{
-					return (v0.z < v1.z - eps);
-				}
-				else return (v0.y < v1.y - eps);
-			}
-			else return (v0.x < v1.x - eps);
-		}
-	private:
-		float eps;
-	};
-
-	struct IndexPolygon
-	{
-		std::list<int> polygon;
-		int start;
-		int end;
-
-		bool closed()
-		{
-			return (polygon.size() >= 2) && (polygon.front() == polygon.back());
-		}
-	};
-
-	typedef std::map<trimesh::vec3, int, point_cmp> unique_point;
-	typedef unique_point::iterator point_iterator;
-
-
-	int generateIndex(unique_point& points, trimesh::vec3 aPoint)
+	//返回点的索引，若没有aPoint，则添加点aPoint，然后返回索引
+	int generateIndex(unique_point& points, const trimesh::vec3& aPoint)
 	{
 		int index = -1;
 		point_iterator it = points.find(aPoint);
@@ -182,8 +137,8 @@ namespace mmesh
 	void lines2polygon(std::vector<trimesh::vec3>& lines, std::vector<std::vector<int>>& polygons, std::vector<trimesh::vec3>& uniPoints)
 	{
 		size_t segsize = lines.size() / 2;//线段数量
-		std::vector<segment> segments(segsize);
-		unique_point points;
+		std::vector<segment> segments(segsize);//segments 线段的点索引
+		unique_point points;// firtst 点数据 second 点索引
 		for (size_t i = 0; i < segsize; ++i)
 		{
 			trimesh::vec3 v1 = lines.at(2 * i);//2 * i==0 2 4
@@ -195,17 +150,17 @@ namespace mmesh
 		std::vector<trimesh::vec3> vecpoints(points.size());
 		for (auto it = points.begin(); it != points.end(); ++it)
 		{
-			vecpoints.at((*it).second) = (*it).first;
+			vecpoints.at((*it).second) = (*it).first;//vecpoints 按索引的顺序存储点数据
 		}
 		std::vector<segment*> segmap(points.size(), nullptr);
 		for (segment& s : segments)
 		{
-			segmap.at(s.start) = &s;
+			segmap.at(s.start) = &s;//segmap 对 segments的start 点进行排序 
 		}
 		std::vector<bool> used(points.size(), false);
 		std::vector<IndexPolygon> indexPolygons;
 		int index = check(used);
-		while (index >= 0)
+		while (index >= 0)//依次对所有的线段进行连接
 		{
 			used.at(index) = true;
 			segment* seg = segmap.at(index);
@@ -217,13 +172,13 @@ namespace mmesh
 				bool find = false;
 				for (IndexPolygon& polygon : indexPolygons)
 				{
-					if (s == polygon.end)
+					if (s == polygon.end)//连接头部
 					{
 						polygon.polygon.push_back(e);
 						polygon.end = e;
 						find = true;
 					}
-					else if (e == polygon.start)
+					else if (e == polygon.start)//连接尾部
 					{
 						polygon.polygon.push_front(s);
 						polygon.start = s;
@@ -234,29 +189,29 @@ namespace mmesh
 						break;
 				}
 
-				if (!find)
+				if (!find)//没有发现连接的点，创建新轮廓
 				{
-					IndexPolygon polygon;
-					polygon.polygon.push_back(s);
-					polygon.polygon.push_back(e);
-					polygon.start = s;
-					polygon.end = e;
-					indexPolygons.emplace_back(polygon);
+					IndexPolygon Ipolygon;
+					Ipolygon.polygon.push_back(s);
+					Ipolygon.polygon.push_back(e);
+					Ipolygon.start = s;
+					Ipolygon.end = e;
+					indexPolygons.emplace_back(Ipolygon);
 				}
 			}
 			index = check(used);
 		}
-		size_t indexPolygonSize = indexPolygons.size();
+
 		std::map<int, IndexPolygon*> IndexPolygonMap;
-		for (size_t i = 0; i < indexPolygonSize; ++i)
+		for (size_t i = 0; i < indexPolygons.size(); ++i)
 		{
 			IndexPolygon& p1 = indexPolygons.at(i);
 			if (!p1.closed())
 				IndexPolygonMap.insert(std::pair<int, IndexPolygon*>(p1.start, &p1));
 		}
 
-		//combime
-		for (size_t i = 0; i < indexPolygonSize; ++i)
+		//combime 生成闭合轮廓
+		for (size_t i = 0; i < indexPolygons.size(); ++i)
 		{
 			IndexPolygon& p1 = indexPolygons.at(i);
 
@@ -272,7 +227,7 @@ namespace mmesh
 					break;
 
 				bool merged = false;
-				if (p1.start == p2.end)
+				if (p1.start == p2.end)//p1轮廓的起始点等于p2轮廓的end点，则合并2个轮廓到p1
 				{
 					p1.start = p2.start;
 					for (auto iter = p2.polygon.rbegin(); iter != p2.polygon.rend(); ++iter)
@@ -281,7 +236,7 @@ namespace mmesh
 					}
 					merged = true;
 				}
-				else if (p1.end == p2.start)
+				else if (p1.end == p2.start)//p1轮廓的end点等于p2轮廓的起始点，则合并2个轮廓到p1
 				{
 					p1.end = p2.end;
 					for (auto iter = p2.polygon.begin(); iter != p2.polygon.end(); ++iter)
@@ -318,14 +273,12 @@ namespace mmesh
 
 				if (polygon.size() > 0)
 				{
-					polygons.emplace_back(polygon);
+					polygons.emplace_back(polygon);//polygons 最终得到的数据索引
 				}
 			}
 		}
-		uniPoints.swap(vecpoints);
+		uniPoints.swap(vecpoints);//uniPoints 最终得到的数据
 	}
-
-
 
 	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
 		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2)
@@ -333,9 +286,6 @@ namespace mmesh
 		size_t vertex_size = inputMesh->vertices.size();
 		if (vertex_size == 0)
 			return false;
-
-
-
 
 		trimesh::vec3 pos(0, 0, z);//切割点与法线normal 共同决定切割面
 		std::vector<float> distances;
@@ -380,46 +330,15 @@ namespace mmesh
 		*mesh1 = meshUP;
 		*mesh2 = meshDown;
 
-		meshUP->faces.swap(faceUp);//faceUp组成meshUP
-		for (trimesh::TriMesh::Face& f : meshUP->faces)
-		{
-			meshUP->vertices.push_back(inputMesh->vertices.at(f.x));
-			meshUP->vertices.push_back(inputMesh->vertices.at(f.y));
-			meshUP->vertices.push_back(inputMesh->vertices.at(f.z));
-		}
-
-		int index = 0;
-		//remap
-		for (trimesh::TriMesh::Face& f : meshUP->faces)
-		{
-			f.x = index++;
-			f.y = index++;
-			f.z = index++;
-		}
-		meshDown->faces.swap(faceDown);//faceDown组成meshDown
-		for (trimesh::TriMesh::Face& f : meshDown->faces)
-		{
-			meshDown->vertices.push_back(inputMesh->vertices.at(f.x));
-			meshDown->vertices.push_back(inputMesh->vertices.at(f.y));
-			meshDown->vertices.push_back(inputMesh->vertices.at(f.z));
-		}
-
-		
-		
-		int indexTemp = 0;
-		for (trimesh::TriMesh::Face& f : meshDown->faces)//remap
-		{
-			f.x = indexTemp++;
-			f.y = indexTemp++;
-			f.z = indexTemp++;
-		}
-
+		FaceGenerateMesh(meshUP,inputMesh,faceUp);
+		FaceGenerateMesh(meshDown, inputMesh, faceDown);
 
 		std::vector<trimesh::vec3> lines;
 		int faceNum = (int)inputMesh->faces.size();
 		for (int i = 0; i < faceNum; ++i)
 		{
 			trimesh::TriMesh::Face& f = inputMesh->faces.at(i);
+			//线段大于0表示线段的点分别位于上下面中，线段<=0 表示线段位的点于上面或者下面中
 			float segment0 = distances.at(f.x) * distances.at(f.y);
 			float segment1 = distances.at(f.y) * distances.at(f.z);
 			float segment2 = distances.at(f.x) * distances.at(f.z);
@@ -444,19 +363,13 @@ namespace mmesh
 
 		}
 
-
-
-		//fill hole 填充切割面的洞
+		//分割面的lines线段生成闭合轮廓，polygons轮廓索引，points轮廓数据
 		std::vector<std::vector<int>> polygons;
 		std::vector<trimesh::vec3> points;
 		lines2polygon(lines, polygons, points);
 
-
-
-		std::vector<trimesh::TriMesh::Face> faces;
 		std::vector<trimesh::dvec2> polygons2;
 		polygons2.reserve(points.size());
-
 		trimesh::vec3 zn = trimesh::vec3(0.0f, 0.0f, 1.0f);
 		trimesh::vec3 axis = normal TRICROSS zn;
 		float angle = trimesh::vv_angle(axis, zn);
@@ -469,9 +382,14 @@ namespace mmesh
 			polygons2.push_back(trimesh::dvec2(p.x, p.y));
 		}
 
+
+		//闭合轮廓三角化生成 faces
+		std::vector<trimesh::TriMesh::Face> faces;
 		mmesh::PolygonStack pstack;
 		pstack.generates(polygons, polygons2, faces, 0);
 
+
+		//将新生成的faces 添加到meshUP，meshDown上下2个mesh中
 		bool fillHole = true;
 		if (fillHole)
 		{
@@ -495,6 +413,23 @@ namespace mmesh
 			}
 		}
 		return true;
+	}
+
+	//face 和 vetices 生成新mesh
+	void FaceGenerateMesh(trimesh::TriMesh* newMesh, trimesh::TriMesh* inputMesh, std::vector<trimesh::TriMesh::Face>& inputface)
+	{
+		newMesh->faces.swap(inputface);//添加面
+		int index = 0;
+		for (trimesh::TriMesh::Face& f : newMesh->faces)
+		{
+			newMesh->vertices.push_back(inputMesh->vertices.at(f.x));//添加面对应的 3个顶点
+			newMesh->vertices.push_back(inputMesh->vertices.at(f.y));
+			newMesh->vertices.push_back(inputMesh->vertices.at(f.z));
+			
+			f.x = index++;//newMesh索引更新
+			f.y = index++;
+			f.z = index++;
+		}
 	}
 
 }

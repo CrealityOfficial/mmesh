@@ -119,7 +119,7 @@ namespace mmesh
 	{
 		if (!m_root || !m_points || !m_close) return false;
 
-		if (m_circleSize >= 5)
+		if (m_circleSize >= 3)
 		{
 			if (m_circleSize == 3)
 			{
