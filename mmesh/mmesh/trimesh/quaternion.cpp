@@ -106,7 +106,7 @@ namespace trimesh
 		if (qFuzzyIsNull(dir.at(0)) && qFuzzyIsNull(dir.at(1)) && qFuzzyIsNull(dir.at(2)))
 			return quaternion();
 
-		const vec3 zAxis(normalized(dir));
+		const vec3 zAxis(trimesh::normalized(dir));
 		vec3 xAxis(fixedValue TRICROSS zAxis);
 		if (qFuzzyIsNull(len2(xAxis)))
 		{
@@ -114,18 +114,64 @@ namespace trimesh
 			return quaternion::rotationTo(vec3(0.0f, 0.0f, 1.0f), zAxis);
 		}
 
-		normalize(xAxis);
+		trimesh::normalize(xAxis);
 		const vec3 yAxis((zAxis TRICROSS xAxis));
 
 		return quaternion::fromAxes(xAxis, yAxis, zAxis);
+	}
+
+	quaternion quaternion::fromAxisAndAngle(const vec3& axis, float angle)
+	{
+		// Algorithm from:
+		// http://www.j3d.org/matrix_faq/matrfaq_latest.html#Q56
+		// We normalize the result just in case the values are close
+		// to zero, as suggested in the above FAQ.
+		float a = angle * M_PI_2f / 180.0f;
+		float s = std::sin(a);
+		float c = std::cos(a);
+		trimesh::vec3 ax = trimesh::normalized(axis);
+		return quaternion(c, ax.x * s, ax.y * s, ax.z * s).normalized();
+	}
+
+	void quaternion::normalize()
+	{
+		// Need some extra precision if the length is very small.
+		double len = double(xp) * double(xp) +
+			double(yp) * double(yp) +
+			double(zp) * double(zp) +
+			double(wp) * double(wp);
+		if (qFuzzyIsNull(len - 1.0f) || qFuzzyIsNull(len))
+			return;
+
+		len = std::sqrt(len);
+
+		xp /= len;
+		yp /= len;
+		zp /= len;
+		wp /= len;
+	}
+
+	quaternion quaternion::normalized() const
+	{
+		// Need some extra precision if the length is very small.
+		double len = double(xp) * double(xp) +
+			double(yp) * double(yp) +
+			double(zp) * double(zp) +
+			double(wp) * double(wp);
+		if (qFuzzyIsNull(len - 1.0f))
+			return *this;
+		else if (!qFuzzyIsNull(len))
+			return *this / std::sqrt(len);
+		else
+			return quaternion(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
 	quaternion quaternion::rotationTo(const vec3& from, const vec3& to)
 	{
 		// Based on Stan Melax's article in Game Programming Gems
 
-		const vec3 v0(normalized(from));
-		const vec3 v1(normalized(to));
+		const vec3 v0(trimesh::normalized(from));
+		const vec3 v1(trimesh::normalized(to));
 
 		//float d = dotProduct(v0, v1) + 1.0f;
 		float d = (v0 DOT v1) + 1.0f;
@@ -137,7 +183,7 @@ namespace trimesh
 			vec3 axis = (vec3(1.0f, 0.0f, 0.0f) TRICROSS v0);
 			if (qFuzzyIsNull(len2(axis)))
 				axis = (vec3(0.0f, 1.0f, 0.0f) TRICROSS v0);
-			normalize(axis);
+			trimesh::normalize(axis);
 
 			// same as QQuaternion::fromAxisAndAngle(axis, 180.0f)
 			return quaternion(0.0f, axis.at(0), axis.at(1), axis.at(2));
