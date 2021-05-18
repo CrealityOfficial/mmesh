@@ -2,7 +2,6 @@
 #define ENCHASE_IMAGELOADER_1608004787715_H
 #include <string>
 
-class LogCallback;
 namespace enchase
 {
 	struct ImageData
@@ -13,7 +12,8 @@ namespace enchase
 	};
 
 	void loadImage(ImageData& data, const std::string& fileName);
-	void loadImage_freeImage(ImageData& data, const std::string& fileName, LogCallback* callback);
+	void loadImage_freeImage(ImageData& data, const std::string& fileName);
+	void loadImage_freeImage(ImageData& data, const std::string& extension, int fd);
 }
 
 #endif // ENCHASE_IMAGELOADER_1608004787715_H
