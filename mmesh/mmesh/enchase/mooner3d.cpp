@@ -10,6 +10,9 @@
 #include "mmesh/enchase/trimeshgenerator.h"
 #include "mmesh/trimesh/trimeshutil.h"
 #include "mmesh/trimesh/split.h"
+#include "mmesh/create/ballcreator.h"
+
+#include "trimesh2/TriMesh_algo.h"
 #include <memory>
 
 namespace enchase
@@ -115,21 +118,34 @@ namespace enchase
 		m_surface->useBlur = param.useBlur;
 		m_surface->blurTimes = param.blurTimes;
 
-		trimesh::TriMesh* mesh = nullptr;
+		trimesh::TriMesh* mesh = mmesh::BallCreator::create(param.radius + param.shellThickness, 8, 1);
+		size_t size = mesh->vertices.size();
+		if (mesh->normals.size() != size && size > 0)
+		{
+			mesh->normals.resize(size);
+			for (size_t i = 0; i < size; ++i)
+				mesh->normals.at(i) = trimesh::normalized(mesh->vertices.at(i));
+		}
+
 		trimesh::TriMesh* meshOut = enchaseGenerate(mesh, SurfacePtr(m_surface));
 		m_surface = nullptr;
 		delete mesh;
 
-		trimesh::TriMesh* meshIn = nullptr;
+		trimesh::TriMesh* meshIn = mmesh::BallCreator::create(param.radius);
+		mmesh::reverseTriMesh(meshIn);
 
 		std::vector<trimesh::TriMesh*> meshes;
-		meshes.push_back(mesh);
+		meshes.push_back(meshOut);
 		meshes.push_back(meshIn);
 
 		trimesh::TriMesh* mergedMesh = new trimesh::TriMesh();
 		mmesh::mergeTriMesh(mergedMesh, meshes);
 		delete meshIn;
 		delete meshOut;
+
+		mergedMesh->need_bbox();
+		trimesh::box3 box = mergedMesh->bbox;
+		trimesh::apply_xform(mergedMesh, trimesh::xform::trans(0.0f, 0.0f, -box.min.z));
 
 		trimesh::TriMesh* meshUpper = nullptr;
 		trimesh::TriMesh* meshLower = nullptr;
