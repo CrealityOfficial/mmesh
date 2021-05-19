@@ -15,6 +15,7 @@ namespace mmesh
 		virtual void progress(float r) = 0;
 		virtual bool interrupt() = 0;
 		virtual void failed(const char* message) = 0;
+		virtual void message(const char* format, ...) {};
 	};
 }
 

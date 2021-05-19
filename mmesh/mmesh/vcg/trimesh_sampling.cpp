@@ -20,6 +20,8 @@
 * for more details.                                                         *
 *                                                                           *
 ****************************************************************************/
+#include <sstream>
+#include <string>
 #include "mmesh/vcg/trimesh_sampling .h"
 #include<vcg/complex/complex.h>
 
