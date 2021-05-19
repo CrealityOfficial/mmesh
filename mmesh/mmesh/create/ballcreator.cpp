@@ -101,7 +101,7 @@ namespace mmesh
 		}
 
 		// create uv coords
-		if (createUV && createUV < 3)
+		if (createUV)
 		{
 			for (size_t i = 0; i < mesh->vertices.size(); i++)
 			{
@@ -127,9 +127,13 @@ namespace mmesh
 						mesh->cornerareas.emplace_back(0.5f - beta / M_2PIf, 0.5f - beta * tan(alpha) / M_2PIf, 0.0f);
 					}
 				}
-				else
+				else if (createUV == 2)
 				{
 					mesh->cornerareas.emplace_back(0.5f + beta * cos(alpha) / M_2PIf, 0.5f + beta * sin(alpha) / M_2PIf, 0.0f);
+				}
+				else if (createUV == 3)
+				{
+					mesh->cornerareas.emplace_back((alpha + M_PIf) / M_2PIf, (M_PIf - beta) / M_PIf, 0.0f);
 				}
 			}
 		}
