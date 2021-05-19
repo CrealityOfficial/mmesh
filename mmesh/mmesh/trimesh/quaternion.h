@@ -21,8 +21,11 @@ namespace trimesh
 		inline vec3 vector() const;
 		vec3 rotatedVector(const vec3& vector3) const;
 		inline float dotProduct(const quaternion& q1, const quaternion& q2);
+		void normalize();
+		quaternion normalized() const;
 
 		static quaternion fromDirection(vec3 dir, const vec3& fixedValue);
+		static quaternion fromAxisAndAngle(const vec3& axis, float angle);
 		static bool qFuzzyIsNull(float f);
 	
 	public:
