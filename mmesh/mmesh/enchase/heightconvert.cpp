@@ -16,9 +16,9 @@ namespace enchase
 		double min_luminance = pow((transmittance_1mm / 100.0), scale);// peak_height=13£¬base_height=3  
 
 		// y = height = 0, 1, 2...118;  x = width = 0, 1, 2...937 
-		for (int y = 0; y < matrix->height(); y++)
+		for (uint y = 0; y < matrix->height(); y++)
 		{
-			for (int x = 0; x < matrix->width(); x++)  //  x = width = 0, 1, 2...937 
+			for (uint x = 0; x < matrix->width(); x++)  //  x = width = 0, 1, 2...937 
 			{
 				double mapped_luminance = min_luminance + (1.0 - min_luminance) * (*matrix->ptr(y, x));
 				*matrix->ptr(y, x) = base + divisor * log(mapped_luminance);
