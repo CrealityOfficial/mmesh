@@ -118,7 +118,7 @@ namespace enchase
 		m_surface->useBlur = param.useBlur;
 		m_surface->blurTimes = param.blurTimes;
 
-		trimesh::TriMesh* mesh = mmesh::BallCreator::create(param.radius + param.shellThickness, 8, 1);
+		trimesh::TriMesh* mesh = mmesh::BallCreator::create(param.radius + param.shellThickness, 8, 2);
 		size_t size = mesh->vertices.size();
 		if (mesh->normals.size() != size && size > 0)
 		{
