@@ -4,7 +4,7 @@ namespace enchase
 {
 	void blur(MatrixF* matrix, int blurNum)
 	{
-		MatrixF f(3, 3, 1, 1.0 / 9.0);
+		MatrixF f(3, 3, 1, 1.0f / 9.0f);
 		MatrixF* matrix2 = new MatrixF(*matrix);
 
 		int i = 0;

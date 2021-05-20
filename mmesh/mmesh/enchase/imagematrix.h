@@ -52,7 +52,7 @@ namespace enchase
 		{
 			m_lineWidth = m_depth * m_width;
 			m_data = (T*)malloc(m_height * m_lineWidth * sizeof(T));
-			for (int i = 0; i < m_height * m_width * m_depth; i++)
+			for (uint i = 0; i < m_height * m_width * m_depth; i++)
 			{
 				m_data[i] = data;
 			}
@@ -178,7 +178,7 @@ namespace enchase
 			Matrix m(f);
 			T* mdata = m.ptr();
 			T* fdata = f.ptr();
-			for (int i = 0; i < f.m_height * f.m_width * f.m_depth; i++)
+			for (uint i = 0; i < f.m_height * f.m_width * f.m_depth; i++)
 			{
 				*mdata++ = v - *fdata++;
 			}
@@ -202,7 +202,7 @@ namespace enchase
 			Matrix m(f);
 			T* mdata = m.ptr();
 			T* fdata = f.ptr();
-			for (int i = 0; i < f.m_height * f.m_width * f.m_depth; i++)
+			for (uint i = 0; i < f.m_height * f.m_width * f.m_depth; i++)
 			{
 				*mdata++ = v + *fdata++;
 			}
@@ -226,7 +226,7 @@ namespace enchase
 			Matrix m(f);
 			T* mdata = m.ptr();
 			T* fdata = f.ptr();
-			for (int i = 0; i < f.m_height * f.m_width * f.m_depth; i++)
+			for (uint i = 0; i < f.m_height * f.m_width * f.m_depth; i++)
 			{
 				*mdata++ = v * *fdata++;
 			}
@@ -306,11 +306,11 @@ namespace enchase
 				{
 					bool b = (sv - x) >= 0;
 
-					T t = b ? *(data1 + 1) : *(data1 - 1);
-					v1 = (T)(v1 * (1 - xper) + t * xper);
+					T _t = b ? *(data1 + 1) : *(data1 - 1);
+					v1 = (T)(v1 * (1 - xper) + _t * xper);
 
-					t = b ? *(data2 + 1) : *(data2 - 1);
-					v2 = (T)(v2 * (1 - xper) + t * xper);
+					_t = b ? *(data2 + 1) : *(data2 - 1);
+					v2 = (T)(v2 * (1 - xper) + _t * xper);
 				}
 
 				v = (T)(v1 * (1 - yper) + v2 * yper);   // 第二次线性插值
@@ -323,8 +323,8 @@ namespace enchase
 					T v1 = *data1;
 
 					bool b = (sv - x) >= 0;
-					T t = b ? *(data1 + 1) : *(data1 - 1);
-					v = (T)(v1 * (1 - xper) + t * xper);
+					T _t = b ? *(data1 + 1) : *(data1 - 1);
+					v = (T)(v1 * (1 - xper) + _t * xper);
 				}
 				else
 				{
