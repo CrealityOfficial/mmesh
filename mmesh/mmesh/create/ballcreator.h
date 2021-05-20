@@ -16,7 +16,7 @@ namespace mmesh
 		// createUV:
 		//    0: no uv
 		//    1: get uv by mapping rectangle area to sphere
-		//    2: get uv by mapping circle area to sphere (Azimuthal Projection)
+		//	  2:get uv by mapping circle area to sphere(Azimuthal Projection)
 		//    3: (Equirectangular Projection)
 		static trimesh::TriMesh* create(float radius = 1.0f, unsigned int num_iter = 4, int createUV = 0);
 
