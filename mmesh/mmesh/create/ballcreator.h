@@ -20,6 +20,12 @@ namespace mmesh
 		//    3: (Equirectangular Projection)
 		static trimesh::TriMesh* create(float radius = 1.0f, unsigned int num_iter = 4, int createUV = 0);
 
+		// sphere map projection, Equirectangular to Azimuthal
+		static trimesh::vec equ2azi(trimesh::vec& point);
+
+		// sphere map projection, Azimuthal to Equirectangular
+		static trimesh::vec azi2equ(trimesh::vec& point);
+
 	};
 }
 

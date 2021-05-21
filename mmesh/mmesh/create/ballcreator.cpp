@@ -142,4 +142,31 @@ namespace mmesh
 
 		return mesh;
 	}
+
+	trimesh::vec BallCreator::equ2azi(trimesh::vec& point)
+	{
+		float alpha = (2.0f * point.x - 1.0) * M_PIf;
+		float beta = (1.0 - point.y) * M_PIf;
+		float x_ = 0.5f * (beta * cos(alpha) / M_PIf + 1.0f);
+		float y_ = 0.5f * (beta * sin(alpha) / M_PIf + 1.0f);
+
+		return trimesh::vec(x_, y_, 0.0f);
+	}
+
+	trimesh::vec BallCreator::azi2equ(trimesh::vec& point)
+	{
+		float alpha = atan2(point.y - 0.5f, point.x - 0.5f);
+		float r = sqrt((point.x - 0.5f)*(point.x - 0.5f) + (point.y - 0.5f)*(point.y - 0.5f));
+
+		if (r > 0.5f)
+		{
+			return trimesh::vec(-1.0f, -1.0f, 0.0f);
+		}
+
+		float beta = 2.0f * M_PIf * r;
+		float x_ = 0.5f + 0.5f * alpha / M_PIf;
+		float y_ = 1.0f - beta / M_PIf;
+
+		return trimesh::vec(x_, y_, 0.0f);
+	}
 }
