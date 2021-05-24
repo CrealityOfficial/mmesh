@@ -118,7 +118,7 @@ namespace enchase
 		m_surface->useBlur = param.useBlur;
 		m_surface->blurTimes = param.blurTimes;
 
-		trimesh::TriMesh* mesh = mmesh::BallCreator::create(param.radius + param.shellThickness, 8, 1);
+		trimesh::TriMesh* mesh = mmesh::BallCreator::create(param.radius + param.shellThickness, 8, 2);
 		size_t size = mesh->vertices.size();
 		if (mesh->normals.size() != size && size > 0)
 		{
@@ -143,13 +143,13 @@ namespace enchase
 		delete meshIn;
 		delete meshOut;
 
-		mergedMesh->need_bbox();
-		trimesh::box3 box = mergedMesh->bbox;
-		trimesh::apply_xform(mergedMesh, trimesh::xform::trans(0.0f, 0.0f, -box.min.z));
+		//mergedMesh->need_bbox();
+		//trimesh::box3 box = mergedMesh->bbox;
+		//trimesh::apply_xform(mergedMesh, trimesh::xform::trans(0.0f, 0.0f, -box.min.z));
 
 		trimesh::TriMesh* meshUpper = nullptr;
 		trimesh::TriMesh* meshLower = nullptr;
-		if (!mmesh::split(mergedMesh, param.clipHeight, trimesh::vec3(0.0f, 0.0f, 1.0f), &meshUpper, &meshLower))
+		if (!mmesh::split(mergedMesh, -param.radius + param.clipHeight, trimesh::vec3(0.0f, 0.0f, 1.0f), &meshUpper, &meshLower))
 			meshUpper = mergedMesh;
 		
 		delete mergedMesh;
