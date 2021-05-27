@@ -133,6 +133,26 @@ namespace trimesh
 		return quaternion(c, ax.x * s, ax.y * s, ax.z * s).normalized();
 	}
 
+	quaternion quaternion::fromEular(vec3 angles)
+	{
+		double yaw = angles.z * M_PI / 180.0;
+		double pitch = angles.y * M_PI / 180;
+		double roll = angles.x * M_PI / 180;
+		double cy = cos(yaw * 0.5);
+		double sy = sin(yaw * 0.5);
+		double cp = cos(pitch * 0.5);
+		double sp = sin(pitch * 0.5);
+		double cr = cos(roll * 0.5);
+		double sr = sin(roll * 0.5);
+
+		quaternion q;
+		q.wp = cy * cp * cr + sy * sp * sr;
+		q.xp = cy * cp * sr - sy * sp * cr;
+		q.yp = sy * cp * sr + cy * sp * cr;
+		q.zp = sy * cp * cr - cy * sp * sr;
+		return q.normalized();
+	}
+
 	void quaternion::normalize()
 	{
 		// Need some extra precision if the length is very small.
