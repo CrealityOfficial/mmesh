@@ -759,6 +759,7 @@ namespace mmesh
 		int percentage_Count = 0;
 		std::vector<std::vector<int>> supportFaces;
 		sectionSources.clear();
+		supportFaces.clear();
 		m_ConnectSectionInfor.facesIndexes.clear();
 
 		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
@@ -818,8 +819,21 @@ namespace mmesh
 							vec3& vertex2 = m_vertexes.at(tFace[1]);
 							vec3& vertex3 = m_vertexes.at(tFace[2]);
 							vec3& normal = m_faceNormals.at(faceID);
-
+#if 1
 							if (rayIntersectTriangle(xypoint, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+							{
+								vec3 pointCross = xypoint + t * dir;
+								std::cout << "pointCross===" << pointCross << std::endl;
+
+								DLPISource dlpSource = generateSource(pointCross, normal);
+								dlpSource.typeflg = SUPPORT_FACE;
+								if (sources.size() == 1)
+								{
+									sources.clear();
+								}
+								sources.push_back(dlpSource);
+							}
+#else
 							{
 								vec3 pointCross = xypoint + t * dir;
 								DLPISource dlpSource = generateSource(pointCross, normal);
@@ -830,8 +844,16 @@ namespace mmesh
 								}
 								sources.push_back(dlpSource);
 							}
+#endif
 						}
 					}
+					if (sources.size() == 0)
+					{
+						std::cout << "no rayIntersectTriangle xypoint===" << centerPoint << std::endl;
+
+					}
+
+					//sources.clear();
 					if ((sources.size() == 0) && (supportEnable == true))
 					{
 						int& faceID = faceChunk[0];//默认选中第一个
