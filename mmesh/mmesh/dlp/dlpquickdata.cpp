@@ -68,7 +68,10 @@ namespace mmesh
 		m_DLPISourceInited = false;
 		clear();
 	}
-
+	trimesh::fxform DLPQuickData::getXformData() const
+	{
+		return m_xf;
+	}
 	void DLPQuickData::clear()
 	{
 		m_boxes.clear();
@@ -667,7 +670,7 @@ namespace mmesh
 				if (crossn % 2 == 0)//向下应与模型有偶数个效点
 				{
 					//DLPISource dlpSource = generateSource(vertex, vec3(0.0f, 0.0f, -1.0f));
-					DLPISource dlpSource = generateSource(vertex, dir);
+					DLPISource dlpSource = generateSource(vertex, DOWN_NORMAL);
 					dlpSource.typeflg = SUPPORT_VERTEX;
 					sources.push_back(dlpSource);
 
@@ -800,7 +803,32 @@ namespace mmesh
 				std::cout << "extract_poisson_point" << outVertexs.size() << std::endl;
 				for (trimesh::vec3 pt : outVertexs)
 				{
-					DLPISource dlpSource = generateSource(pt, trimesh::vec3(0, 0, -1.0));
+					vec3 dir = DOWN_NORMAL;
+
+					{
+						ivec2 pointIndex = m_triangleChunk->index(pt);
+						int iindex = pointIndex.x + pointIndex.y * m_triangleChunk->m_width;
+						std::vector<int>& faceVindex = m_triangleChunk->m_cells.at(iindex);
+						int faceVindexSize = faceVindex.size();
+						for (int faceID : faceChunk)
+						{
+							TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+							vec3& vertex1 = m_vertexes.at(tFace[0]);
+							vec3& vertex2 = m_vertexes.at(tFace[1]);
+							vec3& vertex3 = m_vertexes.at(tFace[2]);
+							if (PointinTriangle(vertex1, vertex2, vertex3, pt))
+							{
+								//std::cout << "hit" << std::endl;
+								dir = m_faceNormals[faceID];
+								break;
+							}
+
+						}
+
+					}
+
+
+					DLPISource dlpSource = generateSource(pt, dir);
 					dlpSource.typeflg = SUPPORT_FACE;
 					sources.push_back(dlpSource);
 				}

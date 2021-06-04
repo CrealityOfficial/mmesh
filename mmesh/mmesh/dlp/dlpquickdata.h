@@ -48,6 +48,7 @@ namespace mmesh
 
 		void setMeshData(trimesh::TriMesh* mesh);
 		void setXformData(trimesh::fxform& xf);
+		trimesh::fxform getXformData() const;
 
 		void build();
 		void clear();

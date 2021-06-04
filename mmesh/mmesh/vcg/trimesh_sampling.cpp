@@ -106,7 +106,7 @@ namespace vcg
             sampleVec.clear();
             rad = m_PoissonAlgCfg.userSampleRad;
             tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, MontecarloSurfaceMesh, rad, pp);
-            tri::BuildMeshFromCoordVector(PoissonMesh, sampleVec);
+            //tri::BuildMeshFromCoordVector(PoissonMesh, sampleVec);
 
             for (Point3f pt : sampleVec)
             {
