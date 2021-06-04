@@ -68,7 +68,10 @@ namespace mmesh
 		m_DLPISourceInited = false;
 		clear();
 	}
-
+	trimesh::fxform DLPQuickData::getXformData() const
+	{
+		return m_xf;
+	}
 	void DLPQuickData::clear()
 	{
 		m_boxes.clear();
