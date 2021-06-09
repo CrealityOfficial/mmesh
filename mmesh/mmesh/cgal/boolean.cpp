@@ -1,4 +1,5 @@
 #include "boolean.h"
+#include "booleanserail.h"
 
 #if (defined(WIN32) || defined(__APPLE__)) && defined(USE_CGAL)
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
@@ -145,6 +146,9 @@ namespace mmesh
     trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriMesh* Mesh2, cxBoolean_operation_type typeindex
         , std::string* error)
     {
+#if _DEBUG
+        saveBoolean("xxx.boolean", Mesh1, Mesh2);
+#endif
         trimesh::TriMesh* outMesh = NULL;
         Mesh surfaceMesh1;
         Mesh surfaceMesh2;
