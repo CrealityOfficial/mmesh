@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef USE_VCG
+
 namespace trimesh
 {
 	class TriMesh;
@@ -24,3 +26,5 @@ namespace mmesh
 		VcgTriMesh *myVcgMesh;
 	};
 }
+
+#endif

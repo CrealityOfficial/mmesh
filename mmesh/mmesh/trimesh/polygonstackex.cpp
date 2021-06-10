@@ -1,11 +1,12 @@
 #include "polygonstackex.h"
 
+#ifdef USE_CGAL
 // CGAL
 #include "CGAL/Exact_predicates_inexact_constructions_kernel.h"
 #include "CGAL/Constrained_Delaunay_triangulation_2.h"
 #include "CGAL/Triangulation_face_base_with_info_2.h"
 #include "CGAL/Polygon_2.h"
-
+#endif
 
 namespace mmesh
 {
@@ -16,6 +17,7 @@ namespace mmesh
 		bool in_domain() { return nesting_level % 2; }
 	};
 
+#ifdef USE_CGAL
 	typedef CGAL::Exact_predicates_inexact_constructions_kernel      K;
 	typedef CGAL::Triangulation_vertex_base_2<K>                     Vb;
 	typedef CGAL::Triangulation_face_base_with_info_2<FaceInfo_2, K> Fbb;
@@ -82,11 +84,13 @@ namespace mmesh
 			}
 		}
 	}
+#endif
 
 	// based on CGAL
 	// site: https://doc.cgal.org/latest/Triangulation_2/index.html#title30
 	void Triangulation(std::vector<std::vector<int>>& polygons, std::vector<trimesh::dvec2>& points, trimesh::TriMesh* mesh)
 	{
+#ifdef USE_CGAL
 		CDT cdt;
 
 		for (size_t i = 0; i < polygons.size(); i++)
@@ -117,6 +121,7 @@ namespace mmesh
 				mesh->faces.emplace_back(vertex_id_start, vertex_id_start + 1, vertex_id_start + 2);
 			}
 		}
+#endif
 	}
 
 

@@ -1,11 +1,12 @@
 #include "trimesh_simplify.h"
 
 #include "trimesh2/TriMesh.h"
+
+#ifdef USE_VCG
 #include <vcg/complex/complex.h>
 #include <vcg/complex/algorithms/create/platonic.h>
 #include "vcg/complex/algorithms/clustering.h"
 #include "wrap/io_trimesh/export.h"
-
 
 namespace mmesh
 {
@@ -102,3 +103,5 @@ namespace mmesh
 		return output_mesh;
 	}
 }
+
+#endif

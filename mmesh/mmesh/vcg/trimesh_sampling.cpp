@@ -23,6 +23,8 @@
 #include <sstream>
 #include <string>
 #include "mmesh/vcg/trimesh_sampling .h"
+
+#ifdef USE_VCG
 #include<vcg/complex/complex.h>
 
 #include<wrap/io_trimesh/import_off.h>
@@ -123,3 +125,5 @@ namespace vcg
         }
     }
 }
+
+#endif
