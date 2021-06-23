@@ -63,13 +63,21 @@ namespace mmesh
 					vec3& v1 = m_vertexes.at(f[fv1]);
 					vec3& v2 = m_vertexes.at(f[fv2]);
 
+					// 向量计算时最好用双精度数，特别是叉乘和归一化，尽量不要用单精度去存储中间结果，以避免精度丢失，进而对临界值的计算造成影响
 					vec3 v01 = v1 - v0;
+					dvec3 v01d = dvec3(v01.x, v01.y, v01.z);
 					vec3 v02 = v2 - v0;
-					vec3 n = v01 TRICROSS v02;
-					normalize(n);
+					dvec3 v02d = dvec3(v02.x, v02.y, v02.z);
+					//vec3 n = v01 TRICROSS v02;
+					dvec3 nd = v01d TRICROSS v02d;
+					//normalize(n);
+					normalize(nd);
 
-					m_faceNormals.at(i) = n;
-					m_dotValues.at(i) = trimesh::dot(n, vec3(0.0f, 0.0f, 1.0f));
+					//m_faceNormals.at(i) = n;
+					m_faceNormals.at(i) = nd;
+					//m_dotValues.at(i) = trimesh::dot(n, vec3(0.0f, 0.0f, 1.0f));
+					m_dotValues.at(i) = trimesh::dot(nd, dvec3(0.0, 0.0, 1.0));
+
 
 					//if (m_logCallback)
 					//{
@@ -532,6 +540,7 @@ namespace mmesh
 
 			vec3 start(vv.x,vv.y, 0.0f);
 			check(collides, start, CheckDir::eUp, -1);
+			check(collides, start, CheckDir::eUp, -1);
 
 			size_t resultSize = collides.size();
 
@@ -557,7 +566,10 @@ namespace mmesh
 				});
 
 			size_t startIndex = 0;
-			float cosValue = cosf(M_PIf * (90.0f - angle) / 180.0f);
+
+			// 有乘除法或者三角函数计算时最好采用双精度，尽量不要用单精度去存储中间结果，以避免精度丢失，进而对临界值的计算造成影响
+			//float cosValue = cosf(M_PIf * (90.0f - angle) / 180.0f);
+			float cosValue = cos(M_PIl * (90.0 - angle) / 180.0);
 
 			while (startIndex < resultSize)
 			{
@@ -567,7 +579,7 @@ namespace mmesh
 				{
 					VerticalCollide& nResult = collides.at(startIndex + 1);
 					float dotd = nResult.faceid >= 0 ? m_dotValues.at(nResult.faceid) : 1.0f;
-					if ((dotu * dotd < 0.0f) && (abs(dotd) >= cosValue) && (abs(nResult.z - cResult.z) >= 0.5f))
+					if ((dotu * dotd < 0.0f) && (abs(dotd) >= cosValue) && (abs(nResult.z - cResult.z) > 0.5f))
 					{
 						VerticalSeg seg;
 						seg.t = vec3(nResult.xy.x, nResult.xy.y, nResult.z);
