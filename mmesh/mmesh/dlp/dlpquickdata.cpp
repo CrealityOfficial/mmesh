@@ -217,7 +217,7 @@ namespace mmesh
 		sources.clear();
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 10.0;
+			m_cbParamsPtr->percentage = 0.1;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -358,7 +358,7 @@ namespace mmesh
 		}
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 100.0;
+			m_cbParamsPtr->percentage = 1.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -379,7 +379,7 @@ namespace mmesh
 		sources.clear();
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 10.0;
+			m_cbParamsPtr->percentage = 0.1;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -614,7 +614,7 @@ namespace mmesh
 #endif
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 100.0;
+			m_cbParamsPtr->percentage = 1.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -676,17 +676,20 @@ namespace mmesh
 
 				}
 
+				percentage_Count++;
 
+				if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+				{
+					m_cbParamsPtr->percentage = 0.1 + (float)percentage_Count / (float)supportVertexes.size() * 2;
+					m_throwFunc(m_cbParamsPtr);
+				}
 			}
 		}
-		percentage_Count++;
-
-		if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportVertexes.size() * 10;
+			m_cbParamsPtr->percentage = 0.3;
 			m_throwFunc(m_cbParamsPtr);
 		}
-
 	}
 
 	void DLPQuickData::autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam)
@@ -749,10 +752,14 @@ namespace mmesh
 
 			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
 			{
-				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportEdges.size() * 10;
+				m_cbParamsPtr->percentage = 0.3 + (float)percentage_Count / (float)supportEdges.size() * 0.2;
 				m_throwFunc(m_cbParamsPtr);
 			}
-
+		}
+		if (m_throwFunc != NULL)
+		{
+			m_cbParamsPtr->percentage = 0.5;
+			m_throwFunc(m_cbParamsPtr);
 		}
 	}
 #ifdef USE_VCG_POISSON_SAMPLE
@@ -921,6 +928,18 @@ namespace mmesh
 					sectionSources.emplace_back(sources);
 				}
 			}
+			percentage_Count++;
+
+			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+			{
+				m_cbParamsPtr->percentage = 0.5 + (float)percentage_Count / (float)supportFaces.size() * 0.4;
+				m_throwFunc(m_cbParamsPtr);
+			}
+		}
+		if (m_throwFunc != NULL)
+		{
+			m_cbParamsPtr->percentage = 0.9;
+			m_throwFunc(m_cbParamsPtr);
 		}
 	}
 
@@ -1097,7 +1116,7 @@ namespace mmesh
 
 			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
 			{
-				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportFaces.size() * 50;
+				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportFaces.size() * 0.5;
 				m_throwFunc(m_cbParamsPtr);
 			}
 		}
