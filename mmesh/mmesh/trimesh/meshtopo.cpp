@@ -1,4 +1,5 @@
 #include "mmesh/trimesh/meshtopo.h"
+#include "mmesh/trimesh/algrithm3d.h"
 
 using namespace trimesh;
 namespace mmesh
@@ -175,7 +176,7 @@ namespace mmesh
 #else
 	void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
 	{
-		auto middlePt = [vertexes](int vertexID1, int vertexID2, int vertexID3) {
+		auto middlePt = [vertexes](int vertexID1, int vertexID2, int vertexID3, vec3 &middlept)->bool {
 #if 0
 			vec3 A(1, 1, 1);
 			vec3 B(3, 1, 1);
@@ -185,25 +186,55 @@ namespace mmesh
 			vec3 B = vertexes.at(vertexID2);
 			vec3 C = vertexes.at(vertexID3);
 #endif
-
+			bool ret = true;
 			vec3 E = (A + B) / 2;
-			//vec3 G = A * (1 - t) + C * t;
-			//vec3 GE = (A - B) / 2+(C-A)*t;
-			//vec3 BA=(A-B);
-			//GE* BA = 0;//x1*x2+y1*y2+z1*z3=0
+			vec3 abN = (B - A);
+			vec3 baN = (A - B);
 
-			vec3 GEtemp = (A - B) / 2;
-			vec3 CAtemp = (C - A);
-			vec3 BA = (A - B);
-			float xtemp = BA.x * BA.x / 2;
-			float ytemp = BA.y * BA.y / 2;
-			float ztemp = BA.z * GEtemp.z / 2;
-			float xtemp_t = BA.x * CAtemp.x;
-			float ytemp_t = BA.y * CAtemp.y;
-			float ztemp_t = BA.z * CAtemp.z;
-			float t = -(xtemp + ytemp + ztemp) / (xtemp_t + ytemp_t + ztemp_t);
-			vec3 middlept = A * (1 - t) + C * t;
-			return middlept;
+			float t = -1;
+			if (rayIntersectPlane(A, (C - A), E, abN, t)&&(t>0&& t <= 1))
+			{
+				 middlept = A * (1 - t) + C * t;
+			}
+			else
+			{
+				//std::cout << "t====" << t << std::endl;
+
+				if (rayIntersectPlane(B, (C - B), E, baN, t) && (t > 0 && t <= 1))
+				{
+					middlept = B * (1 - t) + C * t;
+				}
+				else
+				{
+					std::cout << "middlept error**********" << std::endl;
+					std::cout << "t====" << t << std::endl;
+					std::cout << "A====" << A << std::endl;
+					std::cout << "B====" << B << std::endl;
+					std::cout << "C====" << C << std::endl;
+					ret = false;
+				}
+			}
+
+
+
+
+			//vec3 G = A * (1 - t) + C * t;
+			//vec3 GE =(E-G)= (A - B) / 2+(C-A)*t;
+			//vec3 BA=(A-B);
+			//GE* BA = 0;//x1*x2+y1*y2+z1*z2=0
+
+			//vec3 GEtemp = (A - B) / 2;
+			//vec3 CAtemp = (C - A);
+			//vec3 BA = (A - B);
+			//float xtemp = BA.x * BA.x / 2;
+			//float ytemp = BA.y * BA.y / 2;
+			//float ztemp = BA.z * GEtemp.z / 2;
+			//float xtemp_t = BA.x * CAtemp.x;
+			//float ytemp_t = BA.y * CAtemp.y;
+			//float ztemp_t = BA.z * CAtemp.z;
+			//float t = -(xtemp + ytemp + ztemp) / (xtemp_t + ytemp_t + ztemp_t);
+			//vec3 middlept = A * (1 - t) + C * t;
+			return ret;
 		};
 
 		int faceNum = (int)m_mesh->faces.size();
@@ -218,12 +249,12 @@ namespace mmesh
 			TriMesh::Face& tFace = m_mesh->faces.at(faceID);
 			ivec3& edgeFlag = edgesFlags.at(faceID);
 
-			for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
+			for (int edgeIndex = 0; edgeIndex < 3; edgeIndex++)
 			{
 				if (edgeFlag[edgeIndex] == 0)
 				{
 					edgeFlag[edgeIndex] = 1;//标示该边已检测处理过
-					int vertexID1 = tFace[edgeIndex];
+					int vertexID1 = tFace[edgeIndex % 3];
 					int vertexID2 = tFace[(edgeIndex + 1) % 3];
 					int vertexID3 = tFace[(edgeIndex + 2) % 3];
 					vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
@@ -281,8 +312,13 @@ namespace mmesh
 									oppovertexID3 = oppoFace[0];
 								else if (oppoFace[2] == oppoEdgeVertexID)
 									oppovertexID3 = oppoFace[1];
-								vec3 G = middlePt(vertexID1, vertexID2, vertexID3);
-								vec3 H = middlePt(vertexID1, vertexID2, oppovertexID3);
+								vec3 G,H;
+								if (middlePt(vertexID1, vertexID2, vertexID3, G) == false
+									|| middlePt(vertexID1, vertexID2, oppovertexID3, H) == false
+									)
+								{
+									continue;
+								}
 								vec3 E = (vertexes.at(vertexID1) + vertexes.at(vertexID2)) / 2;
 								if ((G.z - E.z > EPSILON) && (H.z - E.z > EPSILON))
 								{
