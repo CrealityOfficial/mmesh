@@ -4,10 +4,20 @@ namespace mmesh
 {
 	void clipperConvert(const ClipperLib::Path& path, std::vector<trimesh::vec3>& vpath)
 	{
-		if (path.size()<3)
-		{
+		int size = (int)path.size();
+		if (size < 3)
 			return;
-		}
+
+		//auto f = [](const ClipperLib::IntPoint& p)->trimesh::vec3 {
+		//	return trimesh::vec3(INT2MM(p.X), INT2MM(p.Y), 0.0f);
+		//};
+		//for (int i = 0; i < size - 1; ++i)
+		//{
+		//	int index1 = i;
+		//	int index2 = (i + 1) % size;
+		//	vpath.push_back(f(path.at(index1)));
+		//	vpath.push_back(f(path.at(index2)));
+		//}
 
 		trimesh::vec3 startPoint;
 		for (int n = 0; n < path.size(); n++)
