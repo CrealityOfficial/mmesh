@@ -11,7 +11,7 @@ namespace mmesh
 		auto f = [](const ClipperLib::IntPoint& p)->trimesh::vec3 {
 			return trimesh::vec3(INT2MM(p.X), INT2MM(p.Y), 0.0f);
 		};
-		for (int i = 0; i < size - 1; ++i)
+		for (int i = 0; i < size; ++i)
 		{
 			int index1 = i;
 			int index2 = (i + 1) % size;
