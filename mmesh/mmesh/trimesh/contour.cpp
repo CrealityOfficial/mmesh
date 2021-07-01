@@ -61,8 +61,8 @@ namespace mmesh
 		, float gapx, float gapy, std::vector<trimesh::vec3>& newPosition)
 	{
 		trimesh::box3 _box = box;
-		//_box.min += trimesh::vec3(gapx, gapy, 0.0f);
-		//_box.max += trimesh::vec3(-gapx, -gapy, 0.0f);
+		_box.min += trimesh::vec3(gapx, gapy, 0.0f);
+		_box.max += trimesh::vec3(-gapx, -gapy, 0.0f);
 
 		std::vector<trimesh::box3> _boxes;
 		for (const trimesh::box3& b : boxes)

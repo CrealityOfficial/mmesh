@@ -23,6 +23,8 @@
 #include <sstream>
 #include <string>
 #include "mmesh/vcg/trimesh_sampling .h"
+
+#ifdef USE_VCG
 #include<vcg/complex/complex.h>
 
 #include<wrap/io_trimesh/import_off.h>
@@ -106,7 +108,7 @@ namespace vcg
             sampleVec.clear();
             rad = m_PoissonAlgCfg.userSampleRad;
             tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, MontecarloSurfaceMesh, rad, pp);
-            tri::BuildMeshFromCoordVector(PoissonMesh, sampleVec);
+            //tri::BuildMeshFromCoordVector(PoissonMesh, sampleVec);
 
             for (Point3f pt : sampleVec)
             {
@@ -123,3 +125,5 @@ namespace vcg
         }
     }
 }
+
+#endif

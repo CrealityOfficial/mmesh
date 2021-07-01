@@ -26,6 +26,9 @@ namespace mmesh
 
 	trimesh::vec3 moveTrimesh2Center(trimesh::TriMesh* mesh);
 	void moveMeshes2BoxCenter(std::vector<trimesh::TriMesh*> meshes, const trimesh::box3& box, bool zZero = true);
+
+	void convertUV2Azi(trimesh::TriMesh* mesh);
+	void convertUV2Equ(trimesh::TriMesh* mesh);
 }
 
 #endif // MMESH_TRIMESHUTIL_1602590289222_H

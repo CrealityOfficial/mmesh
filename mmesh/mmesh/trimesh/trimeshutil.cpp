@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <assert.h>
 
+#include "mmesh/create/ballcreator.h"
+
 namespace mmesh
 {
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
@@ -406,5 +408,25 @@ namespace mmesh
 		}
 		for (trimesh::TriMesh* mesh : meshes)
 			trimesh::trans(mesh, offset);
+	}
+
+	void convertUV2Azi(trimesh::TriMesh* mesh)
+	{
+		if (!mesh || (mesh->cornerareas.size() != mesh->vertices.size()))
+			return;
+
+		size_t size = mesh->cornerareas.size();
+		for (size_t i = 0; i < size; ++i)
+			mesh->cornerareas.at(i) = BallCreator::equ2azi(mesh->cornerareas.at(i));
+	}
+
+	void convertUV2Equ(trimesh::TriMesh* mesh)
+	{
+		if (!mesh || (mesh->cornerareas.size() != mesh->vertices.size()))
+			return;
+
+		size_t size = mesh->cornerareas.size();
+		for (size_t i = 0; i < size; ++i)
+			mesh->cornerareas.at(i) = BallCreator::azi2equ(mesh->cornerareas.at(i));
 	}
 }

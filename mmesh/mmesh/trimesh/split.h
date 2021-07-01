@@ -6,7 +6,7 @@
 #include "trimesh2/XForm.h"
 #include "trimesh2/Vec3Utils.h"
 #include "mmesh/trimesh/polygonstack.h"
-
+#define FLT_MIN 1.175494351e-38F
 struct segment
 {
 	int start;

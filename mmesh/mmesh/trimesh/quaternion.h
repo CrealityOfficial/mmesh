@@ -26,6 +26,7 @@ namespace trimesh
 
 		static quaternion fromDirection(vec3 dir, const vec3& fixedValue);
 		static quaternion fromAxisAndAngle(const vec3& axis, float angle);
+		static quaternion fromEular(vec3 angles);
 		static bool qFuzzyIsNull(float f);
 	
 	public:

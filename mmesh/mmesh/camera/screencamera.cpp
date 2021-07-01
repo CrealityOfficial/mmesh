@@ -225,6 +225,23 @@ namespace mmesh
 		return true;
 	}
 
+	void ScreenCamera::translate(const trimesh::vec2& transR)
+	{
+		trimesh::vec3 cameraPosition = m_position;
+		trimesh::vec3 viewCenter = m_viewCenter;
+		trimesh::vec3 dir = viewCenter - cameraPosition;
+		float D = trimesh::len(dir);
+		trimesh::normalize(dir);
+		trimesh::vec3 left = dir TRICROSS m_upVector;
+
+		D *= tan(M_PI_180f * m_fovy / 2.0f) * 2.0f;
+		float pixelY = D * transR.y;
+		float pixelX = D * m_aspectRatio * transR.x;
+
+		trimesh::vec3 t = pixelY * m_upVector - pixelX * left;
+		translate(t);
+	}
+
 	bool ScreenCamera::rotate(const trimesh::vec3& axis, float angle)
 	{
 		trimesh::quaternion q = trimesh::quaternion::fromAxisAndAngle(axis, angle);

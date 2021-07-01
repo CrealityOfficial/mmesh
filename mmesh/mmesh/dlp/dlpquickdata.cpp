@@ -68,7 +68,10 @@ namespace mmesh
 		m_DLPISourceInited = false;
 		clear();
 	}
-
+	trimesh::fxform DLPQuickData::getXformData() const
+	{
+		return m_xf;
+	}
 	void DLPQuickData::clear()
 	{
 		m_boxes.clear();
@@ -214,7 +217,7 @@ namespace mmesh
 		sources.clear();
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 10.0;
+			m_cbParamsPtr->percentage = 0.1;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -355,7 +358,7 @@ namespace mmesh
 		}
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 100.0;
+			m_cbParamsPtr->percentage = 1.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -376,7 +379,7 @@ namespace mmesh
 		sources.clear();
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 10.0;
+			m_cbParamsPtr->percentage = 0.1;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -611,7 +614,7 @@ namespace mmesh
 #endif
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 100.0;
+			m_cbParamsPtr->percentage = 1.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -667,23 +670,26 @@ namespace mmesh
 				if (crossn % 2 == 0)//向下应与模型有偶数个效点
 				{
 					//DLPISource dlpSource = generateSource(vertex, vec3(0.0f, 0.0f, -1.0f));
-					DLPISource dlpSource = generateSource(vertex, dir);
+					DLPISource dlpSource = generateSource(vertex, DOWN_NORMAL);
 					dlpSource.typeflg = SUPPORT_VERTEX;
 					sources.push_back(dlpSource);
 
 				}
 
+				percentage_Count++;
 
+				if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+				{
+					m_cbParamsPtr->percentage = 0.1 + (float)percentage_Count / (float)supportVertexes.size() * 2;
+					m_throwFunc(m_cbParamsPtr);
+				}
 			}
 		}
-		percentage_Count++;
-
-		if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportVertexes.size() * 10;
+			m_cbParamsPtr->percentage = 0.3;
 			m_throwFunc(m_cbParamsPtr);
 		}
-
 	}
 
 	void DLPQuickData::autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam)
@@ -746,10 +752,14 @@ namespace mmesh
 
 			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
 			{
-				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportEdges.size() * 10;
+				m_cbParamsPtr->percentage = 0.3 + (float)percentage_Count / (float)supportEdges.size() * 0.2;
 				m_throwFunc(m_cbParamsPtr);
 			}
-
+		}
+		if (m_throwFunc != NULL)
+		{
+			m_cbParamsPtr->percentage = 0.5;
+			m_throwFunc(m_cbParamsPtr);
 		}
 	}
 #ifdef USE_VCG_POISSON_SAMPLE
@@ -759,6 +769,7 @@ namespace mmesh
 		int percentage_Count = 0;
 		std::vector<std::vector<int>> supportFaces;
 		sectionSources.clear();
+		supportFaces.clear();
 		m_ConnectSectionInfor.facesIndexes.clear();
 
 		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
@@ -799,7 +810,32 @@ namespace mmesh
 				std::cout << "extract_poisson_point" << outVertexs.size() << std::endl;
 				for (trimesh::vec3 pt : outVertexs)
 				{
-					DLPISource dlpSource = generateSource(pt, trimesh::vec3(0, 0, -1.0));
+					vec3 dir = DOWN_NORMAL;
+
+					{
+						ivec2 pointIndex = m_triangleChunk->index(pt);
+						int iindex = pointIndex.x + pointIndex.y * m_triangleChunk->m_width;
+						std::vector<int>& faceVindex = m_triangleChunk->m_cells.at(iindex);
+						int faceVindexSize = faceVindex.size();
+						for (int faceID : faceChunk)
+						{
+							TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+							vec3& vertex1 = m_vertexes.at(tFace[0]);
+							vec3& vertex2 = m_vertexes.at(tFace[1]);
+							vec3& vertex3 = m_vertexes.at(tFace[2]);
+							if (PointinTriangle(vertex1, vertex2, vertex3, pt))
+							{
+								//std::cout << "hit" << std::endl;
+								dir = m_faceNormals[faceID];
+								break;
+							}
+
+						}
+
+					}
+
+
+					DLPISource dlpSource = generateSource(pt, dir);
 					dlpSource.typeflg = SUPPORT_FACE;
 					sources.push_back(dlpSource);
 				}
@@ -818,8 +854,21 @@ namespace mmesh
 							vec3& vertex2 = m_vertexes.at(tFace[1]);
 							vec3& vertex3 = m_vertexes.at(tFace[2]);
 							vec3& normal = m_faceNormals.at(faceID);
-
+#if 1
 							if (rayIntersectTriangle(xypoint, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+							{
+								vec3 pointCross = xypoint + t * dir;
+								std::cout << "pointCross===" << pointCross << std::endl;
+
+								DLPISource dlpSource = generateSource(pointCross, normal);
+								dlpSource.typeflg = SUPPORT_FACE;
+								if (sources.size() == 1)
+								{
+									sources.clear();
+								}
+								sources.push_back(dlpSource);
+							}
+#else
 							{
 								vec3 pointCross = xypoint + t * dir;
 								DLPISource dlpSource = generateSource(pointCross, normal);
@@ -830,8 +879,16 @@ namespace mmesh
 								}
 								sources.push_back(dlpSource);
 							}
+#endif
 						}
 					}
+					if (sources.size() == 0)
+					{
+						std::cout << "no rayIntersectTriangle xypoint===" << centerPoint << std::endl;
+
+					}
+
+					//sources.clear();
 					if ((sources.size() == 0) && (supportEnable == true))
 					{
 						int& faceID = faceChunk[0];//默认选中第一个
@@ -871,6 +928,18 @@ namespace mmesh
 					sectionSources.emplace_back(sources);
 				}
 			}
+			percentage_Count++;
+
+			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+			{
+				m_cbParamsPtr->percentage = 0.5 + (float)percentage_Count / (float)supportFaces.size() * 0.4;
+				m_throwFunc(m_cbParamsPtr);
+			}
+		}
+		if (m_throwFunc != NULL)
+		{
+			m_cbParamsPtr->percentage = 0.9;
+			m_throwFunc(m_cbParamsPtr);
 		}
 	}
 
@@ -1047,7 +1116,7 @@ namespace mmesh
 
 			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
 			{
-				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportFaces.size() * 50;
+				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportFaces.size() * 0.5;
 				m_throwFunc(m_cbParamsPtr);
 			}
 		}

@@ -11,7 +11,8 @@ namespace enchase
 		if (!input || input->cornerareas.size() == 0)
 			return nullptr;
 
-		if (!surface || !surface->matrix())
+		MatrixF* mat = surface->matrix();
+		if (!surface || !mat)
 			return nullptr;
 
 		enchase::Mapper mapper;
@@ -34,7 +35,7 @@ namespace enchase
 
 		mapper.allTextureGroup().push_back(texture);
 
-		mapper.setSource(new enchase::MatrixFSource(surface->matrix()));
+		mapper.setSource(new enchase::MatrixFSource(mat));
 		enchaser.enchaseCache(&mapper, 0);
 
 		trimesh::TriMesh* mesh = enchaser.takeCurrent();

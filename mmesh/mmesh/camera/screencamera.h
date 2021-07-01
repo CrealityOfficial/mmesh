@@ -64,6 +64,7 @@ namespace mmesh
 
 		bool zoom(float scale);
 		bool translate(const trimesh::vec3& trans);
+		void translate(const trimesh::vec2& transR);
 		bool rotate(const trimesh::vec3& axis, float angle);
 		bool rotate(const trimesh::quaternion& q);
 

@@ -22,6 +22,8 @@
 ****************************************************************************/
 #include <vector>
 #include "trimesh2/TriMesh.h"
+
+#ifdef USE_VCG
 namespace vcg
 {
     namespace CX_PoissonAlg {
@@ -44,3 +46,5 @@ namespace vcg
 		};
     }//PoissonAlg
 }//vcg
+
+#endif USE_VCG
