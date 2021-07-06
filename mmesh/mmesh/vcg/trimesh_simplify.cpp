@@ -1,15 +1,17 @@
 #include "trimesh_simplify.h"
 
 #include "trimesh2/TriMesh.h"
+#if USE_VCG
 #include "vcg/complex/complex.h"
 #include "vcg/complex/algorithms/create/platonic.h"
 #include "vcg/complex/algorithms/clustering.h"
 #include "vcg/complex/algorithms/local_optimization/tri_edge_collapse_quadric.h"
 #include "wrap/io_trimesh/export.h"
-
+#endif
 
 namespace mmesh
 {
+#if USE_VCG
     class VcgVertex;
     class VcgEdge;
 	class VcgFace;
@@ -124,14 +126,19 @@ namespace mmesh
 		}
 	}
 
+#endif
+
 	TrimeshSimplify::TrimeshSimplify(trimesh::TriMesh* mesh)
 	{
+#if USE_VCG
 		myVcgMesh = new VcgTriMesh();
 		trimesh_to_vcg(mesh, myVcgMesh);
+#endif
 	}
 
 	TrimeshSimplify::~TrimeshSimplify()
 	{
+#if USE_VCG
 		for (size_t i = 0; i < myVcgMesh->face.size(); i++)
 		{
 			vcg::tri::Allocator<VcgTriMesh>::DeleteFace(*myVcgMesh, myVcgMesh->face[i]);
@@ -143,6 +150,7 @@ namespace mmesh
 		}
 
 		delete myVcgMesh;
+#endif
 	}
 
     // copy from the source code of meshlab
@@ -152,7 +160,7 @@ namespace mmesh
         {
             return nullptr;
         }
-
+#if USE_VCG
 		double myCellSize = myVcgMesh->bbox.Diag() * (cell_size_percent < 0.01 ? 0.01 : (cell_size_percent > 1.0 ? 1.0 : cell_size_percent));
 		vcg::tri::Clustering<VcgTriMesh, vcg::tri::AverageColorCell<VcgTriMesh>> clustering;
 
@@ -172,7 +180,10 @@ namespace mmesh
 
 		vcg_to_trimesh(&extracted_mesh, target_mesh);
 
-		return target_mesh;
+        return target_mesh;
+#else
+        return nullptr;
+#endif
 	}
 
     // copy from the source code of meshlab
@@ -183,6 +194,7 @@ namespace mmesh
             return nullptr;
         }
 
+#if USE_VCG
         percent = percent < 0.01 ? 0.01 : (percent > 1.0 ? 1.0 : percent);
 
         // clear deleted flag
@@ -235,5 +247,9 @@ namespace mmesh
         vcg_to_trimesh(myVcgMesh, target_mesh);
 
         return target_mesh;
+#else
+        return nullptr;
+#endif
     }
 }
+
