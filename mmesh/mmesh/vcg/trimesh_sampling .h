@@ -31,18 +31,21 @@ namespace vcg
 		{
 			float baseSampleRad=1.0;//基础采样半径
 			float userSampleRad=2.0;//用户选择采样半径
-
+			float sampleRatio;
 		}PoissonAlgCfg;
+
 		class PoissonFunc
 		{
 		public:
 			PoissonFunc();
 			~PoissonFunc();
 
-			bool main(std::vector<trimesh::vec3> inVertexes, std::vector<trimesh::TriMesh::Face> inFaces, std::vector<trimesh::vec3>& outVertexes);
-			void setPoissonCfg(PoissonAlgCfg *cfgPtr);
+			bool main(std::vector<trimesh::vec3> inVertexes, std::vector<trimesh::TriMesh::Face> inFaces, std::vector<trimesh::vec3>& outVertexes, bool secondflg=false);
+			bool mainSecond(std::vector<trimesh::vec3>& outVertexes);
+			void setPoissonCfg(PoissonAlgCfg* cfgPtr);
 		private:
 			PoissonAlgCfg m_PoissonAlgCfg;
+			void* m_SurfaceMeshInner;
 		};
     }//PoissonAlg
 }//vcg

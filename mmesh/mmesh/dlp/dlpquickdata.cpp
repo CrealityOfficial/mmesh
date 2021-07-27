@@ -775,7 +775,10 @@ namespace mmesh
 		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
 		vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
 		poissonAlgcfg.baseSampleRad = 0.25;//m_triangleChunk->m_width;
-		poissonAlgcfg.userSampleRad = autoParam->space;
+		poissonAlgcfg.userSampleRad = autoParam->space> poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
+		//poissonAlgcfg.baseSampleRad = poissonAlgcfg.userSampleRad;//m_triangleChunk->m_width;
+		poissonAlgcfg.sampleRatio = autoParam->sampleRatio;//m_triangleChunk->m_width;
+
 		for (std::vector<int>& faceChunk : supportFaces)
 		{
 
@@ -802,12 +805,22 @@ namespace mmesh
 			if(supportFlag)
 			{
 				std::vector< trimesh::vec3> outVertexs;
+				std::vector< trimesh::vec3> outSecondVertexs;
 				std::vector<DLPISource> sources;
 				vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
 				PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
 
-				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs);
-				std::cout << "extract_poisson_point" << outVertexs.size() << std::endl;
+				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs,true);
+				if (outVertexs.size() > 1)
+				{
+					//outVertexs.clear();
+					PoissonFuncObj.mainSecond(outSecondVertexs);
+				}
+				if (outSecondVertexs.size() > 0)
+				{
+					outVertexs.swap(outSecondVertexs);
+				}
+				std::cout << "extract_poisson_point===" << outVertexs.size() << std::endl;
 				for (trimesh::vec3 pt : outVertexs)
 				{
 					vec3 dir = DOWN_NORMAL;
