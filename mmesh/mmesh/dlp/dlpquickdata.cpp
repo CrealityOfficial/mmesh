@@ -132,8 +132,8 @@ namespace mmesh
 			//if (m_autoParam.space < 0.1)
 			//	m_autoParam.space = 2.0;
 
-			m_triangleChunk->build(m_boxes, globalBox, 2.0f);		
-			//m_triangleChunk->build(m_boxes, globalBox, m_autoParam.space);
+			//m_triangleChunk->build(m_boxes, globalBox, 2.0f);		
+			m_triangleChunk->build(m_boxes, globalBox, m_autoParam.baseSpace);
 			m_meshTopo->build(m_mesh);
 
 			trimesh::vec3 size = globalBox.size();
@@ -774,10 +774,9 @@ namespace mmesh
 
 		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
 		vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
-		poissonAlgcfg.baseSampleRad = 0.25;//m_triangleChunk->m_width;
+		poissonAlgcfg.baseSampleRad = autoParam->baseSpace;//m_triangleChunk->m_width;
 		poissonAlgcfg.userSampleRad = autoParam->space> poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
 		//poissonAlgcfg.baseSampleRad = poissonAlgcfg.userSampleRad;//m_triangleChunk->m_width;
-		poissonAlgcfg.sampleRatio = autoParam->sampleRatio;//m_triangleChunk->m_width;
 
 		for (std::vector<int>& faceChunk : supportFaces)
 		{
