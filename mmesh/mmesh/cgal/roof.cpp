@@ -44,7 +44,8 @@ void seperate1234(ClipperLib::PolyTree* polyTree, std::vector<PolyPair*>& polyPa
         PolyPair* pair1 = new PolyPair();
         pair1->clockwise = false;
         pair1->outer = node1;
-        pair1->inner.swap(node2);
+        //pair1->inner.swap(node2);
+        pair1->inner=node2;
         polyPairs.push_back(pair1);
 
         for (ClipperLib::PolyNode* n : node3)
@@ -284,6 +285,104 @@ namespace mmesh
                 {
                     traitSkeletonFace(roofFace, aSkeleton, pair->clockwise);
                 }                       
+            }
+            else
+            {
+                std::cerr << "ERROR creating interior straight skeleton" << std::endl;
+            }
+        }
+
+        for (PolyPair* pair : pairs)
+        {
+            delete pair;
+        }
+        pairs.clear();
+    }
+
+    void traitSkeletonPoints(ClipperLib::Path* roofPoint, Straight_skeleton_ptr skeleton)
+    {
+        for (Vertex_const_iterator vit = skeleton->vertices_begin();
+            vit != skeleton->vertices_end(); ++vit)
+        {
+            Vertex_const_handle h = vit;
+            if (h->is_skeleton())
+                roofPoint->push_back(cgal_to_point(h->point()));
+        }
+    }
+
+    bool havePoint(const ClipperLib::Path* path, const ClipperLib::IntPoint& point)
+    {
+        for (size_t i = 0; i < path->size(); i++)
+        {
+            if (path->at(i) == point)
+                return true;
+        }
+        return false;
+    }
+
+    bool havePoints(const ClipperLib::Path* path, const ClipperLib::IntPoint& p1, const ClipperLib::IntPoint& p2)
+    {
+        if (path->size() < 2)
+            return false;
+        for (size_t i = 1; i < path->size(); i++, i++)
+        {
+            if ((path->at(i) == p1 && path->at(i - 1) == p2)
+                || (path->at(i - 1) == p1 && path->at(i) == p2))
+                return true;
+        }
+        return false;
+    }
+
+    void traitSkeletonLine(ClipperLib::Path* roofline, ClipperLib::Path* roofPoint, Straight_skeleton_ptr skeleton)
+    {
+        for (Vertex_const_iterator vit = skeleton->vertices_begin();
+            vit != skeleton->vertices_end(); ++vit)
+        {
+            for (Halfedge_const_iterator hit = skeleton->halfedges_begin();
+                hit != skeleton->halfedges_end(); ++hit)
+            {
+                Halfedge_const_handle h = hit;
+
+                //if (h->is_inner_bisector() && h->opposite()->is_inner_bisector())
+                if (h->vertex()->is_skeleton() && h->opposite()->vertex()->is_skeleton())
+                {
+                    ClipperLib::IntPoint& p = cgal_to_point(h->vertex()->point());
+                    ClipperLib::IntPoint& po = cgal_to_point(h->opposite()->vertex()->point());
+                    if (havePoint(roofPoint, p) && havePoint(roofPoint, po))
+                        if (!havePoints(roofline, p, po))
+                        {
+                            roofline->push_back(cgal_to_point(h->vertex()->point()));
+                            roofline->push_back(cgal_to_point(h->opposite()->vertex()->point()));
+                        }
+                }
+            }
+        }
+    }
+
+
+    void skeletonPoints(ClipperLib::PolyTree* polyTree, ClipperLib::Path* roofLine)
+    {
+        ClipperLib::PolyTree roof;
+        std::vector<PolyPair*> pairs;
+        seperate1234(polyTree, pairs);
+        for (PolyPair* pair : pairs)
+        {
+            Polygon_with_holes input;
+            build_polygon_with_holes(&input, pair);
+            if (!test_simple_polygon(input))
+                continue;
+
+            ClipperLib::PolyTree opposite;
+            Straight_skeleton_ptr aSkeleton = CGAL::create_interior_straight_skeleton_2(input);
+            if (aSkeleton)
+            {
+                ClipperLib::Path roofPoint;
+                traitSkeletonPoints(&roofPoint, aSkeleton);
+
+                if (roofLine)
+                    traitSkeletonLine(roofLine, &roofPoint, aSkeleton);
+
+
             }
             else
             {
