@@ -411,5 +411,9 @@ namespace mmesh
         ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace, bool onePoly)
     {
     }
+
+    void skeletonPoints(ClipperLib::PolyTree* polyTree, ClipperLib::Path* roofLine)
+    {
+    }
 }
 #endif
