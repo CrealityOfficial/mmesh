@@ -105,7 +105,9 @@ namespace vcg
             sampleVec.clear();
             rad = m_PoissonAlgCfg.baseSampleRad;
             sampleNum = tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh>>::ComputePoissonSampleNum(m, rad);
+            #ifdef DEBUG
             std::cout << "sampleNum origal===" << sampleNum << std::endl;
+            #endif
             if (sampleNum == 0)
                 return false;
             //std::cout << "sampleNum==" << sampleNum << std::endl;

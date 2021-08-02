@@ -699,7 +699,7 @@ namespace mmesh
 
 		m_meshTopo->hangEdge(m_vertexes, m_faceNormals, m_dotValues, faceCosValue, supportEdges);
 
-		float minDelta = m_triangleChunk->m_gridSize;
+		float minDelta = autoParam->space;
 
 		int percentage_Count = 0;
 		sources.clear();
@@ -819,7 +819,9 @@ namespace mmesh
 				{
 					outVertexs.swap(outSecondVertexs);
 				}
+				#ifdef DEBUG
 				std::cout << "extract_poisson_point===" << outVertexs.size() << std::endl;
+				#endif
 				for (trimesh::vec3 pt : outVertexs)
 				{
 					vec3 dir = DOWN_NORMAL;
@@ -870,7 +872,9 @@ namespace mmesh
 							if (rayIntersectTriangle(xypoint, dir, vertex1, vertex2, vertex3, &t, &u, &v))
 							{
 								vec3 pointCross = xypoint + t * dir;
+								#ifdef DEBUG
 								std::cout << "pointCross===" << pointCross << std::endl;
+								#endif
 
 								DLPISource dlpSource = generateSource(pointCross, normal);
 								dlpSource.typeflg = SUPPORT_FACE;
