@@ -231,7 +231,7 @@ namespace mmesh
 			if ((flag & SUPPORT_EDGE) == SUPPORT_EDGE)
 			{
 				autoDlpEdgeSource(m_SupportEdgeSources, autoParam);
-				if (1)
+				if (0)
 				{
 					//去除相同点、邻近点
 					auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
@@ -300,7 +300,7 @@ namespace mmesh
 		}
 		/////
 		//if (1)
-		int iterations = sources.size();
+		int iterations = 0;// sources.size();
 		while (iterations)
 		{
 			//去除相同点、邻近点
