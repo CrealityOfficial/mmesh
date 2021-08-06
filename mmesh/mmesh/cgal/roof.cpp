@@ -209,8 +209,14 @@ namespace mmesh
         {
             Halfedge_const_handle h = hit;
 
-            roofLine->Contour.push_back(cgal_to_point(h->vertex()->point()));
-            roofLine->Contour.push_back(cgal_to_point(h->opposite()->vertex()->point()));
+            //roofLine->Contour.push_back(cgal_to_point(h->vertex()->point()));
+            //roofLine->Contour.push_back(cgal_to_point(h->opposite()->vertex()->point()));
+            if (h->vertex()->is_skeleton() && h->opposite()->vertex()->is_skeleton())
+            {
+                roofLine->Contour.push_back(cgal_to_point(h->opposite()->vertex()->point()));
+                //roofLine->Contour.push_back(cgal_to_point(h->vertex()->point()));             
+                //break;
+            }
         }
     }
 
