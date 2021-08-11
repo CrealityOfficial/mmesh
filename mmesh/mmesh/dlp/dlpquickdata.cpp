@@ -205,6 +205,10 @@ namespace mmesh
 #ifdef USE_VCG_POISSON_SAMPLE
 	void DLPQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag, std::function<void(CallBackParams*)> callback, CallBackParams* cbParams)
 	{
+		std::vector<DLPISource> m_SupportFaceSources;
+		std::vector<DLPISource> m_SupportEdgeSources;
+		std::vector<DLPISource> m_SupportVertexSources;
+
 		m_throwFunc = callback;
 		m_cbParamsPtr = cbParams;
 		if (m_autoParam.space != autoParam->space)
@@ -222,7 +226,7 @@ namespace mmesh
 
 		}
 		//flag = SUPPORT_FACE|SUPPORT_EDGE|SUPPORT_VERTEX;
-		flag = SUPPORT_FACE | SUPPORT_EDGE ;
+		//flag = SUPPORT_FACE  ;
 		if (m_DLPISourceInited == false)
 		{
 			if ((flag & SUPPORT_VERTEX) == SUPPORT_VERTEX)
@@ -815,12 +819,24 @@ namespace mmesh
 				vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
 				PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
 
-				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outfirstVertexs,true);
+				PoissonFuncObj.first(m_vertexes, sectFacesIndex, outfirstVertexs,true);
+				PoissonFuncObj.borderSamper(outBorderVertexs);
 				if (outfirstVertexs.size() > 0)
 				{
-					PoissonFuncObj.borderSamper(outBorderVertexs);
-					PoissonFuncObj.mainSecond(outBorderVertexs, outVertexs);
+					PoissonFuncObj.mainSecond(outBorderVertexs, outSecondVertexs);
+					if(outBorderVertexs.size()< outSecondVertexs.size())
+						outVertexs.swap(outSecondVertexs);
+					else
+						outVertexs.swap(outBorderVertexs);
+
+
 				}
+				else
+					outVertexs.swap(outBorderVertexs);
+
+				//std::cout << "outfirstVertexs===" << outfirstVertexs.size() << std::endl;
+				//std::cout << "outSecondVertexs===" << outSecondVertexs.size() << std::endl;
+				//std::cout << "outBorderVertexs===" << outBorderVertexs.size() << std::endl;
 
 				//outVertexs.clear();
 				//outVertexs.insert(outVertexs.end(),outfirstVertexs.begin(), outfirstVertexs.end());
@@ -1278,18 +1294,6 @@ namespace mmesh
 			TriMesh::Face& edgeFaces = m_mesh->faces.at(edgefaceID);
 			centerPointtemp += m_vertexes[vertexIndexStart];
 			ivec3& oppoHalfs = m_meshTopo->m_oppositeHalfEdges.at(edgefaceID);
-			{
-				vec3& vertex1 = m_vertexes.at(edgeFaces[0]);
-				vec3& vertex2 = m_vertexes.at(edgeFaces[1]);
-				vec3& vertex3 = m_vertexes.at(edgeFaces[2]);
-				vec3 e0 = vertex2 - vertex1;
-				vec3 e1 = vertex3 - vertex1;
-				float faceArea = 0.5f * len(e0 TRICROSS e1);
-				float faceAreaThreshold = M_PIf * std::pow(m_autoParam.baseSpace / 10.0, 2.0) * 0.7;
-				if (faceArea < faceAreaThreshold)
-					continue;
-
-			}
 			for (int oppoHalfsIndex = 0; (oppoHalfsIndex < 3)&&((oppoHalfs.x !=-1)&& (oppoHalfs.y != -1) && (oppoHalfs.z != -1)); oppoHalfsIndex++)
 			{
 				int oppovertexIndexStart=m_meshTopo->startvertexid(oppoHalfs[oppoHalfsIndex]);
@@ -1343,15 +1347,18 @@ namespace mmesh
 		centerPoint = centerPointtemp / edgeFaces.size();
 
 		{
-			bool smallsectEable = far_pointpair.first > m_autoParam.baseSpace;
-			float areaThreshold = M_PIf * std::pow(m_autoParam.space / 2.0, 2.0) * 0.7;
+			bool smallsectEable = far_pointpair.first > m_autoParam.space;
+			float areaThreshold = M_PIf * std::pow(m_autoParam.baseSpace / 2.0, 2.0);
 			//use pow replace powf, for linux compile
 			{
 				//if ((sectionFaceArea > areaThreshold)&&(smallsectEable==true))
-				if (sectionFaceArea > areaThreshold)
+				if (sectionFaceArea*0.7 > areaThreshold)
 				{
 					supportflag = true;
 				}
+				if (smallsectEable)
+					supportflag = true;
+
 			}
 			if (supportflag == false)
 			{

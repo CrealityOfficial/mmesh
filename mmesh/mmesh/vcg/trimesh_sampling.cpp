@@ -55,23 +55,19 @@ namespace vcg
         {
             m_PoissonAlgCfg.baseSampleRad = 0.5;
             m_PoissonAlgCfg.userSampleRad = 2.0;
-            m_SurfaceMeshInner = NULL;
-            m_SurfaceMeshSource = new MyMesh;
-
+            m_SurfaceMeshSource = NULL;
+            m_BasicPoissonMesh = NULL;
         }
         PoissonFunc::~PoissonFunc()
         {
-            if (m_SurfaceMeshInner)
-                delete m_SurfaceMeshInner;
-            if (m_SurfaceMeshSource)
-                delete m_SurfaceMeshSource;
+            releaseData();
         
         }
         void PoissonFunc::setPoissonCfg(PoissonAlgCfg* cfgPtr)
         {
             m_PoissonAlgCfg = *cfgPtr;
         }
-        bool PoissonFunc::main(std::vector<trimesh::vec3> inVertexes, std::vector<trimesh::TriMesh::Face> inFaces, std::vector<trimesh::vec3>& outVertexes,bool secondflg)
+        bool PoissonFunc::first(const std::vector<trimesh::vec3> &inVertexes,const std::vector<trimesh::TriMesh::Face> &inFaces, std::vector<trimesh::vec3>& outVertexes,bool secondflg)
         {
 
             int sampleNum = 0;
@@ -79,36 +75,61 @@ namespace vcg
             float rad = 1.0;
             vector<Point3f> coordVec;
             vector<Point3i> indexVec;
+            coordVec.clear();
+            indexVec.clear();
+            if (m_SurfaceMeshSource != NULL)
+            {
+                delete m_SurfaceMeshSource;
+                m_SurfaceMeshSource = NULL;
+            }
+            m_SurfaceMeshSource = new MyMesh;
+            if (m_SurfaceMeshSource == NULL)
+                return false;
+            if (m_BasicPoissonMesh != NULL)
+            {
+                delete m_BasicPoissonMesh;
+                m_BasicPoissonMesh = NULL;
+            }
+            m_BasicPoissonMesh = new MyMesh;
+            if (m_BasicPoissonMesh == NULL)
+                return false;
             if (m_SurfaceMeshSource == NULL)
                 return false;
             MyMesh &m= *(MyMesh*)m_SurfaceMeshSource;
+#if 1
             for (trimesh::vec3 pt : inVertexes) {
                 coordVec.push_back(Point3f(pt.x, pt.y, pt.z));
             }
             for (trimesh::TriMesh::Face faceIndex : inFaces) {
                 indexVec.push_back(Point3i(faceIndex[0], faceIndex[1], faceIndex[2]));
             }
+#else
+            int faceIndexIndex = 0;
+            for (trimesh::TriMesh::Face faceIndex : inFaces) {
+                coordVec.push_back(Point3f(inVertexes[faceIndex[0]].x, inVertexes[faceIndex[0]].y, inVertexes[faceIndex[0]].z));
+                coordVec.push_back(Point3f(inVertexes[faceIndex[1]].x, inVertexes[faceIndex[1]].y, inVertexes[faceIndex[1]].z));
+                coordVec.push_back(Point3f(inVertexes[faceIndex[2]].x, inVertexes[faceIndex[2]].y, inVertexes[faceIndex[2]].z));
+                indexVec.push_back(Point3i(faceIndexIndex, faceIndexIndex + 1, faceIndexIndex + 2));
+                faceIndexIndex += 3;
+            }
 
-
+#endif
+           
             tri::BuildMeshFromCoordVectorIndexVector(m, coordVec, indexVec);//diskMesh
+            //tri::BuildMeshFromCoordVector(m, coordVec);//diskMesh
             //tri::io::ExporterOFF<MyMesh>::Save(m, "disc.off");
             tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::SamplingRandomGenerator().initialize(time(0));
             //----------------------------------------------------------------------
             // Advanced Sample
             // Make a feature dependent Poisson Disk sampling
-            if (m_SurfaceMeshInner)
-            {
-                delete m_SurfaceMeshInner;
-            }
-            m_SurfaceMeshInner = new MyMesh;
 
-            MyMesh& BasicPoissonMesh = *(MyMesh*)m_SurfaceMeshInner;
+            MyMesh& BasicPoissonMesh = *(MyMesh*)m_BasicPoissonMesh;
 
             std::vector<Point3f> sampleVec;
             tri::TrivialSampler<MyMesh> mps(sampleVec);
             tri::UpdateTopology<MyMesh>::FaceFace(m);
             tri::UpdateNormal<MyMesh>::PerFace(m);
-            tri::UpdateFlags<MyMesh>::FaceEdgeSelCrease(m, math::ToRad(m_PoissonAlgCfg.baseSampleRad));
+            tri::UpdateFlags<MyMesh>::FaceEdgeSelCrease(m, math::ToRad(40.0f));
             tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskParam pp;
             ////////////////////////////////////////////////
  
@@ -152,18 +173,17 @@ namespace vcg
         }
         bool PoissonFunc::mainSecond(std::vector<trimesh::vec3> inVertexes,std::vector<trimesh::vec3>& outVertexes)
         {
-            void* SurfaceMeshBetween = m_SurfaceMeshInner;
-            if (SurfaceMeshBetween)
+            if (m_BasicPoissonMesh)
             {
                 //----------------------------------------------------------------------
                 // Advanced Sample
                 // Make a feature dependent Poisson Disk sampling
-                MyMesh& MontecarloSurfaceMesh = *(MyMesh*)SurfaceMeshBetween;;
+                MyMesh& MontecarloSurfaceMesh = *(MyMesh*)m_BasicPoissonMesh;;
                 MyMesh PoissonEdgeMesh;
 
                 float rad = m_PoissonAlgCfg.userSampleRad;
                 //float rad = m_sampleRadius;
-                //float rad = ComputePoissonDiskRadius(*(MyMesh*)m_SurfaceMeshSource, m_sampleNum+ inVertexes.size());
+                 rad = ComputePoissonDiskRadius(MontecarloSurfaceMesh, m_sampleNum+ inVertexes.size());
 
                 //tri::io::ExporterOFF<MyMesh>::Save(m, "disc.off");
                 tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::SamplingRandomGenerator().initialize(time(0));
@@ -200,6 +220,8 @@ namespace vcg
         void PoissonFunc::borderSamper(std::vector<trimesh::vec3>& outVertexes)
         {
             MyMesh poissonEdgeMesh;
+            if(m_SurfaceMeshSource==NULL)
+                return;
             MyMesh* meshPtr = (MyMesh*)m_SurfaceMeshSource;
             typedef typename VoroEdgeMeshAux::EdgeMeshType EdgeMeshType;
             typedef typename EdgeMeshType::CoordType Coord;
@@ -300,6 +322,20 @@ namespace vcg
 
             //tri::io::ExporterOFF<MyMesh>::Save(*meshPtr, "m.off");
             //tri::io::ExporterOFF<MyMesh>::Save(poissonEdgeMesh, "poissonEdgeMesh.off");
+        }
+        void PoissonFunc::releaseData()
+        {
+            if (m_BasicPoissonMesh)
+            {
+                delete m_BasicPoissonMesh;
+                m_BasicPoissonMesh = NULL;
+            }
+            if (m_SurfaceMeshSource)
+            {
+                delete m_SurfaceMeshSource;
+                m_SurfaceMeshSource = NULL;
+            }
+
         }
     }//CX_PoissonAlg End
 }//vcg End
