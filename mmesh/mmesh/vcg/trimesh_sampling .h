@@ -29,20 +29,28 @@ namespace vcg
     namespace CX_PoissonAlg {
 		typedef struct PoissonAlgConfigure
 		{
-			float baseSampleRad=1.0;//基础采样半径
-			float userSampleRad=2.0;//用户选择采样半径
-
+			float baseSampleRad=1.0;//鍩虹閲囨牱鍗婂緞
+			float userSampleRad=2.0;//鐢ㄦ埛閫夋嫨閲囨牱鍗婂緞
+			float ratio=1.0;//鐢ㄦ埛閫夋嫨閲囨牱鍗婂緞
 		}PoissonAlgCfg;
+
 		class PoissonFunc
 		{
 		public:
 			PoissonFunc();
 			~PoissonFunc();
 
-			bool main(std::vector<trimesh::vec3> inVertexes, std::vector<trimesh::TriMesh::Face> inFaces, std::vector<trimesh::vec3>& outVertexes);
-			void setPoissonCfg(PoissonAlgCfg *cfgPtr);
+			bool first(const std::vector<trimesh::vec3> &inVertexes, const std::vector<trimesh::TriMesh::Face> &inFaces, std::vector<trimesh::vec3>& outVertexes, bool secondflg=false);
+			bool mainSecond(std::vector<trimesh::vec3> inVertexes, std::vector<trimesh::vec3>& outVertexes);
+			void setPoissonCfg(PoissonAlgCfg* cfgPtr);
+			void borderSamper(std::vector<trimesh::vec3>& outVertexes);
+			void releaseData();
 		private:
 			PoissonAlgCfg m_PoissonAlgCfg;
+			void* m_BasicPoissonMesh;
+			void* m_SurfaceMeshSource;
+			int   m_sampleNum;
+			int   m_sampleRadius;
 		};
     }//PoissonAlg
 }//vcg
