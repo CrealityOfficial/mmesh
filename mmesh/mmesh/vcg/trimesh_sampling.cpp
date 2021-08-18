@@ -97,9 +97,9 @@ namespace vcg
                 return false;
             MyMesh &m= *(MyMesh*)m_SurfaceMeshSource;
 #if 1
-            for (trimesh::vec3 pt : inVertexes) {
-                coordVec.push_back(Point3f(pt.x, pt.y, pt.z));
-            }
+            //for (trimesh::vec3 pt : inVertexes) {
+            //    coordVec.push_back(Point3f(pt.x, pt.y, pt.z));
+            //}
             for (trimesh::TriMesh::Face faceIndex : inFaces) {
                 indexVec.push_back(Point3i(faceIndex[0], faceIndex[1], faceIndex[2]));
             }
@@ -115,7 +115,7 @@ namespace vcg
 
 #endif
            
-            tri::BuildMeshFromCoordVectorIndexVector(m, coordVec, indexVec);//diskMesh
+            tri::BuildMeshFromCoordVectorIndexVector(m, inVertexes /*coordVec*/, indexVec);//diskMesh
             //tri::BuildMeshFromCoordVector(m, coordVec);//diskMesh
             //tri::io::ExporterOFF<MyMesh>::Save(m, "disc.off");
             tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::SamplingRandomGenerator().initialize(time(0));
@@ -222,11 +222,25 @@ namespace vcg
             MyMesh poissonEdgeMesh;
             if(m_SurfaceMeshSource==NULL)
                 return;
+
             MyMesh* meshPtr = (MyMesh*)m_SurfaceMeshSource;
             typedef typename VoroEdgeMeshAux::EdgeMeshType EdgeMeshType;
             typedef typename EdgeMeshType::CoordType Coord;
             typedef typename MyMesh::VertexType     VertexType;
+            typedef typename MyMesh::MeshType::ScalarType ScalarType;
             EdgeMeshType em;
+            ScalarType meshArea = Stat<MyMesh::MeshType>::ComputeMeshArea(*meshPtr);
+            ScalarType meshBorderLength = Stat<MyMesh::MeshType>::ComputeBorderLength(*meshPtr);
+            //if (meshArea < M_PIf * std::pow(m_PoissonAlgCfg.baseSampleRad, 2) *1.5)
+            //{
+            //    std::cout << "meshArea small" << std::endl;
+            //    return ;
+            //}
+            if (meshArea/meshBorderLength < m_PoissonAlgCfg.baseSampleRad/3)
+            {
+                std::cout << "meshBorderLength small" << std::endl;
+                return ;
+            }
             auto ExtractMeshBorders = [](MyMesh& mesh, EdgeMeshType& sides)
             {
                 RequireFFAdjacency(mesh);
