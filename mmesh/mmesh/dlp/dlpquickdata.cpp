@@ -812,27 +812,27 @@ namespace mmesh
 			if(supportFlag)
 			{
 				std::vector< trimesh::vec3> outVertexs;
-				std::vector< trimesh::vec3> outfirstVertexs;
-				std::vector< trimesh::vec3> outSecondVertexs;
-				std::vector< trimesh::vec3> outBorderVertexs;
+				//std::vector< trimesh::vec3> outfirstVertexs;
+				//std::vector< trimesh::vec3> outSecondVertexs;
+				//std::vector< trimesh::vec3> outBorderVertexs;
 				std::vector<DLPISource> sources;
 				vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
 				PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
 
-				PoissonFuncObj.first(m_vertexes, sectFacesIndex, outfirstVertexs,true);
-				PoissonFuncObj.borderSamper(outBorderVertexs);
-				if (outfirstVertexs.size() > 0)
-				{
-					PoissonFuncObj.mainSecond(outBorderVertexs, outSecondVertexs);
-					if(outBorderVertexs.size()< outSecondVertexs.size())
-						outVertexs.swap(outSecondVertexs);
-					else
-						outVertexs.swap(outBorderVertexs);
+				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs,true);
+				//PoissonFuncObj.borderSamper(outBorderVertexs);
+				//if (outfirstVertexs.size() > 0)
+				//{
+				//	PoissonFuncObj.mainSecond(outBorderVertexs, outSecondVertexs);
+				//	if(outBorderVertexs.size()< outSecondVertexs.size())
+				//		outVertexs.swap(outSecondVertexs);
+				//	else
+				//		outVertexs.swap(outBorderVertexs);
 
 
-				}
-				else
-					outVertexs.swap(outBorderVertexs);
+				//}
+				//else
+				//	outVertexs.swap(outBorderVertexs);
 
 				//std::cout << "outfirstVertexs===" << outfirstVertexs.size() << std::endl;
 				//std::cout << "outSecondVertexs===" << outSecondVertexs.size() << std::endl;
@@ -845,6 +845,7 @@ namespace mmesh
 				#ifdef DEBUG
 				std::cout << "extract_poisson_point===" << outVertexs.size() << std::endl;
 				#endif
+				PoissonFuncObj.releaseData();
 				m_supportFace.insert(m_supportFace.end(), faceChunk.begin(), faceChunk.end());
 				for (trimesh::vec3 pt : outVertexs)
 				{

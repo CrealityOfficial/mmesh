@@ -40,10 +40,8 @@ namespace vcg
 			PoissonFunc();
 			~PoissonFunc();
 
-			bool first(const std::vector<trimesh::vec3> &inVertexes, const std::vector<trimesh::TriMesh::Face> &inFaces, std::vector<trimesh::vec3>& outVertexes, bool secondflg=false);
-			bool mainSecond(std::vector<trimesh::vec3> inVertexes, std::vector<trimesh::vec3>& outVertexes);
+			bool main(const std::vector<trimesh::vec3> &inVertexes, const std::vector<trimesh::TriMesh::Face> &inFaces, std::vector<trimesh::vec3>& outVertexes, bool secondflg=false);
 			void setPoissonCfg(PoissonAlgCfg* cfgPtr);
-			void borderSamper(std::vector<trimesh::vec3>& outVertexes);
 			void releaseData();
 		private:
 			PoissonAlgCfg m_PoissonAlgCfg;
