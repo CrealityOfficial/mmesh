@@ -25,7 +25,7 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
 
     trimesh::TriMesh* mesh = new trimesh::TriMesh();
     mesh->vertices.resize(vertexSize);
-    mesh->faces.resize(faceSize);
+    mesh->faces.reserve(faceSize);
     // The status of being used or removed is stored in a property map
     Mesh::Property_map<Mesh::Vertex_index, bool> removed
         = surfaceMesh.property_map<Mesh::Vertex_index, bool>("v:removed").first;
@@ -53,20 +53,36 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
         //Get face indices ...
         for (Mesh::Face_index face_index : surfaceMesh.faces()) 
         {
-
-            trimesh::TriMesh::Face& f = mesh->faces.at(faceIndex);
+            //trimesh::TriMesh::Face& f = mesh->faces.at(faceIndex);
+            trimesh::TriMesh::Face f ;
+#if 1
            // Mesh::Vertex_around_face_circulator fvit(surfaceMesh.halfedge(face_index), surfaceMesh);
-            CGAL::Vertex_around_face_circulator<Mesh> vcirc(surfaceMesh.halfedge(face_index), surfaceMesh), done(vcirc);
+             CGAL::Vertex_around_face_circulator<Mesh> vcirc(surfaceMesh.halfedge(face_index), surfaceMesh), done(vcirc);
             int index = 0;
-            do
+            if (vcirc)
             {
-                //std::cout << (*vcirc).idx() << std::endl;
-                f[index] = (*vcirc).idx();
-                index += 1;
-            } while (++vcirc != done);
-            faceIndex += 1;
-        }
+                do
+                {
+                    //std::cout << (*vcirc).idx() << std::endl;
+                    f[index] = (*vcirc).idx();
+                    if (f[index] < 0)
+                    {
+                        break;
+                    }
+                    index += 1;
+                } while (++vcirc != done && index < 3);
+                if (index==3)
+                    mesh->faces.emplace_back(f);;
+            }
 
+#else
+            {
+                auto    vtc = surfaceMesh.vertices_around_face(surfaceMesh.halfedge(face_index));
+                int     i = 0;
+                for (auto v : vtc) f[i++] = static_cast<int>(v);
+            }
+#endif
+        }
     }
 
         //for (Mesh::Face_iterator fit = surfaceMesh.faces_begin(); fit != surfaceMesh.faces_end(); ++fit)
@@ -98,9 +114,12 @@ void trimesh2cgal(const trimesh::TriMesh& mesh, Mesh& surfaceMesh)
     for (int i = 0; i < facesSize; i++)
     {
         const trimesh::TriMesh::Face& f = mesh.faces.at(i);
+        if (f[0] < 0 || f[1] < 0 || f[2] < 0)
+            continue;
         vertex_descriptor vh0(f[0]);
         vertex_descriptor vh1(f[1]);
         vertex_descriptor vh2(f[2]);
+
         surfaceMesh.add_face(vh0, vh1, vh2);
     }
 }
