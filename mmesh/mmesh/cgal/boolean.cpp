@@ -46,7 +46,7 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
         }
     }
 
-    //size_t faceIndex = 0;
+
     //for (faceIndex=0; faceIndex< faceSize; faceIndex++)
     {
 
@@ -76,7 +76,6 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
             }
 
             //if (test == 1)
-            //    continue;
 
 #else
             {
