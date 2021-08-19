@@ -46,7 +46,7 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
         }
     }
 
-    size_t faceIndex = 0;
+    //size_t faceIndex = 0;
     //for (faceIndex=0; faceIndex< faceSize; faceIndex++)
     {
 
@@ -54,7 +54,7 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
         for (Mesh::Face_index face_index : surfaceMesh.faces()) 
         {
             //trimesh::TriMesh::Face& f = mesh->faces.at(faceIndex);
-            trimesh::TriMesh::Face f ;
+            trimesh::TriMesh::Face f;
 #if 1
            // Mesh::Vertex_around_face_circulator fvit(surfaceMesh.halfedge(face_index), surfaceMesh);
              CGAL::Vertex_around_face_circulator<Mesh> vcirc(surfaceMesh.halfedge(face_index), surfaceMesh), done(vcirc);
@@ -71,9 +71,12 @@ trimesh::TriMesh* cgal2trimesh(Mesh& surfaceMesh)
                     }
                     index += 1;
                 } while (++vcirc != done && index < 3);
-                if (index==3)
-                    mesh->faces.emplace_back(f);;
+                if(index==3)
+                    mesh->faces.emplace_back(f);
             }
+
+            //if (test == 1)
+            //    continue;
 
 #else
             {
