@@ -16,6 +16,7 @@ namespace mmesh
 		void cancelThread();
 
 		bool isRunning();
+		bool isInterrupt();
 	protected:
 		void setInterrupt();
 

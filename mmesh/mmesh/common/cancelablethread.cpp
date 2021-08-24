@@ -27,9 +27,6 @@ namespace mmesh
 		if (!isRunning())
 			return;
 
-		if (m_interrupt)
-			return;
-
 		setInterrupt();
 		m_thread->join();
 		m_thread.reset();
@@ -43,5 +40,10 @@ namespace mmesh
 	bool CancelableThread::isRunning()
 	{
 		return m_thread.get();
+	}
+
+	bool CancelableThread::isInterrupt()
+	{
+		return m_interrupt;
 	}
 }
