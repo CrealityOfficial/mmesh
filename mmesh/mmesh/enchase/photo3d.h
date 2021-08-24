@@ -40,8 +40,8 @@ namespace enchase
 		void setSource(const std::string& extension, int fd);
 		void setSource(unsigned char* data, int width, int height);   //ª“∂»÷µ
 
-		bool generate(const std::string& stlFile, const Photo3DParam& param, std::string* error);
-		trimesh::TriMesh* generate(const Photo3DParam& param, std::string* error);
+		bool generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode);
+		trimesh::TriMesh* generate(const Photo3DParam& param, int& errorCode);
 	protected:
 		enchase::Surface* m_surface;
 	};

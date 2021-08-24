@@ -45,9 +45,9 @@ namespace enchase
 	};
 
 	void loadImage(ImageData& data, const std::string& fileName);
-	//void loadImage_freeImage(ImageData& data, const std::string& fileName);
-	//void loadImage_freeImage(ImageData& data, const std::string& extension, int fd);
-	//void writeImage_freeImage(unsigned char* data, int width, int height, const std::string& fileName);  //rgba
+	void loadImage_freeImage(ImageData& data, const std::string& fileName);
+	void loadImage_freeImage(ImageData& data, const std::string& extension, int fd);
+	void writeImage_freeImage(unsigned char* data, int width, int height, const std::string& fileName);  //rgba
 }
 
 #endif // ENCHASE_IMAGELOADER_1608004787715_H

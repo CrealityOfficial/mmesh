@@ -16,6 +16,7 @@ namespace mmesh
 		, m_bottom(-1.0f)
 		, m_left(-1.0f)
 		, m_right(1.0f)
+		, m_maniFlag(7)
 	{
 #ifdef WIN32
 		m_aspectRatio = 1920.0f / 1080.0f;
@@ -27,6 +28,45 @@ namespace mmesh
 	ScreenCamera::~ScreenCamera()
 	{
 
+	}
+
+	void ScreenCamera::enableTranslate(bool enable)
+	{
+		if(enable)
+			m_maniFlag |= 1;
+		else
+			m_maniFlag &=~1;
+	}
+
+	void ScreenCamera::enableRotate(bool enable)
+	{
+		if(enable)
+			m_maniFlag |= 2;
+		else
+			m_maniFlag &=~2;
+	}
+
+	void ScreenCamera::enableScale(bool enable)
+	{
+		if(enable)
+			m_maniFlag |= 4;
+		else
+			m_maniFlag &=~4;
+	}
+
+	bool ScreenCamera::canTranslate()
+	{
+		return m_maniFlag & 1;
+	}
+
+	bool ScreenCamera::canRotate()
+	{
+		return m_maniFlag & 2;
+	}
+
+	bool ScreenCamera::canScale()
+	{
+		return m_maniFlag & 4;
 	}
 
 	void ScreenCamera::notifyViewMatrix(const trimesh::fxform& xform)
@@ -127,18 +167,51 @@ namespace mmesh
 	void ScreenCamera::setAspectRatio(float ratio)
 	{
 		m_aspectRatio = ratio;
+		if(m_centerBox.valid)
+			fitNotChangeDir(m_box, m_centerBox);
+
 		m_projectMatrixDirty = true;
+		updateProjectMatrix();
+	}
+
+	void ScreenCamera::fitNotChangeDir(const trimesh::box3& box, const trimesh::box3& centerBox)
+	{
+		m_box = box;
+		m_centerBox = centerBox;
+
+		trimesh::vec3 size = m_centerBox.size();
+		float radius = m_centerBox.radius();
+
+		float fovy = 30.0f * M_PIf / 180.0f;
+
+		auto f = [](float z, float x, float fovy)->float{
+			float r = sqrtf( x * x + z * z) / 2.0f;
+			return r / sinf(fovy / 2.0f);
+		};
+
+		float len1 = f(size.z, size.y, fovy);
+		float len2 = f(size.x, size.y, 2.0f * atanf(m_aspectRatio * tanf(fovy / 2.0f)));
+		float len = len1 > len2 ? len1 :len2;
+
+		trimesh::vec3 dir = m_viewCenter - m_position;
+		trimesh::normalize(dir);
+		trimesh::vec3 eye = m_viewCenter - dir * len;
+		trimesh::vec3 center = m_viewCenter;
+		trimesh::vec3 up = m_upVector;
+		setView(eye, center, up);
+		updateViewMatrix();
+
+		updateNearFar(m_box);
 	}
 
 	void ScreenCamera::updateProjectMatrix()
 	{
 		if (m_projectMatrixDirty)
 		{
-			if(m_projectionType == ScreenCameraProjectionType::ePerspective)
-				m_projectMatrix = trimesh::fxform::perspective(m_fovy, m_aspectRatio, m_near, m_far);
-			else
-			{
-				m_projectMatrix = trimesh::fxform::ortho(0.0f, 1.0f, 0.0f, 1.0f, m_near, m_far);
+            if (m_projectionType == ScreenCameraProjectionType::ePerspective) {
+                m_projectMatrix = trimesh::fxform::perspective(m_fovy, m_aspectRatio, m_near, m_far);
+            } else {
+				m_projectMatrix = trimesh::fxform::ortho(m_left, m_right, m_bottom, m_top, m_near, m_far);
 			}
 			notifyProjectionMatrix(m_projectMatrix);
 			m_projectMatrixDirty = false;
@@ -147,21 +220,102 @@ namespace mmesh
 
 	void ScreenCamera::fittingBox(const trimesh::box3& box)
 	{
+        m_box = box;
+        m_centerBox = box;
+
 		trimesh::vec3 center = box.center();
+		trimesh::vec3 size = box.size();
 		float radius = box.radius();
 
-		float fovy = m_fovy;
-		float len1 = radius / sin(fovy * 3.1415926f / 180.0f / 2.0f);
-		float len2 = radius / sin(0.7f * m_aspectRatio * fovy * 3.1415926f / 180.0f / 2.0f );
+		m_fovy = 30.0f;
+		float fovy = m_fovy * M_PIf / 180.0f;
+
+		auto f = [](float z, float x, float fovy)->float{
+		    float r = sqrtf( x * x + z * z) / 2.0f;
+		    return r / sinf(fovy / 2.0f);
+		};
+
+		float len1 = f(size.z, size.y, fovy);
+		float len2 = f(size.x, size.y, 2.0f * atanf(m_aspectRatio * tanf(fovy / 2.0f)));
 		float len = len1 > len2 ? len1 :len2;
-		trimesh::vec3 eye = center + trimesh::vec3(1.0f, 0.0f, 0.0f) * len;
+
+		trimesh::vec3 eye = center + trimesh::vec3(0.0f, -1.0f, 0.0f) * len;
 		trimesh::vec3 up = trimesh::vec3(0.0f, 0.0f, 1.0f);
 
 		setView(eye, center, up);
 		updateViewMatrix();
 
-		setNearFar(1.0f, len + 3.0f * radius);
-		updateProjectMatrix();
+		updateNearFar(m_box);
+	}
+
+	void ScreenCamera::adjustCamera(const trimesh::box3& box, int type)
+	{
+		m_box = box;
+		m_centerBox = box;
+
+		trimesh::vec3 size = m_centerBox.size();
+		trimesh::vec3 center = m_centerBox.center();
+
+		if(type == 1)
+		{
+			float t = size.y;
+			size.y = size.z;
+			size.z = t;
+		}else if(type == 2)
+		{
+			float t = size.y;
+			size.y = size.x;
+			size.x = t;
+		}
+
+		m_fovy = 30.0f;
+		float fovy = m_fovy * M_PIf / 180.0f;
+
+		auto f = [](float z, float x, float fovy)->float{
+			float r = sqrtf( x * x + z * z) / 2.0f;
+			return r / sinf(fovy / 2.0f);
+		};
+
+		float len1 = f(size.z, size.y, fovy);
+		float len2 = f(size.x, size.y, 2.0f * atanf(m_aspectRatio * tanf(fovy / 2.0f)));
+		float len = len1 > len2 ? len1 :len2;
+
+		trimesh::vec3 eye = center + trimesh::vec3(0.0f, -1.0f, 0.0f) * len;
+		trimesh::vec3 up = trimesh::vec3(0.0f, 0.0f, 1.0f);
+
+		setView(eye, center, up);
+		updateViewMatrix();
+
+		updateNearFar(m_box);
+	}
+
+	void ScreenCamera::fittingBox(const trimesh::box3& box, const trimesh::box& centerBox, const trimesh::vec3& center)
+	{
+		m_box = box;
+		m_centerBox = centerBox;
+
+		trimesh::vec3 size = centerBox.size();
+		float radius = centerBox.radius();
+
+		m_fovy = 30.0f;
+		float fovy = m_fovy * M_PIf / 180.0f;
+
+		auto f = [](float z, float x, float fovy)->float{
+			float r = sqrtf( x * x + z * z) / 2.0f;
+			return r / sinf(fovy / 2.0f);
+		};
+
+		float len1 = f(size.z, size.y, fovy);
+		float len2 = f(size.x, size.y, 2.0f * atanf(m_aspectRatio * tanf(fovy / 2.0f)));
+		float len = len1 > len2 ? len1 :len2;
+
+		trimesh::vec3 eye = center + trimesh::vec3(0.0f, -1.0f, 0.0f) * len;
+		trimesh::vec3 up = trimesh::vec3(0.0f, 0.0f, 1.0f);
+
+		setView(eye, center, up);
+		updateViewMatrix();
+
+		updateNearFar(m_box);
 	}
 
 	void ScreenCamera::setView(const trimesh::vec3& position, const trimesh::vec3& center, const trimesh::vec3& up)
@@ -181,10 +335,13 @@ namespace mmesh
 
 	bool ScreenCamera::zoom(float scale)
 	{
+		if(!canScale())
+			return false;
+
 		float factor = scale;
 
 		float maxFovy = 50.0f;
-		float minFovy = 0.8f;
+		float minFovy = 2.0f;
 		float fovy = m_fovy;
 		fovy /= factor;
 		if (fovy >= minFovy && fovy <= maxFovy)
@@ -218,6 +375,9 @@ namespace mmesh
 
 	bool ScreenCamera::translate(const trimesh::vec3& trans)
 	{
+		if(!canTranslate())
+			return false;
+
 		trimesh::vec3 cameraPosition = m_position;
 		trimesh::vec3 viewCenter = m_viewCenter;
 		cameraPosition += trans;
@@ -227,7 +387,7 @@ namespace mmesh
 		setViewCenter(viewCenter);
 		updateViewMatrix();
 
-		//_updateNearFar(m_box);
+		updateNearFar(m_box);
 		return true;
 	}
 
@@ -302,6 +462,9 @@ namespace mmesh
 
 	bool ScreenCamera::rotate(const trimesh::quaternion& q)
 	{
+		if(!canRotate())
+			return false;
+
 		trimesh::vec3 up = m_upVector;
 		trimesh::vec3 viewCenter = m_viewCenter;
 		trimesh::vec3 position = m_position;
@@ -318,7 +481,9 @@ namespace mmesh
 		setUpVector(newUp);
 		setPosition(newPosition);
 
-		//_updateNearFar(m_box);
+		updateViewMatrix();
+
+		updateNearFar(m_box);
 		return true;
 	}
 
@@ -434,4 +599,87 @@ namespace mmesh
 	//
 	//	return ratio;
 	//}
+
+    void ScreenCamera::setProjectionType(ScreenCameraProjectionType projection)
+    {
+        m_projectionType = projection;
+    }
+
+    void ScreenCamera::viewFromBottom()
+    {
+        trimesh::vec3 dir(0.0f, 0.0f, 1.0f);
+        trimesh::vec3 right(1.0f, 0.0f, 0.0f);
+        view(dir, right);
+    }
+
+    void ScreenCamera::viewFromTop()
+    {
+        trimesh::vec3 dir(0.0f, 0.0f, -1.0f);
+        trimesh::vec3 right(1.0f, 0.0f, 0.0f);
+        view(dir, right);
+    }
+
+    void ScreenCamera::viewFromLeft()
+    {
+        trimesh::vec3 dir(1.0f, 0.0f, 0.0f);
+        trimesh::vec3 right(0.0f, -1.0f, 0.0f);
+        view(dir, right);
+    }
+
+    void ScreenCamera::viewFromRight()
+    {
+        trimesh::vec3 dir(-1.0f, 0.0f, 0.0f);
+        trimesh::vec3 right(0.0f, 1.0f, 0.0f);
+        view(dir, right);
+    }
+
+    void ScreenCamera::viewFromFront()
+    {
+        trimesh::vec3 dir(0.0f, 1.0f, 0.0f);
+        trimesh::vec3 right(1.0f, 0.0f, 0.0f);
+        view(dir, right);
+    }
+
+    void ScreenCamera::viewFromBack()
+    {
+        trimesh::vec3 dir(0.0f, -1.0f, 0.0f);
+        trimesh::vec3 right(-1.0f, 0.0f, 0.0f);
+        view(dir, right);
+    }
+
+    void ScreenCamera::view(const trimesh::vec3& dir, const trimesh::vec3& right)
+    {
+        trimesh::vec3 newUp = right TRICROSS dir;
+        trimesh::normalize(newUp);
+
+        trimesh::vec3 viewCenter = m_viewCenter;
+        trimesh::vec3 position = m_position;
+        float d = trimesh::len(viewCenter - position);
+        trimesh::vec3 newPosition = viewCenter - trimesh::normalized(dir) * d;
+
+        setView(newPosition, viewCenter, newUp);
+        updateViewMatrix();
+
+		updateNearFar(m_box);
+    }
+
+	void ScreenCamera::updateNearFar(const trimesh::box3& box)
+	{
+		trimesh::vec3 cameraPosition = m_position;
+		trimesh::vec3 cameraCenter = m_viewCenter;
+		trimesh::vec3 cameraView = cameraCenter - cameraPosition;
+		trimesh::normalize(cameraView);
+
+		trimesh::vec3 center = box.center();
+		float r = trimesh::len(box.size()) / 2.0f;
+		float d = cameraView DOT (center - cameraPosition);
+		float dmin = d - 1.2f * r;
+		float dmax = d + 1.2f * r;
+
+		float nearpos = dmin < 1.0f ? (2.0f * r > 1.0f ? 0.1f : dmin) : dmin;
+		float farpos = dmax > 0.0f ? dmax : 3000.0f;
+
+		setNearFar(nearpos, farpos);
+		updateProjectMatrix();
+	}
 }

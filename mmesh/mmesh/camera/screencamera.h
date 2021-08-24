@@ -32,7 +32,8 @@ namespace mmesh
 		trimesh::vec3 viewCenter();
 		trimesh::vec3 upVector();
 		trimesh::vec3 position();
-
+        
+        void setProjectionType(ScreenCameraProjectionType projection);
 		void setViewCenter(const trimesh::vec3& viewCenter);
 		void setUpVector(const trimesh::vec3& upVector);
 		void setPosition(const trimesh::vec3& position);
@@ -58,7 +59,10 @@ namespace mmesh
 		void setLeft(float left);
 		void setRight(float right);
 
+		void fitNotChangeDir(const trimesh::box3& box, const trimesh::box3& centerBox);
 		void fittingBox(const trimesh::box3& box);
+		void fittingBox(const trimesh::box3& box, const trimesh::box& centerBox, const trimesh::vec3& center);
+		void adjustCamera(const trimesh::box3& box, int type);
 		void setView(const trimesh::vec3& position, const trimesh::vec3& center, const trimesh::vec3& up);
 		void setNearFar(float n, float f);
 
@@ -76,6 +80,22 @@ namespace mmesh
 		trimesh::vec3 horizontal();
 		trimesh::vec3 vertical();
 		float verticalAngle();
+		void updateNearFar(const trimesh::box3& box);
+
+		void enableTranslate(bool enable);
+		void enableRotate(bool enable);
+		void enableScale(bool enable);
+		bool canTranslate();
+		bool canRotate();
+		bool canScale();
+
+		void viewFromBottom();
+		void viewFromTop();
+		void viewFromLeft();
+		void viewFromRight();
+		void viewFromFront();
+		void viewFromBack();
+		void view(const trimesh::vec3 & dir, const trimesh::vec3 & right);
 	protected:
 		void notifyViewMatrix(const trimesh::fxform& xform);
 		void notifyProjectionMatrix(const trimesh::fxform& xform);
@@ -99,6 +119,10 @@ namespace mmesh
 		ScreenCameraProjectionType m_projectionType;
 		bool m_projectMatrixDirty;
 		trimesh::fxform m_projectMatrix;
+
+		int m_maniFlag;
+		trimesh::box3 m_box;
+		trimesh::box3 m_centerBox;
 	};
 }
 

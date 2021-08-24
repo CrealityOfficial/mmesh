@@ -5,6 +5,7 @@
 namespace enchase
 {
 	void blur(MatrixF* matrix, int blurNum);
+    void blur(MatrixU* matrix, int blurNum);
 }
 
 #endif // ENCHASE_BLUR_1600480088460_H

@@ -55,32 +55,32 @@ namespace enchase
 	{
 		enchase::ImageData image;
 
-		//enchase::loadImage_freeImage(image, extension, fd);
+		enchase::loadImage_freeImage(image, extension, fd);
 
-		//if (image.width == 0 || image.height == 0 || image.data == nullptr)
-		//	return;
+		if (image.width == 0 || image.height == 0 || image.data == nullptr)
+			return;
 
-		//setSource(image.data, image.width, image.height);
-		//if (image.data)
-		//{
-		//	delete[] image.data;
-		//}
+		setSource(image.data, image.width, image.height);
+		if (image.data)
+		{
+			delete[] image.data;
+		}
 	}
 
 	void Moon3D::setSource(const std::string& imageName)
 	{
 		enchase::ImageData image;
 
-		//enchase::loadImage_freeImage(image, imageName);
+		enchase::loadImage_freeImage(image, imageName);
 
-		//if (image.width == 0 || image.height == 0 || image.data == nullptr)
-		//	return;
+		if (image.width == 0 || image.height == 0 || image.data == nullptr)
+			return;
 
-		//setSource(image.data, image.width, image.height);
-		//if (image.data)
-		//{
-		//	delete[] image.data;
-		//}
+		setSource(image.data, image.width, image.height);
+		if (image.data)
+		{
+			delete[] image.data;
+		}
 	}
 
 	void Moon3D::setSource(unsigned char* data, int width, int height)
@@ -101,7 +101,8 @@ namespace enchase
 		std::unique_ptr<trimesh::TriMesh> destPtr(generate(param));
 		if (destPtr)
 		{
-			destPtr->write(stlFile);
+			int errorCode = 0;
+			destPtr->write(stlFile, errorCode);
 			return true;
 		}
 

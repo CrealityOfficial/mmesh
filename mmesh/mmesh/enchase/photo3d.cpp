@@ -14,11 +14,11 @@ namespace enchase
 	Photo3DParam::Photo3DParam()
 	{
 		useBlur = true;
-		blurTimes = 9;
+		blurTimes = 3;
 
 		baseThickness = 0.0f;
 		maxThickness = 2.2f;
-		invert = true;
+		invert = false;
 		useIndex = 0;
 
 		maxPixel = 600;
@@ -52,32 +52,33 @@ namespace enchase
 	{
 		enchase::ImageData image;
 
-		//enchase::loadImage_freeImage(image, extension, fd);
+		enchase::loadImage_freeImage(image, extension, fd);
 
-		//if (image.width == 0 || image.height == 0 || image.data == nullptr)
-		//	return;
+		if (image.width == 0 || image.height == 0 || image.data == nullptr)
+			return;
 
-		//setSource(image.data, image.width, image.height);
-		//if (image.data)
-		//{
-		//	delete[] image.data;
-		//}
+		setSource(image.data, image.width, image.height);
+		if (image.data)
+		{
+			delete[] image.data;
+		}
 	}
 
 	void Photo3D::setSource(const std::string& imageName)
 	{
 		enchase::ImageData image;
 
-		//enchase::loadImage_freeImage(image, imageName);
+		enchase::loadImage_freeImage(image, imageName);
 
-		//if(image.width == 0 || image.height == 0 || image.data == nullptr)
-		//	return;
+		if(image.width == 0 || image.height == 0 || image.data == nullptr)
+			return;
 
-		//setSource(image.data, image.width, image.height);
-		//if (image.data)
-		//{
-		//	delete [] image.data;
-		//}
+		setSource(image.data, image.width, image.height);
+		if (image.data)
+		{
+			delete [] image.data;
+            image.data = nullptr;
+		}
 	}
 
 	void Photo3D::setSource(unsigned char* data, int width, int height)
@@ -93,22 +94,19 @@ namespace enchase
 		m_surface = surface;
 	}
 
-	bool Photo3D::generate(const std::string& stlFile, const Photo3DParam& param, std::string* error)
+	bool Photo3D::generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode)
 	{		
-		std::unique_ptr<trimesh::TriMesh> destPtr(generate(param, error));
+		std::unique_ptr<trimesh::TriMesh> destPtr(generate(param, errorCode));
 		if (destPtr)
 		{
-			destPtr->write(stlFile);
+			destPtr->write(stlFile, errorCode);
 			return true;
 		}
-
-		if (error)
-			*error = "enchase error.";
 
 		return false;
 	}
 
-	trimesh::TriMesh* Photo3D::generate(const Photo3DParam& param, std::string* error)
+	trimesh::TriMesh* Photo3D::generate(const Photo3DParam& param, int& errorCode)
 	{
 		enchase::MatrixF* matrix = nullptr;
 		if (m_surface)
@@ -124,6 +122,7 @@ namespace enchase
 
 		if (!matrix)
 		{
+			errorCode = 1;
 			return nullptr;
 		}
 
@@ -137,11 +136,10 @@ namespace enchase
 
 		float pixel = param.realWidth / (float)width;
 		trimesh::TriMesh* mesh = enchase::defaultPlane(width, height, pixel);
-
+        enchase::Enchaser enchaser;
+        enchaser.setSource(mesh);
+        
 		enchase::Mapper mapper;
-		enchase::Enchaser enchaser;
-		enchaser.setSource(mesh);
-
 		enchase::defaultCoord(width, height, mapper.allTextureGroup());
 
 		enchase::MatrixFSource* source = new enchase::MatrixFSource(matrix);

@@ -6,8 +6,12 @@ namespace enchase
 {
 	void normalConvert(MatrixF* matrix, float base, float scale)
 	{
-		*matrix = scale * (*matrix);
-		*matrix = base + (*matrix);
+        if (scale != 1.0) {
+            *matrix = scale * (*matrix);
+        }
+        if (base != 0.0) {
+            *matrix = base + (*matrix);
+        }
 	}
 
 	void transparencyConvert(MatrixF* matrix, float base, float scale, float transmittance_1mm)

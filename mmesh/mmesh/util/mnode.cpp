@@ -149,7 +149,7 @@ namespace mmesh
 			trimesh::fxform s = trimesh::fxform::scale(m_localScale.x, m_localScale.y, m_localScale.z);
 			trimesh::fxform t2 = trimesh::fxform::trans(-m_localCenter);
 
-			m_localMatrix = t1 * s * r * t2;
+			m_localMatrix = t1 * r * s * t2;
 			m_localDirty = false;
 		}
 

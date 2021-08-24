@@ -10,6 +10,7 @@ namespace mmesh
 		EularMouseManipulator();
 		virtual ~EularMouseManipulator();
 
+		void performRotate(float angle, const trimesh::vec3& axis);
 	protected:
 		void onRightStart(const trimesh::ivec2& pos, const trimesh::ivec2& size) override;
 		void onRightMove(const trimesh::ivec2& pos) override;

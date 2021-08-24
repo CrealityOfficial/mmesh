@@ -72,17 +72,23 @@ namespace mmesh
 		//m_screenCamera->updateNearFar();
 	}
 
+	void EularMouseManipulator::performRotate(float angle, const trimesh::vec3& axis)
+	{
+		trimesh::quaternion hq = trimesh::quaternion::fromAxisAndAngle(axis, angle);
+	}
+
 	void EularMouseManipulator::performRotate(const trimesh::ivec2& pos)
 	{
-		trimesh::vec3 viewCenter = m_camera->viewCenter();
-		trimesh::vec3 position = m_camera->position();
-		trimesh::vec3 horizontal = m_camera->horizontal();
-
 		trimesh::ivec2 idelta = pos - m_savePoint;
 		trimesh::vec2 delta = trimesh::vec2((float)idelta.x, (float)idelta.y);
 
 		float hangle = -0.1f * (float)delta.x;
 		trimesh::quaternion hq = trimesh::quaternion::fromAxisAndAngle(trimesh::vec3(0.0f, 0.0f, 1.0f), hangle);
+
+		trimesh::vec3 viewCenter = m_camera->viewCenter();
+		trimesh::vec3 position = m_camera->position();
+		trimesh::vec3 horizontal = m_camera->horizontal();
+
 		trimesh::vec3 h = hq * horizontal;
 		trimesh::normalize(h);
 

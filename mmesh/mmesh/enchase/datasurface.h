@@ -10,8 +10,15 @@ namespace enchase
 		virtual ~DataSurface();
 
 		void setData(unsigned char* data, int width, int height);
+        
+        void original(MatrixU* matrix);
+        void oilPainting(MatrixU* matrix);
+        void sketch(MatrixU* matrix);
+        
 	protected:
 		MatrixF* produce() override;
+        void stepData(MatrixU* matrix, int steps, bool smooth);
+        
 	protected:
 		int m_width;
 		int m_height;

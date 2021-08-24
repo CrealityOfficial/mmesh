@@ -27,7 +27,7 @@ namespace enchase
 			PAD_REFLECT,  // 反射填充
 		};
 
-	protected:
+	public:
 		uint m_width;
 		uint m_height;
 		uint m_depth;
@@ -279,7 +279,7 @@ namespace enchase
 			{
 				return false;
 			}
-			if (s < 0 || s > 1 || t < 0 || t > 1)
+			if (s < 0.0f || s > 1.0f || t < 0.0f || t > 1.0f)
 			{
 				return false;
 			}
@@ -335,7 +335,8 @@ namespace enchase
 		}
 
 		// 使用 convm 对自身进行卷积，结果保存到 outm 中
-		int conv(const Matrix& convm, PADDING pad, Matrix& outm) const
+        template<class F>
+		int conv(const Matrix<F>& convm, PADDING pad, Matrix& outm) const
 		{
 			if (m_depth != 1 || convm.m_depth != 1)
 			{
@@ -444,13 +445,13 @@ namespace enchase
 
 							if (!set_zero)   // m_data = new T[m_width * m_height * m_depth];    
 							{
-								summ += m_data[pos1 * w1 + pos2] * convm.m_data[i1 * w2 + j1];
+								summ += (double)m_data[pos1 * w1 + pos2] * (double)convm.m_data[i1 * w2 + j1];
 
 							}
 
 						}
 					}
-					outm.m_data[i * w1 + j] = summ;
+					outm.m_data[i * w1 + j] = (T)summ;
 				}
 			}
 

@@ -20,6 +20,8 @@
 * for more details.                                                         *
 *                                                                           *
 ****************************************************************************/
+#if __APPLE__
+#else
 #include <sstream>
 #include <string>
 #include "mmesh/vcg/trimesh_sampling .h"

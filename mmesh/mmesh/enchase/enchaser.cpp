@@ -44,7 +44,8 @@ namespace enchase
 			return;
 		}
 
-		m_source->write(stlFile);
+		int errorCode = 0;
+		m_source->write(stlFile, errorCode);
 	}
 
 	void Enchaser::enchaseCache(Mapper* mapper, int index)

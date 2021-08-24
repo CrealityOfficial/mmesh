@@ -20,6 +20,9 @@
 * for more details.                                                         *
 *                                                                           *
 ****************************************************************************/
+
+#if __APPLE__
+#else
 #include <vector>
 #include "trimesh2/TriMesh.h"
 
@@ -54,3 +57,4 @@ namespace vcg
 }//vcg
 
 #endif USE_VCG
+#endif

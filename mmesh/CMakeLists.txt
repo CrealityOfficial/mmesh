@@ -38,6 +38,10 @@ if(CGAL_ENABLE)
 	add_definitions(-DUSE_CGAL)
 endif()
 
+if(WIN32)
+	list(APPEND DEFS _USE_MATH_DEFINES)
+endif()
+
 if(NOT VCG_INCLUDE_DIRS)
 	message(FATAL_ERROR "Please Specified VCG_INCLUDE_DIRS")
 endif()
