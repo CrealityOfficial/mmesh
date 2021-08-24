@@ -16,12 +16,12 @@ namespace enchase
 		useBlur = true;
 		blurTimes = 9;
 
-		baseThickness = 0.35f;
+		baseThickness = 0.0f;
 		maxThickness = 2.2f;
-		invert = false;
+		invert = true;
 		useIndex = 0;
 
-		maxPixel = 400;
+		maxPixel = 600;
 		realWidth = 140.0f;
 	}
 
@@ -52,32 +52,32 @@ namespace enchase
 	{
 		enchase::ImageData image;
 
-		enchase::loadImage_freeImage(image, extension, fd);
+		//enchase::loadImage_freeImage(image, extension, fd);
 
-		if (image.width == 0 || image.height == 0 || image.data == nullptr)
-			return;
+		//if (image.width == 0 || image.height == 0 || image.data == nullptr)
+		//	return;
 
-		setSource(image.data, image.width, image.height);
-		if (image.data)
-		{
-			delete[] image.data;
-		}
+		//setSource(image.data, image.width, image.height);
+		//if (image.data)
+		//{
+		//	delete[] image.data;
+		//}
 	}
 
 	void Photo3D::setSource(const std::string& imageName)
 	{
 		enchase::ImageData image;
 
-		enchase::loadImage_freeImage(image, imageName);
+		//enchase::loadImage_freeImage(image, imageName);
 
-		if(image.width == 0 || image.height == 0 || image.data == nullptr)
-			return;
+		//if(image.width == 0 || image.height == 0 || image.data == nullptr)
+		//	return;
 
-		setSource(image.data, image.width, image.height);
-		if (image.data)
-		{
-			delete [] image.data;
-		}
+		//setSource(image.data, image.width, image.height);
+		//if (image.data)
+		//{
+		//	delete [] image.data;
+		//}
 	}
 
 	void Photo3D::setSource(unsigned char* data, int width, int height)

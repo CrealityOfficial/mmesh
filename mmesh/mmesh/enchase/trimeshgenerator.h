@@ -5,7 +5,7 @@
 
 namespace enchase
 {
-	trimesh::TriMesh* enchaseGenerate(trimesh::TriMesh* input, SurfacePtr source);
+	trimesh::TriMesh* enchaseGenerate(trimesh::TriMesh* input, SurfacePtr source, bool ball = false);
 }
 
 #endif // ENCHASE_TRIMESHGENERATOR_1620897704388_H

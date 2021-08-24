@@ -429,4 +429,17 @@ namespace mmesh
 		for (size_t i = 0; i < size; ++i)
 			mesh->cornerareas.at(i) = BallCreator::azi2equ(mesh->cornerareas.at(i));
 	}
+
+	void flipZ(trimesh::TriMesh* mesh)
+	{
+		if (!mesh)
+			return;
+
+		mesh->need_bbox();
+		trimesh::box3 b = mesh->bbox;
+		trimesh::xform xf = trimesh::xform::trans(b.center()) 
+			* trimesh::xform::rot(M_PIf, trimesh::vec3(1.0f, 0.0f, 0.0f))
+			* trimesh::xform::trans(-b.center());
+		trimesh::apply_xform(mesh, xf);
+	}
 }

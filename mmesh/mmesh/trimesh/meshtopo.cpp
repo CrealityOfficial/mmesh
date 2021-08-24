@@ -1,5 +1,4 @@
 #include "mmesh/trimesh/meshtopo.h"
-#include "mmesh/trimesh/algrithm3d.h"
 
 using namespace trimesh;
 namespace mmesh
@@ -176,7 +175,7 @@ namespace mmesh
 #else
 	void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
 	{
-		auto middlePt = [vertexes](int vertexID1, int vertexID2, int vertexID3, vec3 &middlept)->bool {
+		auto middlePt = [vertexes](int vertexID1, int vertexID2, int vertexID3) {
 #if 0
 			vec3 A(1, 1, 1);
 			vec3 B(3, 1, 1);
@@ -186,55 +185,25 @@ namespace mmesh
 			vec3 B = vertexes.at(vertexID2);
 			vec3 C = vertexes.at(vertexID3);
 #endif
-			bool ret = true;
+
 			vec3 E = (A + B) / 2;
-			vec3 abN = (B - A);
-			vec3 baN = (A - B);
-
-			float t = -1;
-			if (rayIntersectPlane(A, (C - A), E, abN, t)&&(t>0&& t <= 1))
-			{
-				 middlept = A * (1 - t) + C * t;
-			}
-			else
-			{
-				//std::cout << "t====" << t << std::endl;
-
-				if (rayIntersectPlane(B, (C - B), E, baN, t) && (t > 0 && t <= 1))
-				{
-					middlept = B * (1 - t) + C * t;
-				}
-				else
-				{
-					std::cout << "middlept error**********" << std::endl;
-					std::cout << "t====" << t << std::endl;
-					std::cout << "A====" << A << std::endl;
-					std::cout << "B====" << B << std::endl;
-					std::cout << "C====" << C << std::endl;
-					ret = false;
-				}
-			}
-
-
-
-
 			//vec3 G = A * (1 - t) + C * t;
-			//vec3 GE =(E-G)= (A - B) / 2+(C-A)*t;
+			//vec3 GE = (A - B) / 2+(C-A)*t;
 			//vec3 BA=(A-B);
-			//GE* BA = 0;//x1*x2+y1*y2+z1*z2=0
+			//GE* BA = 0;//x1*x2+y1*y2+z1*z3=0
 
-			//vec3 GEtemp = (A - B) / 2;
-			//vec3 CAtemp = (C - A);
-			//vec3 BA = (A - B);
-			//float xtemp = BA.x * BA.x / 2;
-			//float ytemp = BA.y * BA.y / 2;
-			//float ztemp = BA.z * GEtemp.z / 2;
-			//float xtemp_t = BA.x * CAtemp.x;
-			//float ytemp_t = BA.y * CAtemp.y;
-			//float ztemp_t = BA.z * CAtemp.z;
-			//float t = -(xtemp + ytemp + ztemp) / (xtemp_t + ytemp_t + ztemp_t);
-			//vec3 middlept = A * (1 - t) + C * t;
-			return ret;
+			vec3 GEtemp = (A - B) / 2;
+			vec3 CAtemp = (C - A);
+			vec3 BA = (A - B);
+			float xtemp = BA.x * BA.x / 2;
+			float ytemp = BA.y * BA.y / 2;
+			float ztemp = BA.z * GEtemp.z / 2;
+			float xtemp_t = BA.x * CAtemp.x;
+			float ytemp_t = BA.y * CAtemp.y;
+			float ztemp_t = BA.z * CAtemp.z;
+			float t = -(xtemp + ytemp + ztemp) / (xtemp_t + ytemp_t + ztemp_t);
+			vec3 middlept = A * (1 - t) + C * t;
+			return middlept;
 		};
 
 		int faceNum = (int)m_mesh->faces.size();
@@ -249,12 +218,12 @@ namespace mmesh
 			TriMesh::Face& tFace = m_mesh->faces.at(faceID);
 			ivec3& edgeFlag = edgesFlags.at(faceID);
 
-			for (int edgeIndex = 0; edgeIndex < 3; edgeIndex++)
+			for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
 			{
 				if (edgeFlag[edgeIndex] == 0)
 				{
 					edgeFlag[edgeIndex] = 1;//标示该边已检测处理过
-					int vertexID1 = tFace[edgeIndex % 3];
+					int vertexID1 = tFace[edgeIndex];
 					int vertexID2 = tFace[(edgeIndex + 1) % 3];
 					int vertexID3 = tFace[(edgeIndex + 2) % 3];
 					vec3 edge = vertexes.at(vertexID1) - vertexes.at(vertexID2);
@@ -312,13 +281,8 @@ namespace mmesh
 									oppovertexID3 = oppoFace[0];
 								else if (oppoFace[2] == oppoEdgeVertexID)
 									oppovertexID3 = oppoFace[1];
-								vec3 G,H;
-								if (middlePt(vertexID1, vertexID2, vertexID3, G) == false
-									|| middlePt(vertexID1, vertexID2, oppovertexID3, H) == false
-									)
-								{
-									continue;
-								}
+								vec3 G = middlePt(vertexID1, vertexID2, vertexID3);
+								vec3 H = middlePt(vertexID1, vertexID2, oppovertexID3);
 								vec3 E = (vertexes.at(vertexID1) + vertexes.at(vertexID2)) / 2;
 								if ((G.z - E.z > EPSILON) && (H.z - E.z > EPSILON))
 								{
@@ -328,54 +292,53 @@ namespace mmesh
 									{
 										const float& faceNormal_dot = dotValues.at(faceID);
 										const float& oppoFaceNormal_dot = dotValues.at(oppoFaceID);
-										float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
-										float oppofaceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
-										bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
-										bool oppofaceThresCosflg = (oppofaceCosValue - faceThresCosValue) > EPSILON || abs(oppofaceCosValue - faceCosValue) < EPSILON;
-										vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
 
-										if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0)&&(faceThresCosflg==false)&&(oppofaceThresCosflg==false))
+										if (faceNormal_dot * oppoFaceNormal_dot < 0.0f)//两个面法向量一个向上，一个向下，法向量向下的面应当不是需要加支撑的面，不然单边都可以自支撑起来
 										{
-											if (faceNormal_dot * oppoFaceNormal_dot < 0.0f)//两个面法向量一个向上，一个向下，法向量向下的面应当不是需要加支撑的面，不然单边都可以自支撑起来
+											if (dotValues.at(faceID) < 0.0)//面法向量向下
 											{
-												if (dotValues.at(faceID) < 0.0)//面法向量向下
-												{
-													float faceAngle = 180.0 - acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
-													float oppoFaceAngle = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
-													float faceAngle1 = 90.0 - faceAngle;
-													float oppoFaceAngle1 = 90.0 - oppoFaceAngle;
 
-													if (faceAngle1 > oppoFaceAngle1)
+												if (acos(dotValues.at(faceID)) > acos(dotValues.at(oppoFaceID)))
+												{
+													vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
+													float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
+													bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
+
+													//if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0)&& (faceThresCosflg ==false))
+													if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0))
 													{
 														shouldAdd = true;
 													}
-												}
-												else
-												{
-													float faceAngle = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
-													float oppoFaceAngle = 180.0 - acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
-													float faceAngle1 = 90.0 - faceAngle;
-													float oppoFaceAngle1 = 90.0 - oppoFaceAngle;
-
-													if (faceAngle1 < oppoFaceAngle1)
-													{
-														shouldAdd = true;
-													}
-
 												}
 											}
 											else
 											{
-												shouldAdd = true;
+												if (acos(dotValues.at(oppoFaceID)) > acos(dotValues.at(faceID)))
+												{
+													vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
+													float faceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
+													bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
+
+													//if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0) && (faceThresCosflg==false))
+													if ((trimesh::dot(faceNormalAdd, vec3(0.0f, 0.0f, -1.0f)) > 0.0))
+													{
+														shouldAdd = true;
+													}
+												}
+
 											}
 										}
-										if(0)//两个面法向量同时向下
+										else//两个面法向量同时向下
 										{
 											float tempdot = trimesh::dot(faceNormal, oppoFaceNormal);
 											float tempdotAngle = acos(tempdot) * 180.0 / M_PIf;
 											if (tempdotAngle > EPSILON)//只要不是共面
 											{
 												vec3 faceNormalAdd = faceNormal + oppoFaceNormal;
+												float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
+												float oppofaceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
+												bool faceThresCosflg = (faceCosValue - faceThresCosValue) > EPSILON || abs(faceThresCosValue - faceCosValue) < EPSILON;
+												bool oppofaceThresCosflg = (oppofaceCosValue - faceThresCosValue) > EPSILON || abs(oppofaceCosValue - faceCosValue) < EPSILON;
 
 												{
 													typedef struct VERTEX_INFOR

@@ -12,7 +12,6 @@ enum class cxBoolean_operation_type
 
 namespace mmesh
 {
-    trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriMesh* Mesh2, cxBoolean_operation_type typeindex
-    , std::string* error = nullptr);
+    trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriMesh* Mesh2, cxBoolean_operation_type typeindex);
 }
 #endif // MMESH_BOOLEAN_1607481576423_H

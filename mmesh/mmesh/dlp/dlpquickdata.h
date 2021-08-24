@@ -48,7 +48,6 @@ namespace mmesh
 
 		void setMeshData(trimesh::TriMesh* mesh);
 		void setXformData(trimesh::fxform& xf);
-		trimesh::fxform getXformData() const;
 
 		void build();
 		void clear();
@@ -92,11 +91,13 @@ namespace mmesh
 		
 
 		std::vector<std::vector<trimesh::vec3>> m_VertexSampleInCell;
+		std::vector<DLPISource> m_SupportFaceSources;
+		std::vector<DLPISource> m_SupportEdgeSources;
+		std::vector<DLPISource> m_SupportVertexSources;
 		bool m_DLPISourceInited;
 		AutoDLPSupportParam m_autoParam;
 		ConnectSectionInfor m_ConnectSectionInfor;
-	private:
-		std::vector<int> m_supportFace;
+
 
 	};
 }

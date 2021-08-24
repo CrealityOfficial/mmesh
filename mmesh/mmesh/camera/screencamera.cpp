@@ -17,7 +17,11 @@ namespace mmesh
 		, m_left(-1.0f)
 		, m_right(1.0f)
 	{
-
+#ifdef WIN32
+		m_aspectRatio = 1920.0f / 1080.0f;
+#elif __ANDROID__ || __APPLE__
+		m_aspectRatio = 540.0f / 1080.0f;
+#endif
 	}
 
 	ScreenCamera::~ScreenCamera()
@@ -147,8 +151,10 @@ namespace mmesh
 		float radius = box.radius();
 
 		float fovy = m_fovy;
-		float len = radius / sin(fovy * 3.1415926f / 180.0f / 2.0f);
-		trimesh::vec3 eye = center + trimesh::vec3(0.0f, -1.0f, 0.0f) * len;
+		float len1 = radius / sin(fovy * 3.1415926f / 180.0f / 2.0f);
+		float len2 = radius / sin(0.7f * m_aspectRatio * fovy * 3.1415926f / 180.0f / 2.0f );
+		float len = len1 > len2 ? len1 :len2;
+		trimesh::vec3 eye = center + trimesh::vec3(1.0f, 0.0f, 0.0f) * len;
 		trimesh::vec3 up = trimesh::vec3(0.0f, 0.0f, 1.0f);
 
 		setView(eye, center, up);
@@ -178,7 +184,7 @@ namespace mmesh
 		float factor = scale;
 
 		float maxFovy = 50.0f;
-		float minFovy = 2.0f;
+		float minFovy = 0.8f;
 		float fovy = m_fovy;
 		fovy /= factor;
 		if (fovy >= minFovy && fovy <= maxFovy)

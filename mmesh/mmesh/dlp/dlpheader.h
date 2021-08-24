@@ -90,8 +90,6 @@ namespace mmesh
 		float startheight;
 		float manualAngle;
 		float space;
-		float baseSpace;
-
 	};
 }
 

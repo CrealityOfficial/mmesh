@@ -68,10 +68,7 @@ namespace mmesh
 		m_DLPISourceInited = false;
 		clear();
 	}
-	trimesh::fxform DLPQuickData::getXformData() const
-	{
-		return m_xf;
-	}
+
 	void DLPQuickData::clear()
 	{
 		m_boxes.clear();
@@ -132,8 +129,8 @@ namespace mmesh
 			//if (m_autoParam.space < 0.1)
 			//	m_autoParam.space = 2.0;
 
-			//m_triangleChunk->build(m_boxes, globalBox, 2.0f);		
-			m_triangleChunk->build(m_boxes, globalBox, m_autoParam.baseSpace);
+			m_triangleChunk->build(m_boxes, globalBox, 2.0f);		
+			//m_triangleChunk->build(m_boxes, globalBox, m_autoParam.space);
 			m_meshTopo->build(m_mesh);
 
 			trimesh::vec3 size = globalBox.size();
@@ -205,10 +202,6 @@ namespace mmesh
 #ifdef USE_VCG_POISSON_SAMPLE
 	void DLPQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag, std::function<void(CallBackParams*)> callback, CallBackParams* cbParams)
 	{
-		std::vector<DLPISource> m_SupportFaceSources;
-		std::vector<DLPISource> m_SupportEdgeSources;
-		std::vector<DLPISource> m_SupportVertexSources;
-
 		m_throwFunc = callback;
 		m_cbParamsPtr = cbParams;
 		if (m_autoParam.space != autoParam->space)
@@ -221,36 +214,21 @@ namespace mmesh
 		sources.clear();
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 0.1;
+			m_cbParamsPtr->percentage = 10.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
-		//flag = SUPPORT_FACE|SUPPORT_EDGE|SUPPORT_VERTEX;
-		//flag = SUPPORT_FACE  ;
+		//flag = SUPPORT_EDGE|SUPPORT_VERTEX;
 		if (m_DLPISourceInited == false)
 		{
 			if ((flag & SUPPORT_VERTEX) == SUPPORT_VERTEX)
 			{
 				autoDlpVertexSource(m_SupportVertexSources, autoParam);
 			}
-			if ((flag & SUPPORT_FACE) == SUPPORT_FACE)
-			{
-				std::vector<std::vector<DLPISource>> sectionSources;
-				//m_SupportFaceSources
-				autoDlpFaceSource(sectionSources, autoParam);
-				m_SupportFaceSources.clear();
-				for (int sectIndex = 0; sectIndex < sectionSources.size(); sectIndex++)
-				{
-					std::vector<DLPISource>& sectionSrcs = sectionSources[sectIndex];
-
-					if (sectionSrcs.size())
-						m_SupportFaceSources.insert(m_SupportFaceSources.end(), sectionSrcs.begin(), sectionSrcs.end());
-				}
-			}
 			if ((flag & SUPPORT_EDGE) == SUPPORT_EDGE)
 			{
 				autoDlpEdgeSource(m_SupportEdgeSources, autoParam);
-				if (0)
+				if (1)
 				{
 					//去除相同点、邻近点
 					auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
@@ -275,12 +253,24 @@ namespace mmesh
 					m_SupportEdgeSources.resize(std::distance(m_SupportEdgeSources.begin(), iterator));
 				}
 			}
+			if ((flag & SUPPORT_FACE) == SUPPORT_FACE)
+			{
+				std::vector<std::vector<DLPISource>> sectionSources;
+				//m_SupportFaceSources
+				autoDlpFaceSource(sectionSources, autoParam);
+				m_SupportFaceSources.clear();
+				for (int sectIndex = 0; sectIndex < sectionSources.size(); sectIndex++)
+				{
+					std::vector<DLPISource>& sectionSrcs = sectionSources[sectIndex];
+
+					if (sectionSrcs.size())
+						m_SupportFaceSources.insert(m_SupportFaceSources.end(), sectionSrcs.begin(), sectionSrcs.end());
+				}
+			}
 
 			m_DLPISourceInited = true;
 		}
-		std::cout << "m_SupportVertexSources size=="<< m_SupportVertexSources.size() <<std::endl;
-		std::cout << "m_SupportEdgeSources size=="<< m_SupportEdgeSources.size() <<std::endl;
-		std::cout << "m_SupportFaceSources size=="<< m_SupportFaceSources.size() <<std::endl;
+
 		if ((flag & SUPPORT_VERTEX) == SUPPORT_VERTEX)
 		{
 
@@ -307,7 +297,7 @@ namespace mmesh
 		}
 		/////
 		//if (1)
-		int iterations = 0;// sources.size();
+		int iterations = sources.size();
 		while (iterations)
 		{
 			//去除相同点、邻近点
@@ -365,7 +355,7 @@ namespace mmesh
 		}
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 1.0;
+			m_cbParamsPtr->percentage = 100.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -386,7 +376,7 @@ namespace mmesh
 		sources.clear();
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 0.1;
+			m_cbParamsPtr->percentage = 10.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -621,7 +611,7 @@ namespace mmesh
 #endif
 		if (m_throwFunc != NULL)
 		{
-			m_cbParamsPtr->percentage = 1.0;
+			m_cbParamsPtr->percentage = 100.0;
 			m_throwFunc(m_cbParamsPtr);
 
 		}
@@ -677,26 +667,23 @@ namespace mmesh
 				if (crossn % 2 == 0)//向下应与模型有偶数个效点
 				{
 					//DLPISource dlpSource = generateSource(vertex, vec3(0.0f, 0.0f, -1.0f));
-					DLPISource dlpSource = generateSource(vertex, DOWN_NORMAL);
+					DLPISource dlpSource = generateSource(vertex, dir);
 					dlpSource.typeflg = SUPPORT_VERTEX;
 					sources.push_back(dlpSource);
 
 				}
 
-				percentage_Count++;
 
-				if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
-				{
-					m_cbParamsPtr->percentage = 0.1 + (float)percentage_Count / (float)supportVertexes.size() * 2;
-					m_throwFunc(m_cbParamsPtr);
-				}
 			}
 		}
-		if (m_throwFunc != NULL)
+		percentage_Count++;
+
+		if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
 		{
-			m_cbParamsPtr->percentage = 0.3;
+			m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportVertexes.size() * 10;
 			m_throwFunc(m_cbParamsPtr);
 		}
+
 	}
 
 	void DLPQuickData::autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam)
@@ -706,7 +693,7 @@ namespace mmesh
 
 		m_meshTopo->hangEdge(m_vertexes, m_faceNormals, m_dotValues, faceCosValue, supportEdges);
 
-		float minDelta = autoParam->space;
+		float minDelta = m_triangleChunk->m_gridSize;
 
 		int percentage_Count = 0;
 		sources.clear();
@@ -759,14 +746,10 @@ namespace mmesh
 
 			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
 			{
-				m_cbParamsPtr->percentage = 0.3 + (float)percentage_Count / (float)supportEdges.size() * 0.2;
+				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportEdges.size() * 10;
 				m_throwFunc(m_cbParamsPtr);
 			}
-		}
-		if (m_throwFunc != NULL)
-		{
-			m_cbParamsPtr->percentage = 0.5;
-			m_throwFunc(m_cbParamsPtr);
+
 		}
 	}
 #ifdef USE_VCG_POISSON_SAMPLE
@@ -776,16 +759,12 @@ namespace mmesh
 		int percentage_Count = 0;
 		std::vector<std::vector<int>> supportFaces;
 		sectionSources.clear();
-		supportFaces.clear();
 		m_ConnectSectionInfor.facesIndexes.clear();
 
 		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
 		vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
-		poissonAlgcfg.baseSampleRad = autoParam->baseSpace;//m_triangleChunk->m_width;
-		poissonAlgcfg.userSampleRad = autoParam->space> poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
-		poissonAlgcfg.ratio = autoParam->density;//m_triangleChunk->m_width;
-		//poissonAlgcfg.baseSampleRad = poissonAlgcfg.userSampleRad;//m_triangleChunk->m_width;
-		m_supportFace.clear();
+		poissonAlgcfg.baseSampleRad = 0.25;//m_triangleChunk->m_width;
+		poissonAlgcfg.userSampleRad = autoParam->space;
 		for (std::vector<int>& faceChunk : supportFaces)
 		{
 
@@ -819,7 +798,8 @@ namespace mmesh
 				vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
 				PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
 
-				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs,true);
+				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs);
+				std::cout << "extract_poisson_point" << outVertexs.size() << std::endl;
 				//PoissonFuncObj.borderSamper(outBorderVertexs);
 				//if (outfirstVertexs.size() > 0)
 				//{
@@ -849,37 +829,11 @@ namespace mmesh
 				m_supportFace.insert(m_supportFace.end(), faceChunk.begin(), faceChunk.end());
 				for (trimesh::vec3 pt : outVertexs)
 				{
-					vec3 dir = DOWN_NORMAL;
-
-					{
-						ivec2 pointIndex = m_triangleChunk->index(pt);
-						int iindex = pointIndex.x + pointIndex.y * m_triangleChunk->m_width;
-						std::vector<int>& faceVindex = m_triangleChunk->m_cells.at(iindex);
-						int faceVindexSize = faceVindex.size();
-						for (int faceID : faceChunk)
-						{
-							TriMesh::Face& tFace = m_mesh->faces.at(faceID);
-							vec3& vertex1 = m_vertexes.at(tFace[0]);
-							vec3& vertex2 = m_vertexes.at(tFace[1]);
-							vec3& vertex3 = m_vertexes.at(tFace[2]);
-							if (PointinTriangle(vertex1, vertex2, vertex3, pt))
-							{
-								//std::cout << "hit" << std::endl;
-								dir = m_faceNormals[faceID];
-								break;
-							}
-
-						}
-
-					}
-
-
-					DLPISource dlpSource = generateSource(pt, dir);
+					DLPISource dlpSource = generateSource(pt, trimesh::vec3(0, 0, -1.0));
 					dlpSource.typeflg = SUPPORT_FACE;
 					sources.push_back(dlpSource);
 				}
-				//if (sources.size() <= 1)
-				if (0)
+				if (sources.size() <= 1)
 				{
 					//if ((sources.size() == 1) || (supportEnable == true))
 					{
@@ -894,14 +848,10 @@ namespace mmesh
 							vec3& vertex2 = m_vertexes.at(tFace[1]);
 							vec3& vertex3 = m_vertexes.at(tFace[2]);
 							vec3& normal = m_faceNormals.at(faceID);
-#if 1
+
 							if (rayIntersectTriangle(xypoint, dir, vertex1, vertex2, vertex3, &t, &u, &v))
 							{
 								vec3 pointCross = xypoint + t * dir;
-								#ifdef DEBUG
-								std::cout << "pointCross===" << pointCross << std::endl;
-								#endif
-
 								DLPISource dlpSource = generateSource(pointCross, normal);
 								dlpSource.typeflg = SUPPORT_FACE;
 								if (sources.size() == 1)
@@ -910,27 +860,8 @@ namespace mmesh
 								}
 								sources.push_back(dlpSource);
 							}
-#else
-							{
-								vec3 pointCross = xypoint + t * dir;
-								DLPISource dlpSource = generateSource(pointCross, normal);
-								dlpSource.typeflg = SUPPORT_FACE;
-								if (sources.size() == 1)
-								{
-									sources.clear();
-								}
-								sources.push_back(dlpSource);
-							}
-#endif
 						}
 					}
-					if (sources.size() == 0)
-					{
-						std::cout << "no rayIntersectTriangle xypoint===" << centerPoint << std::endl;
-
-					}
-
-					//sources.clear();
 					if ((sources.size() == 0) && (supportEnable == true))
 					{
 						int& faceID = faceChunk[0];//默认选中第一个
@@ -970,18 +901,6 @@ namespace mmesh
 					sectionSources.emplace_back(sources);
 				}
 			}
-			percentage_Count++;
-
-			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
-			{
-				m_cbParamsPtr->percentage = 0.5 + (float)percentage_Count / (float)supportFaces.size() * 0.4;
-				m_throwFunc(m_cbParamsPtr);
-			}
-		}
-		if (m_throwFunc != NULL)
-		{
-			m_cbParamsPtr->percentage = 0.9;
-			m_throwFunc(m_cbParamsPtr);
 		}
 	}
 
@@ -1158,7 +1077,7 @@ namespace mmesh
 
 			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
 			{
-				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportFaces.size() * 0.5;
+				m_cbParamsPtr->percentage = m_cbParamsPtr->percentage + (float)percentage_Count / (float)supportFaces.size() * 50;
 				m_throwFunc(m_cbParamsPtr);
 			}
 		}
@@ -1334,6 +1253,10 @@ namespace mmesh
 						edgeSectVertexsNearDown.emplace_back(temp);
 					}
 
+					//std::cout << "edgeFaces[3]" << edgeFaces << std::endl;
+					//std::cout << "oppoFaces[3]" << oppoFaces << std::endl;
+					//std::cout << "supportflag==" << supportflag << std::endl;
+					//std::cout << std::endl;
 				}
 
 			}
@@ -1347,31 +1270,12 @@ namespace mmesh
 			farPoint = edgeSectVertexsNearUp[far_pointpair.second];
 		centerPoint = centerPointtemp / edgeFaces.size();
 
+		//use pow replace powf, for linux compile
+		bool smallsectEable = (far_pointpair.first > m_triangleChunk->m_gridSize) || (sectionFaceArea /(M_PIf * std::pow(m_triangleChunk->m_gridSize / 2.0, 2.0)*0.7 ) > 1);
+		if (nearFaceDown==0|| smallsectEable)
+		//if (nearFaceDown==0|| far_pointpair.first > m_triangleChunk->m_gridSize|| sectionFaceArea> M_PIf * std::pow(m_triangleChunk->m_gridSize / 2.0, 2.0))
 		{
-			bool smallsectEable = far_pointpair.first > m_autoParam.space;
-			float areaThreshold = M_PIf * std::pow(m_autoParam.baseSpace / 2.0, 2.0);
-			//use pow replace powf, for linux compile
-			{
-				//if ((sectionFaceArea > areaThreshold)&&(smallsectEable==true))
-				if (sectionFaceArea*0.7 > areaThreshold)
-				{
-					supportflag = true;
-				}
-				if (smallsectEable)
-					supportflag = true;
-
-			}
-			if (supportflag == false)
-			{
-				//if (nearFaceDown == 0 || smallsectEable)
-				//if (nearFaceDown==0&& (sectionFaceArea> M_PIf * std::pow(m_autoParam.baseSpace / 2.0, 2.0)))
-				if (nearFaceDown < 1)//悬重面
-				{
-					supportflag = true;
-				}
-				//if(smallsectEable)
-				//	supportflag = true;
-			}
+			supportflag = true;
 		}
 		return supportflag;//supportflag;
 	}

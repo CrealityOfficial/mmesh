@@ -27,6 +27,8 @@ namespace enchase
 		float radius;
 		float shellThickness;
 		float clipHeight;
+
+		bool onlyCreateOutter;
 	};
 
 	class Moon3D

@@ -16,6 +16,7 @@ namespace mmesh
 		virtual bool interrupt() = 0;
 		virtual void failed(const char* message) = 0;
 		virtual void message(const char* format, ...) {};
+		virtual void message(int msg, int ext1, int ext2, bool differentThread){}
 	};
 }
 

@@ -3,7 +3,7 @@
 namespace trimesh
 {
 	quaternion::quaternion()
-		:wp(0.0f), xp(0.0f), yp(0.0f), zp(0.0f)
+		:wp(1.0f), xp(0.0f), yp(0.0f), zp(0.0f)
 	{
 
 	}

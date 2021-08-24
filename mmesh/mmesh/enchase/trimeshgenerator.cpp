@@ -3,10 +3,11 @@
 #include "enchaser.h"
 #include "texturegroup.h"
 #include "imagematrixfsource.h"
+#include "mmesh/trimesh/trimeshutil.h"
 
 namespace enchase
 {
-	trimesh::TriMesh* enchaseGenerate(trimesh::TriMesh* input, SurfacePtr surface)
+	trimesh::TriMesh* enchaseGenerate(trimesh::TriMesh* input, SurfacePtr surface, bool ball)
 	{
 		if (!input || input->cornerareas.size() == 0)
 			return nullptr;
@@ -14,6 +15,9 @@ namespace enchase
 		MatrixF* mat = surface->matrix();
 		if (!surface || !mat)
 			return nullptr;
+
+		if(ball && (float)mat->width()/(float)mat->height() > 1.5f)
+			mmesh::convertUV2Equ(input);
 
 		enchase::Mapper mapper;
 		enchase::Enchaser enchaser;

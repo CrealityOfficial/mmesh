@@ -29,6 +29,7 @@ namespace enchase
 		radius = 10.0f;
 		shellThickness = 1.0f;
 		clipHeight = 4.0f;
+        onlyCreateOutter = false;
 	}
 
 	Moon3DParam::~Moon3DParam()
@@ -54,32 +55,32 @@ namespace enchase
 	{
 		enchase::ImageData image;
 
-		enchase::loadImage_freeImage(image, extension, fd);
+		//enchase::loadImage_freeImage(image, extension, fd);
 
-		if (image.width == 0 || image.height == 0 || image.data == nullptr)
-			return;
+		//if (image.width == 0 || image.height == 0 || image.data == nullptr)
+		//	return;
 
-		setSource(image.data, image.width, image.height);
-		if (image.data)
-		{
-			delete[] image.data;
-		}
+		//setSource(image.data, image.width, image.height);
+		//if (image.data)
+		//{
+		//	delete[] image.data;
+		//}
 	}
 
 	void Moon3D::setSource(const std::string& imageName)
 	{
 		enchase::ImageData image;
 
-		enchase::loadImage_freeImage(image, imageName);
+		//enchase::loadImage_freeImage(image, imageName);
 
-		if (image.width == 0 || image.height == 0 || image.data == nullptr)
-			return;
+		//if (image.width == 0 || image.height == 0 || image.data == nullptr)
+		//	return;
 
-		setSource(image.data, image.width, image.height);
-		if (image.data)
-		{
-			delete[] image.data;
-		}
+		//setSource(image.data, image.width, image.height);
+		//if (image.data)
+		//{
+		//	delete[] image.data;
+		//}
 	}
 
 	void Moon3D::setSource(unsigned char* data, int width, int height)
@@ -127,9 +128,12 @@ namespace enchase
 				mesh->normals.at(i) = trimesh::normalized(mesh->vertices.at(i));
 		}
 
-		trimesh::TriMesh* meshOut = enchaseGenerate(mesh, SurfacePtr(m_surface));
+		trimesh::TriMesh* meshOut = enchaseGenerate(mesh, SurfacePtr(m_surface), true);
 		m_surface = nullptr;
 		delete mesh;
+
+		if(param.onlyCreateOutter)
+			return meshOut;
 
 		trimesh::TriMesh* meshIn = mmesh::BallCreator::create(param.radius);
 		mmesh::reverseTriMesh(meshIn);

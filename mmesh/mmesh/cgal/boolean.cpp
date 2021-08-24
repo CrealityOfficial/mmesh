@@ -1,7 +1,6 @@
 #include "boolean.h"
-#include "booleanserail.h"
 
-#if (defined(WIN32) || defined(__APPLE__)) && defined(USE_CGAL)
+#if defined(WIN32) && defined(USE_CGAL)
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/Surface_mesh.h>
@@ -164,12 +163,8 @@ int main_test()
 
 namespace mmesh
 {
-    trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriMesh* Mesh2, cxBoolean_operation_type typeindex
-        , std::string* error)
+    trimesh::TriMesh* cxBooleanOperateMeshObj(trimesh::TriMesh* Mesh1, trimesh::TriMesh* Mesh2, cxBoolean_operation_type typeindex)
     {
-#if _DEBUG
-        saveBoolean("xxx.boolean", Mesh1, Mesh2);
-#endif
         trimesh::TriMesh* outMesh = NULL;
         Mesh surfaceMesh1;
         Mesh surfaceMesh2;
@@ -178,57 +173,37 @@ namespace mmesh
         trimesh2cgal(*Mesh1, surfaceMesh1);
         trimesh2cgal(*Mesh2, surfaceMesh2);
         if (surfaceMesh1.is_empty() || surfaceMesh2.is_empty())
+            goto END;
+        //main_test();
+
+        PMP::stitch_borders(surfaceMesh1);
+        PMP::stitch_borders(surfaceMesh2);
+
+        switch (typeindex)
         {
-            if (error)
-                *error = "input mesh is empty.";
+        case cxBoolean_operation_type::CX_UNION:
+            validvalue = PMP::corefine_and_compute_union(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
+            break;
+        case cxBoolean_operation_type::CX_INTERSECTION:
+            validvalue = PMP::corefine_and_compute_intersection(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
+            break;
+        case cxBoolean_operation_type::CX_TM1_MINUS_TM2:
+            validvalue = PMP::corefine_and_compute_difference(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
+            break;
+        case cxBoolean_operation_type::CX_TM2_MINUS_TM1:
+            validvalue = PMP::corefine_and_compute_difference(surfaceMesh2, surfaceMesh1, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
+            break;
         }
-        else
+        if (validvalue)
         {
-            PMP::stitch_borders(surfaceMesh1);
-            PMP::stitch_borders(surfaceMesh2);
-
-            try
-            {
-
-                switch (typeindex)
-                {
-                case cxBoolean_operation_type::CX_UNION:
-                    validvalue = PMP::corefine_and_compute_union(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
-                    break;
-                case cxBoolean_operation_type::CX_INTERSECTION:
-                    validvalue = PMP::corefine_and_compute_intersection(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
-                    break;
-                case cxBoolean_operation_type::CX_TM1_MINUS_TM2:
-                    validvalue = PMP::corefine_and_compute_difference(surfaceMesh1, surfaceMesh2, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
-                    break;
-                case cxBoolean_operation_type::CX_TM2_MINUS_TM1:
-                    validvalue = PMP::corefine_and_compute_difference(surfaceMesh2, surfaceMesh1, surfaceOut, PMP::parameters::throw_on_self_intersection(true));
-                    break;
-                }
-                if (validvalue)
-                {
 #if 0
-                    std::ofstream output("bool_result.off");
-                    output.precision(17);
-                    output << surfaceOut;
+            std::ofstream output("bool_result.off");
+            output.precision(17);
+            output << surfaceOut;
 #endif
-                    outMesh = cgal2trimesh(surfaceOut);
-                }
-            }
-            catch (CGAL::Polygon_mesh_processing::Corefinement::Self_intersection_exception e)
-            {
-                if (error)
-                    *error = "Self_intersection_exception. ";
-                outMesh = nullptr;
-            }
-            catch (CGAL::Assertion_exception e)
-            {
-                if (error)
-                    *error = "Assertion_exception. ";
-                outMesh = nullptr;
-            }
+            outMesh = cgal2trimesh(surfaceOut);
         }
-
+    END:
         return outMesh;
     }
 }

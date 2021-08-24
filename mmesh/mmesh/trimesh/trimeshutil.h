@@ -29,6 +29,8 @@ namespace mmesh
 
 	void convertUV2Azi(trimesh::TriMesh* mesh);
 	void convertUV2Equ(trimesh::TriMesh* mesh);
+
+	void flipZ(trimesh::TriMesh* mesh);
 }
 
 #endif // MMESH_TRIMESHUTIL_1602590289222_H
