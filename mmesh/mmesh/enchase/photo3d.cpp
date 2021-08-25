@@ -99,7 +99,11 @@ namespace enchase
 		std::unique_ptr<trimesh::TriMesh> destPtr(generate(param, errorCode));
 		if (destPtr)
 		{
+#if _WIN32
+			destPtr->write(stlFile);
+#else
 			destPtr->write(stlFile, errorCode);
+#endif
 			return true;
 		}
 

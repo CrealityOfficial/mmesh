@@ -101,8 +101,7 @@ namespace enchase
 		std::unique_ptr<trimesh::TriMesh> destPtr(generate(param));
 		if (destPtr)
 		{
-			int errorCode = 0;
-			destPtr->write(stlFile, errorCode);
+			destPtr->write(stlFile);
 			return true;
 		}
 
