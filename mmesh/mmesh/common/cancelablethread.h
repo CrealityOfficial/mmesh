@@ -16,8 +16,8 @@ namespace mmesh
 		void cancelThread();
 
 		bool isRunning();
-		bool isInterrupt();
 	protected:
+		bool isInterrupt();
 		void setInterrupt();
 
 		virtual void run() = 0;
@@ -25,6 +25,8 @@ namespace mmesh
 		bool m_interrupt;
 		std::unique_ptr<std::thread> m_thread;
 		std::mutex m_lock;
+
+		bool m_finished;
 	};
 }
 

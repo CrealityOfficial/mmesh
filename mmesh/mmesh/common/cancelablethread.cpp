@@ -4,6 +4,7 @@ namespace mmesh
 {
 	CancelableThread::CancelableThread()
 		:m_interrupt(false)
+		, m_finished(false)
 	{
 
 	}
@@ -18,18 +19,20 @@ namespace mmesh
 		if (m_thread)
 			cancelThread();
 
+		m_finished = false;
 		m_interrupt = false;
 		m_thread.reset(new std::thread(&CancelableThread::run, this));
 	}
 
 	void CancelableThread::cancelThread()
 	{
-		if (!isRunning())
+		if (!m_thread)
 			return;
 
 		setInterrupt();
 		m_thread->join();
 		m_thread.reset();
+		m_finished = true;
 	}
 
 	void CancelableThread::setInterrupt()
@@ -39,7 +42,7 @@ namespace mmesh
 
 	bool CancelableThread::isRunning()
 	{
-		return m_thread.get();
+		return m_thread.get() && !m_finished;
 	}
 
 	bool CancelableThread::isInterrupt()

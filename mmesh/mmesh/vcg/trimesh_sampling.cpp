@@ -356,5 +356,6 @@ namespace vcg
         }
     }//CX_PoissonAlg End
 }//vcg End
-#endif //USE_VCG
+
+#endif // USE_VCG
 #endif
