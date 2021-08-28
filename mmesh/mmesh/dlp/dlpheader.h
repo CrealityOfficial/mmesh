@@ -17,16 +17,16 @@ namespace mmesh
 		trimesh::vec3 normal;
 		int typeflg;
 		struct VerticalC posHit;
-		#ifdef CX_BOOST_CLUSTER
+#ifdef CX_BOOST_CLUSTER
 		ClusteredPoints clusteredPts;
-		#endif
+#endif
 	};
 	struct DLPISources
 	{
 		std::vector<DLPISource> sources;
-		#ifdef CX_BOOST_CLUSTER
+#ifdef CX_BOOST_CLUSTER
 		ClusteredPoints clusteredSrcID;
-		#endif
+#endif
 	};
 
 
@@ -90,6 +90,8 @@ namespace mmesh
 		float startheight;
 		float manualAngle;
 		float space;
+		float baseSpace;
+
 	};
 }
 
