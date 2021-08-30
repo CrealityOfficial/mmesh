@@ -32,9 +32,10 @@ namespace vcg
     namespace CX_PoissonAlg {
 		typedef struct PoissonAlgConfigure
 		{
-			float baseSampleRad = 1.0;//基础采样半径
-			float userSampleRad = 2.0;//用户选择采样半径
-			float ratio = 1.0;//用户选择采样半径
+			float baseSampleRad=1.0;//基础采样半径
+			float userSampleRad=2.0;//用户选择采样半径
+			float borderSampleOff=-0.5;//沿边采样半径向量偏移量
+			float ratio=1.0;//用户选择采样半径
 		}PoissonAlgCfg;
 
 		class PoissonFunc
@@ -50,8 +51,6 @@ namespace vcg
 			PoissonAlgCfg m_PoissonAlgCfg;
 			void* m_BasicPoissonMesh;
 			void* m_SurfaceMeshSource;
-			int   m_sampleNum;
-			int   m_sampleRadius;
 		};
     }//PoissonAlg
 }//vcg

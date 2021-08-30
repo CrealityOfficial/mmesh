@@ -896,7 +896,7 @@ namespace mmesh
 #endif
 				PoissonFuncObj.releaseData();
 				m_supportFace.insert(m_supportFace.end(), faceChunk.begin(), faceChunk.end());
-				for (trimesh::vec3 pt : outVertexs)
+				for (trimesh::vec3 &pt : outVertexs)
 				{
 					vec3 dir = DOWN_NORMAL;
 
@@ -927,8 +927,8 @@ namespace mmesh
 					dlpSource.typeflg = SUPPORT_FACE;
 					sources.push_back(dlpSource);
 				}
-				//if (sources.size() <= 1)
-				if (0)
+				if (sources.size() <= 1)
+				//if (0)
 				{
 					//if ((sources.size() == 1) || (supportEnable == true))
 					{
