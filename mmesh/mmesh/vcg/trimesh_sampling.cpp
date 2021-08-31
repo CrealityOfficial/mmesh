@@ -106,7 +106,7 @@ namespace vcg
                 pp.preGenFlag = true;
                 sampleVec.clear();
                 tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, *surfaceMeshPtr, rad, pp);
-                //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruningByNumber(mps, *surfaceMeshPtr, sampleNum, rad, pp,0.04,20);
+                //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruningByNumber(mps, *surfaceMeshPtr, sampleNum, rad, pp,0.04,1);
                 outVertexes.swap(sampleVec);
                 //tri::io::ExporterOFF<MyMesh>::Save(PoissonMesh, "PoissonMesh.off");
                 //printf("Computed a feature aware poisson disk distribution of %i vertices radius is %6.3f\n", PoissonMesh.VN(), rad);
@@ -286,7 +286,7 @@ namespace vcg
                 Clean<EdgeMeshType>::RemoveDuplicateVertex(sides);
             };
             ExtractMeshBorders(*surfaceMeshPtr, em);
-            if (1)
+            if (0)
             {
                 char edgefilename[128];
                 char str[25];
@@ -384,7 +384,7 @@ namespace vcg
                 }
                 outPaths.clear();
                 c.Execute(ctUnion, outPaths, pftEvenOdd);
-                if(1)
+                if(0)
                 {
                     SVGBuilder svg;
                     svg.style.penWidth = 0.1;
@@ -947,6 +947,12 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
             {
                 sampleNum = 1;
             }
+            //std::cout << "sampleNum baseSampleRad===" << m_PoissonAlgCfg.baseSampleRad << std::endl;
+            //std::cout << "sampleNum userSampleRad===" << m_PoissonAlgCfg.userSampleRad << std::endl;
+            //std::cout << "sampleNum borderSampleOff===" << m_PoissonAlgCfg.borderSampleOff << std::endl;
+            //std::cout << "sampleNum ratio===" << m_PoissonAlgCfg.ratio << std::endl;
+            //std::cout << "sampleNum ===" << sampleNum << std::endl;
+
             //tri::PoissonSampling<MyMesh>(m, sampleVec, sampleNum, rad);
 
             //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::Montecarlo(m, mps, sampleNum);
@@ -965,7 +971,7 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
             //}
             //if (sampleVec.size())
             {
-                tri::BuildMeshFromCoordVector(BasicPoissonMesh, sampleVec);
+                //tri::BuildMeshFromCoordVector(BasicPoissonMesh, sampleVec);
 #if 0
                 borderSamper(&m, &m_PoissonAlgCfg, outBorderVertexs);
 #else
