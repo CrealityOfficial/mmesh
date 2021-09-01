@@ -57,7 +57,17 @@ if(WIN32)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif()
 
+if (SLIC3R)
+add_definitions(-DUSE_TBB_MODULE)
+add_subdirectory(tbb/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tbb/src/include)
+
+set(Libs trimesh2 clipper tbb)
+else()
 set(Libs trimesh2 clipper)
+
+endif()
+
 if(HAVE_BOOST_ERIALIZATION)
 	__files_group(${CMAKE_CURRENT_SOURCE_DIR}/mmeshtest/ SRCS_TEST)
 	source_group(cereal FILES ${SRCS_TEST})

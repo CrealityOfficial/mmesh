@@ -97,8 +97,6 @@ namespace mmesh
 		bool m_DLPISourceInited;
 		AutoDLPSupportParam m_autoParam;
 		ConnectSectionInfor m_ConnectSectionInfor;
-	private:
-		std::vector<int> m_supportFace;
 
 	};
 }

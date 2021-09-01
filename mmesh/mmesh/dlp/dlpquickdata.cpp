@@ -12,6 +12,8 @@
 #include "mmesh/cgal/clusterPoint.h"
 #endif
 #include "mmesh/vcg/trimesh_sampling .h"
+#include "Concurrency.hpp"
+
 using namespace trimesh;
 namespace mmesh
 {
@@ -258,10 +260,8 @@ namespace mmesh
 				//m_SupportFaceSources
 				autoDlpFaceSource(sectionSources, autoParam);
 				m_SupportFaceSources.clear();
-				for (int sectIndex = 0; sectIndex < sectionSources.size(); sectIndex++)
+				for (std::vector<DLPISource>& sectionSrcs: sectionSources)
 				{
-					std::vector<DLPISource>& sectionSrcs = sectionSources[sectIndex];
-
 					if (sectionSrcs.size())
 						m_SupportFaceSources.insert(m_SupportFaceSources.end(), sectionSrcs.begin(), sectionSrcs.end());
 				}
@@ -834,7 +834,252 @@ namespace mmesh
 		poissonAlgcfg.userSampleRad = autoParam->space > poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
 		poissonAlgcfg.ratio = autoParam->density;//m_triangleChunk->m_width;
 		//poissonAlgcfg.baseSampleRad = poissonAlgcfg.userSampleRad;//m_triangleChunk->m_width;
-		m_supportFace.clear();
+		#ifdef USE_TBB_MODULE
+		{
+			size_t step = supportFaces.size() / 5;
+			sectionSources.resize(supportFaces.size());
+			std::function<void(size_t)> filterfn;
+			filterfn = [this, &sectionSources, &poissonAlgcfg, &supportFaces, &filterfn](size_t i) {
+				if (m_interruptFunc && m_interruptFunc(m_cbParamsPtr))
+				{
+					return;
+				}
+				std::vector<int>& faceChunk = supportFaces[i];
+				if (faceChunk.size() > 0)
+				{
+
+					trimesh::box3 connectSectBox;
+					float faceChunkArea = 0.0;
+					bool supportEnable = true;
+					std::vector< trimesh::vec3> inVertexs;
+					std::vector< trimesh::vec3> inNors;
+					std::vector< trimesh::vec3> outVertexs;
+					std::vector<DLPISource> sources;
+					std::vector<trimesh::TriMesh::Face> sectFacesIndex;
+					std::vector<int> edgeFaces;
+					std::vector<trimesh::vec3> edgeSectVertexsNearUp;
+					trimesh::vec3 centerPoint(-1.0, -1.0, -1.0);
+					trimesh::vec3 farPoint(-1.0, -1.0, -1.0);
+					for (int faceID : faceChunk)
+					{
+						TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+						sectFacesIndex.emplace_back(tFace);
+
+					}
+					bool supportFlag = sectionFaceNeedSupport(faceChunk, edgeFaces, farPoint, centerPoint);
+					//bool supportFlag = sectionFaceNeedSupport(faceChunk, edgeFaces, farPoint, centerPoint, edgeSectVertexsNearUp);
+					if (supportFlag)
+					{
+						std::vector< trimesh::vec3> outVertexs;
+						//std::vector< trimesh::vec3> outfirstVertexs;
+						//std::vector< trimesh::vec3> outSecondVertexs;
+						//std::vector< trimesh::vec3> outBorderVertexs;
+						std::vector<DLPISource> sources;
+						vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
+						PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
+
+						PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs, true);
+						//PoissonFuncObj.borderSamper(outBorderVertexs);
+						//if (outfirstVertexs.size() > 0)
+						//{
+						//	PoissonFuncObj.mainSecond(outBorderVertexs, outSecondVertexs);
+						//	if(outBorderVertexs.size()< outSecondVertexs.size())
+						//		outVertexs.swap(outSecondVertexs);
+						//	else
+						//		outVertexs.swap(outBorderVertexs);
+
+
+						//}
+						//else
+						//	outVertexs.swap(outBorderVertexs);
+
+						//std::cout << "outfirstVertexs===" << outfirstVertexs.size() << std::endl;
+						//std::cout << "outSecondVertexs===" << outSecondVertexs.size() << std::endl;
+						//std::cout << "outBorderVertexs===" << outBorderVertexs.size() << std::endl;
+
+						//outVertexs.clear();
+						//outVertexs.insert(outVertexs.end(),outfirstVertexs.begin(), outfirstVertexs.end());
+						//outVertexs.insert(outVertexs.end(), outSecondVertexs.begin(), outSecondVertexs.end());
+						//outVertexs.insert(outVertexs.end(), outBorderVertexs.begin(), outBorderVertexs.end());
+#ifdef DEBUG
+						std::cout << "extract_poisson_point===" << outVertexs.size() << std::endl;
+#endif
+						PoissonFuncObj.releaseData();
+						for (trimesh::vec3& pt : outVertexs)
+						{
+							vec3 dir = DOWN_NORMAL;
+
+							{
+								ivec2 pointIndex = m_triangleChunk->index(pt);
+								int iindex = pointIndex.x + pointIndex.y * m_triangleChunk->m_width;
+								std::vector<int>& faceVindex = m_triangleChunk->m_cells.at(iindex);
+								int faceVindexSize = faceVindex.size();
+								for (int faceID : faceChunk)
+								{
+									TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+									vec3& vertex1 = m_vertexes.at(tFace[0]);
+									vec3& vertex2 = m_vertexes.at(tFace[1]);
+									vec3& vertex3 = m_vertexes.at(tFace[2]);
+									if (PointinTriangle(vertex1, vertex2, vertex3, pt))
+									{
+										//std::cout << "hit" << std::endl;
+										dir = m_faceNormals[faceID];
+										break;
+									}
+
+								}
+
+							}
+
+
+							DLPISource dlpSource = generateSource(pt, dir);
+							dlpSource.typeflg = SUPPORT_FACE;
+							sources.push_back(dlpSource);
+						}
+						if (sources.size() <= 1)
+							//if (0)
+						{
+							//if ((sources.size() == 1) || (supportEnable == true))
+							{
+								vec3 xypoint(centerPoint.x, centerPoint.y, 0.0);
+								vec3 dir = UP_NORMAL;
+								float t = 0.0, u = 0.0, v = 0.0;
+								for (int faceIDindex = 0; faceIDindex < faceChunk.size(); faceIDindex++)
+								{
+									int& faceID = faceChunk[faceIDindex];
+									TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+									vec3& vertex1 = m_vertexes.at(tFace[0]);
+									vec3& vertex2 = m_vertexes.at(tFace[1]);
+									vec3& vertex3 = m_vertexes.at(tFace[2]);
+									vec3& normal = m_faceNormals.at(faceID);
+#if 1
+									if (rayIntersectTriangle(xypoint, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+									{
+										vec3 pointCross = xypoint + t * dir;
+#ifdef DEBUG
+										std::cout << "pointCross===" << pointCross << std::endl;
+#endif
+
+										DLPISource dlpSource = generateSource(pointCross, normal);
+										dlpSource.typeflg = SUPPORT_FACE;
+										if (sources.size() == 1)
+										{
+											sources.clear();
+										}
+										sources.push_back(dlpSource);
+									}
+#else
+									{
+										vec3 pointCross = xypoint + t * dir;
+										DLPISource dlpSource = generateSource(pointCross, normal);
+										dlpSource.typeflg = SUPPORT_FACE;
+										if (sources.size() == 1)
+										{
+											sources.clear();
+										}
+										sources.push_back(dlpSource);
+									}
+#endif
+								}
+							}
+							if (sources.size() == 0)
+							{
+								std::cout << "no rayIntersectTriangle xypoint===" << centerPoint << std::endl;
+
+							}
+
+							//sources.clear();
+							if ((sources.size() == 0) && (supportEnable == true))
+							{
+								int& faceID = faceChunk[0];//默认选中第一个
+								TriMesh::Face& tFace = m_mesh->faces.at(faceID);
+								vec3& vertex1 = m_vertexes.at(tFace[0]);
+								vec3& vertex2 = m_vertexes.at(tFace[1]);
+								vec3& vertex3 = m_vertexes.at(tFace[2]);
+								vec3 normal = m_faceNormals.at(faceID);
+								vec3 pointCross = (vertex1 + vertex2 + vertex3) / 3;
+								vec3 xypoint0(pointCross.x, pointCross.y, 0.0);
+								vec3 dir = UP_NORMAL;
+								float t, u, v;
+
+								if (farPoint.z > 0.0)
+								{
+									vec3 pointCross = farPoint;
+									DLPISource dlpSource = generateSource(pointCross, normal);
+									dlpSource.typeflg = SUPPORT_FACE;
+									sources.push_back(dlpSource);
+								}
+								else if (rayIntersectTriangle(xypoint0, dir, vertex1, vertex2, vertex3, &t, &u, &v))
+								{
+									vec3 pointCross = xypoint0 + t * dir;
+									DLPISource dlpSource = generateSource(pointCross, normal);
+									dlpSource.typeflg = SUPPORT_FACE;
+									sources.push_back(dlpSource);
+								}
+							}
+
+						}
+
+						if (sources.size())
+						{
+							sectionSources[i].swap(sources);
+						}
+					}
+
+				}
+
+
+
+
+
+			};
+			//ccr::for_each(size_t(0), supportFaces.size(),
+			//	[this, &sectionSources, &poissonAlgcfg,  &supportFaces, &filterfn](size_t i) {
+			//		filterfn(i);
+			//	});
+			ccr::for_each(size_t(0), step,
+				[this, &sectionSources, &poissonAlgcfg,  &supportFaces, &filterfn](size_t i) {
+					filterfn(i);
+				});
+			if (m_throwFunc != NULL)
+			{
+				m_cbParamsPtr->percentage = 0.6;
+				m_throwFunc(m_cbParamsPtr);
+			}
+			ccr::for_each(step, 2*step,
+				[this, &sectionSources, &poissonAlgcfg,  &supportFaces, &filterfn](size_t i) {
+					filterfn(i);
+				});
+			if (m_throwFunc != NULL)
+			{
+				m_cbParamsPtr->percentage = 0.7;
+				m_throwFunc(m_cbParamsPtr);
+			}
+			ccr::for_each(2*step, 3*step,
+				[this, &sectionSources, &poissonAlgcfg,  &supportFaces, &filterfn](size_t i) {
+					filterfn(i);
+				});
+			if (m_throwFunc != NULL)
+			{
+				m_cbParamsPtr->percentage = 0.8;
+				m_throwFunc(m_cbParamsPtr);
+			}
+			ccr::for_each(3*step, 4* step,
+				[this, &sectionSources, &poissonAlgcfg,  &supportFaces, &filterfn](size_t i) {
+					filterfn(i);
+				});
+			if (m_throwFunc != NULL)
+			{
+				m_cbParamsPtr->percentage = 0.9;
+				m_throwFunc(m_cbParamsPtr);
+			}
+			ccr::for_each(4*step, supportFaces.size(),
+				[this, &sectionSources, &poissonAlgcfg,  &supportFaces, &filterfn](size_t i) {
+					filterfn(i);
+				});
+
+		}
+		#else
 		for (std::vector<int>& faceChunk : supportFaces)
 		{
 
@@ -895,7 +1140,6 @@ namespace mmesh
 				std::cout << "extract_poisson_point===" << outVertexs.size() << std::endl;
 #endif
 				PoissonFuncObj.releaseData();
-				m_supportFace.insert(m_supportFace.end(), faceChunk.begin(), faceChunk.end());
 				for (trimesh::vec3 &pt : outVertexs)
 				{
 					vec3 dir = DOWN_NORMAL;
@@ -1036,6 +1280,7 @@ namespace mmesh
 			m_cbParamsPtr->percentage = 0.9;
 			m_throwFunc(m_cbParamsPtr);
 		}
+		#endif
 	}
 
 #else
