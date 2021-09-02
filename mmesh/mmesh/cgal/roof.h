@@ -19,6 +19,8 @@ namespace mmesh
 
 	void roofLine(ClipperLib::PolyTree* polyTree,
 		ClipperLib::PolyTree* roof, ClipperLib::PolyTree* roofPoint, ClipperLib::Paths* roofFace, bool onePoly = false);
+
+	void skeletonPoints(ClipperLib::PolyTree* polyTree, ClipperLib::Path* roofPoint);
 }
 
 #endif // FMESH_ROOF_1605318972342_H
