@@ -58,10 +58,6 @@ if(WIN32)
 endif()
 
 if (SLIC3R)
-add_definitions(-DUSE_TBB_MODULE)
-add_subdirectory(tbb/src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tbb/src/include)
-
 set(Libs trimesh2 clipper tbb)
 else()
 set(Libs trimesh2 clipper)
