@@ -120,7 +120,7 @@ namespace AABBTreeModle
         // generates point set
         static std::vector<My_point> points;
         static std::vector<size_t> triangles;
-        if (meshPtr == NULL)
+        if (meshPtr == NULL || xfPtr == NULL)
             return EXIT_FAILURE;
         if (meshPtrBefore == meshPtr && xfPtrBefore == *xfPtr)
            return EXIT_SUCCESS;

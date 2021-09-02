@@ -41,7 +41,7 @@ struct vec3f
 {
     double x, y, z;
 
-    inline vec3f( void ) {}
+	inline vec3f(void) { x = 0; y = 0; z = 0; }
 
     //inline vec3f operator =( vector3 a )
 	// { vec3f b ; b.x = a.x; b.y = a.y; b.z = a.z; return b;}

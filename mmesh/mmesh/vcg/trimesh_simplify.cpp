@@ -129,6 +129,7 @@ namespace mmesh
 #endif
 
 	TrimeshSimplify::TrimeshSimplify(trimesh::TriMesh* mesh)
+        :myVcgMesh(nullptr)
 	{
 #if USE_VCG
 		myVcgMesh = new VcgTriMesh();

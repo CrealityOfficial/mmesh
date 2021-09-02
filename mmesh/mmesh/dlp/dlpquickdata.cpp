@@ -30,6 +30,7 @@ namespace mmesh
 
 	}
 	CallBackParams::CallBackParams()
+		: percentage(0)
 	{
 
 	}
@@ -42,6 +43,10 @@ namespace mmesh
 		, m_DLPISourceInited(false)
 		, m_mesh(nullptr)
 		, m_pixel(1.0f)
+		, m_cbParamsPtr(nullptr)
+		, m_width(0)
+		, m_height(0)
+		, m_autoParam()
 	{
 		m_triangleChunk = new TriangleChunk();
 		m_meshTopo = new MeshTopo();
