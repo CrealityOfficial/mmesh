@@ -31,7 +31,7 @@ public:
 	std::vector < TreeNode *> m_TreeContainer;
 public:
 	void createTreeContainer(std::vector < TreeNode*> &treeContainer, std::vector<trimesh::vec3> points);
-	bool calculateCrossPoint(trimesh::vec3 point0, trimesh::vec3 point1,trimesh::vec3& crossPoint);
+	bool calculateCrossPoint(trimesh::vec3 point1, trimesh::vec3 point2,trimesh::vec3& crossPoint);
 
 };
 #endif // __DLP_SUPPORTTREE_H__

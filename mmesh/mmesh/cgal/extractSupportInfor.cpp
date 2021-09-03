@@ -86,7 +86,7 @@ typedef ComputeNormalsSM::Surface_mesh::Property_map<ComputeNormalsSM::vertex_de
 
     public:
         WLoop_mask_3(PolygonMesh& pmesh)
-            : pmesh(pmesh), vpm(get(CGAL::vertex_point, pmesh))
+            : pmesh(pmesh), vpm(get(CGAL::vertex_point, pmesh)), m_continue(false)
         {}
 
         void edge_node(halfedge_descriptor hd, Point& pt) {

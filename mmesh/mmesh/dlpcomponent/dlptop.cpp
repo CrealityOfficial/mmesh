@@ -4,6 +4,7 @@
 namespace mmesh
 {
 	DLPTop::DLPTop()
+		: m_topParam()
 	{
 	}
 
