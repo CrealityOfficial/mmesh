@@ -6,9 +6,41 @@
 #include "mmesh/util/tcontainer.h"
 #include "mmesh/trimesh/quaternion.h"
 #include "mmesh/camera/ray.h"
+#include <vector>
 
 namespace mmesh
 {
+	enum class ScreenCameraProjectionType
+	{
+		ePerspective,
+		eOrth
+	};
+
+	struct ScreenCameraMeta
+	{
+		ScreenCameraProjectionType type;
+
+		trimesh::vec3 viewCenter;
+		trimesh::vec3 upVector;
+		trimesh::vec3 position;
+
+		float fNear;
+		float fFar;
+		float fovy;
+		float aspectRatio;
+
+		float top;
+		float bottom;
+		float left;
+		float right;
+
+		trimesh::fxform viewMatrix();
+		trimesh::fxform posMatrix();
+		trimesh::fxform projectionMatrix();
+	};
+
+	void createCameraPoints(ScreenCameraMeta* meta, std::vector<trimesh::vec3>& positions);
+
 	class ScreenCameraTracer
 	{
 	public:
@@ -18,16 +50,13 @@ namespace mmesh
 		virtual void onProjectionMatrixChanged(const trimesh::fxform& xform) = 0;
 	};
 
-	enum class ScreenCameraProjectionType
-	{
-		ePerspective,
-		eOrth
-	};
 	class ScreenCamera : public TContainer<ScreenCameraTracer>
 	{
 	public:
 		ScreenCamera();
 		~ScreenCamera();
+
+		ScreenCameraMeta traitMeta();
 
 		trimesh::vec3 viewCenter();
 		trimesh::vec3 upVector();

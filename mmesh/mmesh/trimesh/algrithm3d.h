@@ -1,6 +1,7 @@
 #ifndef CREATIVE_KERNEL_ALGRITHM3D_1593580656409_H
 #define CREATIVE_KERNEL_ALGRITHM3D_1593580656409_H
 #include "trimesh2/Vec.h"
+#include "trimesh2/Box.h"
 
 namespace mmesh
 {
@@ -11,6 +12,8 @@ namespace mmesh
 
 	bool rayIntersectPlane(const trimesh::vec3& orig, const trimesh::vec3& dir, trimesh::vec3& vertex, trimesh::vec3& normal, float& t);
 	bool PointinTriangle(trimesh::vec3 A, trimesh::vec3 B, trimesh::vec3 C, trimesh::vec3 P);
+
+	trimesh::box3 extendBox(const trimesh::box3& b, float r);
 
 }
 #endif // CREATIVE_KERNEL_ALGRITHM3D_1593580656409_H
