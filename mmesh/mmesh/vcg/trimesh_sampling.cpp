@@ -413,12 +413,12 @@ namespace vcg
 #if 1
         void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Paths& contourpaths, PoissonAlgCfg* poissonCfgPtr, std::vector<CoordType>& outBorderVertexs)
         {
-
+            bool firstflg = true;
             ClipperLib::Paths solution;
-            ClipperLib::ClipperOffset co;
             TriMeshGrid static_grid;
             static_grid.Set(MeshSource->face.begin(), MeshSource->face.end());
             float maxDist =  MeshSource->bbox.max.Z() + 100;
+            
             ScalarType  sampleDist = poissonCfgPtr->userSampleRad * 1000;
             bool hitflg = false;
             outBorderVertexs.clear();
@@ -451,149 +451,200 @@ namespace vcg
                 }
                 return;
             }
-
-            co.AddPaths(contourpaths, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
-            co.Execute(solution, poissonCfgPtr->borderSampleOff * 1000);
-
-            if (0)
             {
-                SVGBuilder svg;
-                svg.style.penWidth = 0.1;
-                svg.style.pft = pftEvenOdd;
-                svg.style.brushClr = 0x1200009C;
-                svg.style.penClr = 0xCCD3D3DA;
-                //svg.AddPaths(subj);
-                //svg.style.brushClr = 0x129C0000;
-                //svg.style.penClr = 0xCCFFA07A;
-                //svg.AddPaths(clip);
-                svg.style.brushClr = 0x6080ff9C;
-                svg.style.penClr = 0xFF003300;
-                svg.style.pft = pftNonZero;
-
-                svg.AddPaths(solution);
-                char str[25];
-                itoa(em->vert.size(), str, 10);
-                string gFilenamePre = str;
-                string filename = "./SVG/off_" + gFilenamePre + ".svg";
-                svg.SaveToFile(filename, 0.01);
+                CoordType lowCenterPos(MeshSource->bbox.Center().X(), MeshSource->bbox.Center().Y(), 0.0);
+                MyMesh::FaceType* rf;
+                float t;
+                Point3f dir(0.0, 0.0, 1.0);
+                vcg::Ray3f ray;
+                ray.SetOrigin(lowCenterPos);
+                ray.SetDirection(dir);
+                rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
+                if (rf)
+                {
+                    CoordType raypt = ray.Origin() + ray.Direction() * t;
+                    outBorderVertexs.emplace_back(raypt);
+                }
             }
 
-            if (0)
+            do
             {
+                ClipperLib::ClipperOffset co;
+                std::vector<CoordType> borderVertexs;
+                if (firstflg == true)
+                {
+                    co.AddPaths(contourpaths, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
+                    co.Execute(solution, poissonCfgPtr->borderSampleOff * 1000);
+                    firstflg = false;
+                }
+                else
+                {
+                    if (solution.size() == 0)
+                        return;
+
+                    co.AddPaths(solution, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
+                    co.Execute(solution, -sampleDist);
+                }
+
+
+
+
+                if (0)
+                {
+                    SVGBuilder svg;
+                    svg.style.penWidth = 0.1;
+                    svg.style.pft = pftEvenOdd;
+                    svg.style.brushClr = 0x1200009C;
+                    svg.style.penClr = 0xCCD3D3DA;
+                    //svg.AddPaths(subj);
+                    //svg.style.brushClr = 0x129C0000;
+                    //svg.style.penClr = 0xCCFFA07A;
+                    //svg.AddPaths(clip);
+                    svg.style.brushClr = 0x6080ff9C;
+                    svg.style.penClr = 0xFF003300;
+                    svg.style.pft = pftNonZero;
+
+                    svg.AddPaths(solution);
+                    char str[25];
+                    itoa(em->vert.size(), str, 10);
+                    string gFilenamePre = str;
+                    string filename = "./SVG/off_" + gFilenamePre + ".svg";
+                    svg.SaveToFile(filename, 0.01);
+                }
+
+                if (0)
+                {
+                    for (ClipperLib::Path& solutionSub : solution)
+                    {
+                        for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
+                        {
+                            ClipperLib::IntPoint ptNew = solutionSub[ptIndex];
+
+                            outBorderVertexs.emplace_back(trimesh::vec3(ptNew.X, ptNew.Y, ptNew.Z));
+                            continue;
+                            MyMesh::FaceType* rf;
+                            float t;
+                            Point3f dir(0.0, 0.0, 1.0);
+                            vcg::Ray3f ray;
+                            ray.SetOrigin(CoordType(ptNew.X, ptNew.Y, 0.0));
+                            ray.SetDirection(dir);
+                            rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
+                            if (rf)
+                            {
+                                CoordType raypt = ray.Origin() + ray.Direction() * t;
+                                outBorderVertexs.emplace_back(raypt);
+                            }
+                        }
+                    }
+                    return;
+                }
+                ////////
+                double areaTotal = 0.0;
                 for (ClipperLib::Path& solutionSub : solution)
                 {
-                    for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
+                    double area = ClipperLib::Area(solutionSub);
+                    areaTotal += area;
+                    //int size = (int)solutionSub.size();
+                    //float rad = 0.05 * 1000;
+                    //if (area > (ClipperLib::pi * std::pow(sampleDist, 2)*0.7))
                     {
-                        ClipperLib::IntPoint ptNew = solutionSub[ptIndex];
-
-                        outBorderVertexs.emplace_back(trimesh::vec3(ptNew.X, ptNew.Y, ptNew.Z));
-                        continue;
-                        MyMesh::FaceType* rf;
-                        float t;
-                        Point3f dir(0.0, 0.0, 1.0);
-                        vcg::Ray3f ray;
-                        ray.SetOrigin(CoordType(ptNew.X, ptNew.Y, 0.0));
-                        ray.SetDirection(dir);
-                        rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
-                        if (rf)
+                        ScalarType lendelt = 0;
+                        ClipperLib::IntPoint ptNew = solutionSub[0];
+                        ScalarType  curLen = 0;
+                        ScalarType  totalLen = 0;
+                        size_t      sampleCnt = 0;
+                        size_t      sampleNum = 1;
+                        for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
                         {
-                            CoordType raypt = ray.Origin() + ray.Direction() * t;
-                            outBorderVertexs.emplace_back(raypt);
-                        }
-                    }
-                }
-                return;
-            }
-            ////////
-            for (ClipperLib::Path& solutionSub : solution)
-            {
-                //double area = ClipperLib::Area(solutionSub);
-                //int size = (int)solutionSub.size();
-                //float rad = 0.05 * 1000;
-                //if (area > ClipperLib::pi * std::pow(rad , 2))
-                {
-                    ScalarType lendelt = 0;
-                    ClipperLib::IntPoint ptNew = solutionSub[0];
-                    ScalarType  curLen = 0;
-                    ScalarType  totalLen = 0;
-                    size_t      sampleCnt = 0;
-                    size_t      sampleNum = 1;
-                    for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
-                    {
-                        ClipperLib::IntPoint& pt = solutionSub[ptIndex];
-                        ClipperLib::IntPoint ptNext = pt;
-                        if (ptIndex == (solutionSub.size() - 1))
-                        {
-                            ptNext = solutionSub[0];
-
-                        }
-                        else
-                            ptNext = solutionSub[ptIndex + 1];
-
-                        totalLen = totalLen + PointsDistace(ptNext, pt);
-                    }
-                    sampleNum = std::ceil(totalLen / sampleDist);
-
-                    for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
-                    {
-                        ClipperLib::IntPoint& pt = solutionSub[ptIndex];
-                        ClipperLib::IntPoint ptNext = pt;
-                        if (ptIndex == (solutionSub.size() - 1))
-                        {
-                            ptNext = solutionSub[0];
-                        }
-                        else
-                            ptNext = solutionSub[ptIndex + 1];
-
-                        Point3f linedir(ptNext.X - pt.X, ptNext.Y - pt.Y, ptNext.Z - pt.Z);
-                        linedir.Normalize();
-                        {
-                            ScalarType edgeLen = PointsDistace(pt, ptNext);
-                            ScalarType d0 = curLen;
-                            ScalarType d1 = d0 + edgeLen;
-
-                            ClipperLib::IntPoint ptNew = pt;
-                            while (d1 > sampleCnt * sampleDist && sampleCnt < sampleNum)
+                            ClipperLib::IntPoint& pt = solutionSub[ptIndex];
+                            ClipperLib::IntPoint ptNext = pt;
+                            if (ptIndex == (solutionSub.size() - 1))
                             {
-                                ScalarType off = (sampleCnt * sampleDist - d0);
+                                ptNext = solutionSub[0];
 
-                                Point3f lineOff = linedir * off;
-                                ptNew.X = pt.X + lineOff.X();
-                                ptNew.Y = pt.Y + lineOff.Y();
-                                ptNew.Z = pt.Z + lineOff.Z();
-
-                                MyMesh::FaceType* rf;
-                                float t;
-                                Point3f dir(0.0, 0.0, 1.0);
-                                vcg::Ray3f ray;
-                                ray.SetOrigin(CoordType(ptNew.X, ptNew.Y, ptNew.Z));
-                                ray.SetDirection(dir);
-                                rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
-                                if (rf)
-                                {
-                                    CoordType raypt = ray.Origin() + ray.Direction() * t;
-                                    outBorderVertexs.emplace_back(raypt);
-                                    hitflg = true;
-                                }
-                                sampleCnt++;
                             }
-                            curLen += edgeLen;
+                            else
+                                ptNext = solutionSub[ptIndex + 1];
+
+                            totalLen = totalLen + PointsDistace(ptNext, pt);
                         }
-                    }
-                    if (hitflg == false)
-                    {
-                        std::cout << "raypt  no hit  gFilenamePre==" << std::endl;
-                        //for (ClipperLib::Path& solutionSub : solution)
-                        //{
-                        //    for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
-                        //    {
-                        //        ClipperLib::IntPoint& pt = solutionSub[ptIndex];
-                        //        outBorderVertexs.emplace_back(CoordType(pt.X, pt.Y, pt.Z+5000));
-                        //    }
-                        //}
+                        sampleNum = std::ceil(totalLen / sampleDist);
+
+                        for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
+                        {
+                            ClipperLib::IntPoint& pt = solutionSub[ptIndex];
+                            ClipperLib::IntPoint ptNext = pt;
+                            if (ptIndex == (solutionSub.size() - 1))
+                            {
+                                ptNext = solutionSub[0];
+                            }
+                            else
+                                ptNext = solutionSub[ptIndex + 1];
+
+                            Point3f linedir(ptNext.X - pt.X, ptNext.Y - pt.Y, ptNext.Z - pt.Z);
+                            linedir.Normalize();
+                            {
+                                ScalarType edgeLen = PointsDistace(pt, ptNext);
+                                ScalarType d0 = curLen;
+                                ScalarType d1 = d0 + edgeLen;
+
+                                ClipperLib::IntPoint ptNew = pt;
+                                while (d1 > sampleCnt * sampleDist && sampleCnt < sampleNum)
+                                {
+                                    ScalarType off = (sampleCnt * sampleDist - d0);
+
+                                    Point3f lineOff = linedir * off;
+                                    ptNew.X = pt.X + lineOff.X();
+                                    ptNew.Y = pt.Y + lineOff.Y();
+                                    ptNew.Z = pt.Z + lineOff.Z();
+
+                                    MyMesh::FaceType* rf;
+                                    float t;
+                                    Point3f dir(0.0, 0.0, 1.0);
+                                    vcg::Ray3f ray;
+                                    ray.SetOrigin(CoordType(ptNew.X, ptNew.Y, ptNew.Z));
+                                    ray.SetDirection(dir);
+                                    rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
+                                    if (rf)
+                                    {
+                                        CoordType raypt = ray.Origin() + ray.Direction() * t;
+                                        borderVertexs.emplace_back(raypt);
+                                        //outBorderVertexs.emplace_back(raypt);
+                                        hitflg = true;
+                                    }
+                                    sampleCnt++;
+                                }
+                                curLen += edgeLen;
+                            }
+                        }
+                        if (hitflg == false)
+                        {
+                            std::cout << "raypt  no hit  gFilenamePre==" << std::endl;
+                        }
+
                     }
                 }
-            }
+
+                {
+
+                    ClipperLib::Paths solutionNext = solution;
+                    co.Execute(solutionNext, -sampleDist);
+                    outBorderVertexs.insert(outBorderVertexs.end(), borderVertexs.begin(), borderVertexs.end());
+
+                    if (solutionNext.size() == 0)
+                    {
+                        break;
+                    }
+                    if (areaTotal < (ClipperLib::pi * std::pow(sampleDist, 2) * 0.7))
+                        break;
+
+
+                }
+
+
+
+            }while (1);
+
             std::cout << " outBorderVertexs===" << outBorderVertexs.size() << std::endl;
 
         }
@@ -983,7 +1034,7 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
 
                 }
 #endif
-                mainSecond(&m, &m_PoissonAlgCfg, outBorderVertexs, sampleNum + outBorderVertexs.size(), outSecondVertexs);
+                //mainSecond(&m, &m_PoissonAlgCfg, outBorderVertexs, sampleNum + outBorderVertexs.size(), outSecondVertexs);
                 //if (outBorderVertexs.size())
                 //{
 
@@ -1000,7 +1051,7 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
                 //    outSampleVec.swap(sampleVec);
                 //}
             }
-            for (Point3f pt : outSecondVertexs)
+            for (Point3f pt : outBorderVertexs)
             {
                 outVertexes.emplace_back(trimesh::vec3(pt.X()/1000, pt.Y()/1000, pt.Z()/1000));
             }
