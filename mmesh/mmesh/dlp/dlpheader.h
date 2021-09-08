@@ -91,6 +91,7 @@ namespace mmesh
 		float manualAngle;
 		float space;
 		float baseSpace;
+		float borderSampleOff;
 
 	};
 }

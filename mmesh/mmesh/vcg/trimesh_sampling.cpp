@@ -54,10 +54,10 @@ namespace vcg
             Use<MyEdge>     ::AsEdgeType,
             Use<MyFace>     ::AsFaceType> {};
 
-        class MyVertex : public Vertex<MyUsedTypes, vertex::Coord3f, vertex::Normal3f, vertex::Mark, vertex::BitFlags  > {};
+        class MyVertex : public Vertex<MyUsedTypes, vcg::vertex::VFAdj, vertex::Qualityf, vertex::Color4b, vertex::Coord3f, vertex::Normal3f, vertex::Mark, vertex::BitFlags  > {};
         //class MyFace : public Face< MyUsedTypes, face::FFAdj, face::Normal3f, face::VertexRef, face::BitFlags > {};
 
-        class MyFace : public Face  <MyUsedTypes, face::FFAdj, face::VertexRef, face::BitFlags, face::Mark, face::Normal3f> {};
+        class MyFace : public Face  <MyUsedTypes, face::FFAdj, vcg::face::VFAdj, face::VertexRef, face::BitFlags, face::Mark, face::Normal3f> {};
 
         class MyEdge : public Edge<MyUsedTypes> {};
         class MyMesh : public tri::TriMesh< vector<MyVertex>, vector<MyFace>, vector<MyEdge>  > {};
@@ -77,9 +77,42 @@ namespace vcg
             return std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
         }
 
-        bool mainSecond(MyMesh* surfaceMeshPtr, PoissonAlgCfg* poissonCfgPtr, std::vector<CoordType> inVertexes, int sampleNum, std::vector<CoordType>& outVertexes)
+        template <class MeshType>
+        void  poissonRadiusSurface(MeshType& baseMesh,
+            typename tri::SurfaceSampling<MeshType, tri::MeshSampler<MeshType> >::PoissonDiskParam &pp,
+            typename MeshType::ScalarType _poissonRadiusSurface,
+            std::vector<typename MeshType::CoordType>& outVertexes)
         {
-            std::cout << __LINE__ << "  " << __FUNCTION__ << std::endl;
+            MeshType::ScalarType poissonRadiusSurface;
+            MeshType poissonSurfaceMesh;
+
+            MeshType montecarloSurfaceMesh;
+            if (_poissonRadiusSurface == 0) 
+                poissonRadiusSurface = baseMesh.bbox.Diag() / 50.0f;
+            else 
+                poissonRadiusSurface = _poissonRadiusSurface;
+            ScalarType meshArea = Stat<MeshType>::ComputeMeshArea(baseMesh);
+            int MontecarloSurfSampleNum = 10 * meshArea / (poissonRadiusSurface * poissonRadiusSurface);
+            tri::MeshSampler<MeshType> sampler(montecarloSurfaceMesh);
+            tri::SurfaceSampling<MeshType, tri::MeshSampler<MeshType> >::Montecarlo(baseMesh, sampler, MontecarloSurfSampleNum);
+            montecarloSurfaceMesh.bbox = baseMesh.bbox; // we want the same bounding box
+            poissonSurfaceMesh.Clear();
+            tri::MeshSampler<MeshType> mps(poissonSurfaceMesh);
+
+            tri::SurfaceSampling<MeshType, tri::MeshSampler<MeshType> >::PoissonDiskPruning(mps, montecarloSurfaceMesh, poissonRadiusSurface, pp);
+            vcg::tri::UpdateBounding<MeshType>::Box(poissonSurfaceMesh);
+
+           // printf("Surface Sampling radius %f - montecarlo %ivn - Poisson %ivn\n", poissonRadiusSurface, montecarloSurfaceMesh.vn, poissonSurfaceMesh.vn);
+            //VertexConstDataWrapper<MeshType> ww(poissonSurfaceMesh);
+            for (int index=0;index< poissonSurfaceMesh.vn; index++)
+            {
+                outVertexes.emplace_back(poissonSurfaceMesh.vert[index].P());
+            }
+
+        }
+        bool mainSecond(MyMesh* surfaceMeshPtr, PoissonAlgCfg* poissonCfgPtr, std::vector<CoordType> inVertexes, std::vector<CoordType> inExternVertexes, int sampleNum, std::vector<CoordType>& outVertexes)
+        {
+            //std::cout << __LINE__ << "  " << __FUNCTION__ << std::endl;
             {
                 //----------------------------------------------------------------------
                 // Advanced Sample
@@ -92,21 +125,40 @@ namespace vcg
                 //tri::io::ExporterOFF<MyMesh>::Save(m, "disc.off");
                 tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::SamplingRandomGenerator().initialize(time(0));
 
-                vector<CoordType> coordVec;
-                coordVec.swap(inVertexes);
-                if (coordVec.size() > 3)
-                    tri::BuildMeshFromCoordVector(PoissonEdgeMesh, coordVec);
 
-                std::vector<Point3f> sampleVec;
+                tri::BuildMeshFromCoordVector(PoissonEdgeMesh, inVertexes);
+
+                std::vector<CoordType> sampleVec;
                 tri::TrivialSampler<MyMesh> mps(sampleVec);
                 tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskParam pp;
 
-                // tri::io::ExporterOFF<MyMesh>::Save(MontecarloSurfaceMesh, "MontecarloSurfaceMesh.off");
+                sampleVec.clear();
+                MyMesh MontecarloSurfaceMesh;
+                tri::BuildMeshFromCoordVector(MontecarloSurfaceMesh, inExternVertexes);
+                //tri::io::ExporterOFF<MyMesh>::Save(MontecarloSurfaceMesh, "MontecarloSurfaceMesh.off");
+
                 pp.preGenMesh = &PoissonEdgeMesh;
                 pp.preGenFlag = true;
                 sampleVec.clear();
-                tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, *surfaceMeshPtr, rad, pp);
-                //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruningByNumber(mps, *surfaceMeshPtr, sampleNum, rad, pp,0.04,1);
+
+                tri::SurfaceSampling<MyMesh, tri::MeshSampler<MyMesh> >::PoissonDiskParam pptest;
+                pptest.preGenMesh = &PoissonEdgeMesh;
+                pptest.preGenFlag = true;
+
+                tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, MontecarloSurfaceMesh, rad, pp);
+
+                //poissonRadiusSurface<MyMesh>(*surfaceMeshPtr, pptest, rad, sampleVec);
+                //PoissonSamplingTest < MyMesh>(*surfaceMeshPtr, inVertexes, sampleVec, sampleNum, rad);
+                //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, MontecarloSurfaceMesh, rad, pp);
+                //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, *surfaceMeshPtr, rad, pp);
+               // tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruningByNumber(mps, *surfaceMeshPtr, sampleNum, rad, pp,0.04,5);
+               // tri::PoissonSampling<MyMesh>(*surfaceMeshPtr, sampleVec, sampleNum, rad);
+                //tri::PoissonPruning<MyMesh>(*surfaceMeshPtr, sampleVec, rad);
+                //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::Montecarlo(m, mps, sampleNum);
+                //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::MontecarloPoisson(*surfaceMeshPtr, mps, sampleNum);
+
+                
+                
                 outVertexes.swap(sampleVec);
                 //tri::io::ExporterOFF<MyMesh>::Save(PoissonMesh, "PoissonMesh.off");
                 //printf("Computed a feature aware poisson disk distribution of %i vertices radius is %6.3f\n", PoissonMesh.VN(), rad);
@@ -235,7 +287,7 @@ namespace vcg
         {
 
             typedef typename EdgeMeshType::CoordType EdgeCoord;
-            std::cout << __LINE__ <<"  "<< __FUNCTION__ << std::endl;
+            //std::cout << __LINE__ <<"  "<< __FUNCTION__ << std::endl;
             auto ExtractMeshBorders = [](MyMesh& mesh, EdgeMeshType& sides)
             {
                 RequireFFAdjacency(mesh);
@@ -410,6 +462,250 @@ namespace vcg
 
             }
         }
+       void borderSamperClipPoint(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Paths& contourpaths, PoissonAlgCfg* poissonCfgPtr, std::vector<CoordType>& outContoursVertexs, std::vector<CoordType>& outBorderVertexs)
+        {
+            bool firstflg = true;
+            ClipperLib::Paths solution;
+            TriMeshGrid static_grid;
+            static_grid.Set(MeshSource->face.begin(), MeshSource->face.end());
+            float maxDist = MeshSource->bbox.max.Z() + 100;
+
+            ScalarType  sampleDist = poissonCfgPtr->userSampleRad * 1000;
+            bool hitflg = false;
+            outBorderVertexs.clear();
+            //std::cout << __LINE__ << "  " << __FUNCTION__ << "contourpaths.size==" << contourpaths.size() << std::endl;
+            if (contourpaths.size() == 0)
+                return;
+            if (0)
+            {
+                for (ClipperLib::Path& solutionSub : contourpaths)
+                {
+                    for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
+                    {
+                        ClipperLib::IntPoint ptNew = solutionSub[ptIndex];
+
+                        outBorderVertexs.emplace_back(trimesh::vec3(ptNew.X, ptNew.Y, ptNew.Z));
+                        continue;
+                        MyMesh::FaceType* rf;
+                        float t;
+                        Point3f dir(0.0, 0.0, 1.0);
+                        vcg::Ray3f ray;
+                        ray.SetOrigin(CoordType(ptNew.X, ptNew.Y, 0.0));
+                        ray.SetDirection(dir);
+                        rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
+                        if (rf)
+                        {
+                            CoordType raypt = ray.Origin() + ray.Direction() * t;
+                            outBorderVertexs.emplace_back(raypt);
+                        }
+                    }
+                }
+                return;
+            }
+
+
+            do
+            {
+                ClipperLib::ClipperOffset co;
+                std::vector<CoordType> borderVertexs;
+                if (firstflg == true)
+                {
+                    co.AddPaths(contourpaths, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
+                    co.Execute(solution, poissonCfgPtr->borderSampleOff * 1000);
+                }
+                else
+                {
+                    if (solution.size() == 0)
+                        return;
+
+                    co.AddPaths(solution, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
+                    co.Execute(solution, -sampleDist);
+                }
+
+
+
+
+                if (0)
+                {
+                    SVGBuilder svg;
+                    svg.style.penWidth = 0.1;
+                    svg.style.pft = pftEvenOdd;
+                    svg.style.brushClr = 0x1200009C;
+                    svg.style.penClr = 0xCCD3D3DA;
+                    //svg.AddPaths(subj);
+                    //svg.style.brushClr = 0x129C0000;
+                    //svg.style.penClr = 0xCCFFA07A;
+                    //svg.AddPaths(clip);
+                    svg.style.brushClr = 0x6080ff9C;
+                    svg.style.penClr = 0xFF003300;
+                    svg.style.pft = pftNonZero;
+
+                    svg.AddPaths(solution);
+                    char str[25];
+                    itoa(em->vert.size(), str, 10);
+                    string gFilenamePre = str;
+                    string filename = "./SVG/off_" + gFilenamePre + ".svg";
+                    svg.SaveToFile(filename, 0.01);
+                }
+
+                if (0)
+                {
+                    for (ClipperLib::Path& solutionSub : solution)
+                    {
+                        for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
+                        {
+                            ClipperLib::IntPoint ptNew = solutionSub[ptIndex];
+
+                            outBorderVertexs.emplace_back(trimesh::vec3(ptNew.X, ptNew.Y, ptNew.Z));
+                            continue;
+                            MyMesh::FaceType* rf;
+                            float t;
+                            Point3f dir(0.0, 0.0, 1.0);
+                            vcg::Ray3f ray;
+                            ray.SetOrigin(CoordType(ptNew.X, ptNew.Y, 0.0));
+                            ray.SetDirection(dir);
+                            rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
+                            if (rf)
+                            {
+                                CoordType raypt = ray.Origin() + ray.Direction() * t;
+                                outBorderVertexs.emplace_back(raypt);
+                            }
+                        }
+                    }
+                    return;
+                }
+                ////////
+                double areaTotal = 0.0;
+                for (ClipperLib::Path& solutionSub : solution)
+                {
+                    double area = ClipperLib::Area(solutionSub);
+                    areaTotal += area;
+                    //int size = (int)solutionSub.size();
+                    //float rad = 0.05 * 1000;
+                    //if (area > (ClipperLib::pi * std::pow(sampleDist, 2)*0.7))
+                    {
+                        ScalarType lendelt = 0;
+                        ClipperLib::IntPoint ptNew = solutionSub[0];
+                        ScalarType  curLen = 0;
+                        ScalarType  totalLen = 0;
+                        size_t      sampleCnt = 0;
+                        size_t      sampleNum = 1;
+                        for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
+                        {
+                            ClipperLib::IntPoint& pt = solutionSub[ptIndex];
+                            ClipperLib::IntPoint ptNext = pt;
+                            if (ptIndex == (solutionSub.size() - 1))
+                            {
+                                ptNext = solutionSub[0];
+
+                            }
+                            else
+                                ptNext = solutionSub[ptIndex + 1];
+
+                            totalLen = totalLen + PointsDistace(ptNext, pt);
+                        }
+                        sampleNum = std::ceil(totalLen / sampleDist);
+
+                        for (int ptIndex = 0; ptIndex < solutionSub.size(); ptIndex++)
+                        {
+                            ClipperLib::IntPoint& pt = solutionSub[ptIndex];
+                            ClipperLib::IntPoint ptNext = pt;
+                            if (ptIndex == (solutionSub.size() - 1))
+                            {
+                                ptNext = solutionSub[0];
+                            }
+                            else
+                                ptNext = solutionSub[ptIndex + 1];
+
+                            Point3f linedir(ptNext.X - pt.X, ptNext.Y - pt.Y, ptNext.Z - pt.Z);
+                            linedir.Normalize();
+                            {
+                                ScalarType edgeLen = PointsDistace(pt, ptNext);
+                                ScalarType d0 = curLen;
+                                ScalarType d1 = d0 + edgeLen;
+
+                                ClipperLib::IntPoint ptNew = pt;
+                                while (d1 > sampleCnt * sampleDist && sampleCnt < sampleNum)
+                                {
+                                    ScalarType off = (sampleCnt * sampleDist - d0);
+
+                                    Point3f lineOff = linedir * off;
+                                    ptNew.X = pt.X + lineOff.X();
+                                    ptNew.Y = pt.Y + lineOff.Y();
+                                    ptNew.Z = pt.Z + lineOff.Z();
+
+                                    MyMesh::FaceType* rf;
+                                    float t;
+                                    Point3f dir(0.0, 0.0, 1.0);
+                                    vcg::Ray3f ray;
+                                    ray.SetOrigin(CoordType(ptNew.X, ptNew.Y, ptNew.Z));
+                                    ray.SetDirection(dir);
+                                    rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
+                                    if (rf)
+                                    {
+                                        CoordType raypt = ray.Origin() + ray.Direction() * t;
+                                        borderVertexs.emplace_back(raypt);
+                                        //outBorderVertexs.emplace_back(raypt);
+                                        hitflg = true;
+                                    }
+                                    sampleCnt++;
+                                }
+                                curLen += edgeLen;
+                            }
+                        }
+                        if (hitflg == false)
+                        {
+                            std::cout << "raypt  no hit  gFilenamePre==" << std::endl;
+                        }
+
+                    }
+                }
+                {
+                    if (firstflg == true)
+                    {
+                        {
+                            CoordType lowCenterPos(MeshSource->bbox.Center().X(), MeshSource->bbox.Center().Y(), 0.0);
+                            MyMesh::FaceType* rf;
+                            float t;
+                            Point3f dir(0.0, 0.0, 1.0);
+                            vcg::Ray3f ray;
+                            ray.SetOrigin(lowCenterPos);
+                            ray.SetDirection(dir);
+                            rf = tri::DoRay<MyMesh, TriMeshGrid>(*MeshSource, static_grid, ray, maxDist, t);
+                            if (rf)
+                            {
+                                CoordType raypt = ray.Origin() + ray.Direction() * t;
+                                borderVertexs.emplace_back(raypt);
+                            }
+                        }
+                        outContoursVertexs.insert(outContoursVertexs.end(), borderVertexs.begin(), borderVertexs.end());
+                    }
+                    firstflg = false;
+                }
+
+                {
+
+                    ClipperLib::Paths solutionNext = solution;
+                    co.Execute(solutionNext, -sampleDist);
+                    outBorderVertexs.insert(outBorderVertexs.end(), borderVertexs.begin(), borderVertexs.end());
+                    if (solutionNext.size() == 0)
+                    {
+                        break;
+                    }
+                    if (areaTotal < (ClipperLib::pi * std::pow(sampleDist, 2) * 0.7))
+                        break;
+
+
+                }
+
+
+
+            } while (1);
+
+            //std::cout << " outBorderVertexs===" << outBorderVertexs.size() << std::endl;
+
+        }
+
 #if 1
         void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Paths& contourpaths, PoissonAlgCfg* poissonCfgPtr, std::vector<CoordType>& outBorderVertexs)
         {
@@ -884,6 +1180,7 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
 
             std::vector<CoordType> sampleVec;
             std::vector<CoordType> outBorderVertexs;
+            std::vector<CoordType> outExternVertexes;
             std::vector<CoordType> outSecondVertexs;
             std::vector<CoordType> outSampleVec;
             tri::TrivialSampler<MyMesh> mps(sampleVec);
@@ -899,6 +1196,12 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
 
             Clean<MyMesh>::RemoveDuplicateVertex(m, true);
             Allocator<MyMesh>::CompactVertexVector(m);
+
+            tri::Clean<MyMesh>::RemoveUnreferencedVertex(m);
+            tri::Allocator<MyMesh>::CompactEveryVector(m);
+
+            tri::UpdateTopology<MyMesh>::VertexFace(m);
+
 
             ////// select all vertices (to mark them fixed)
             UpdateFlags<MyMesh>::VertexSetS(m);
@@ -979,11 +1282,11 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
                     ClipperLib::Paths outPaths;
                     EdgeMeshType em;
                     borderPaths(&m, outPaths, em);
-                    borderSamperPointOff(&m, &em, outPaths, &m_PoissonAlgCfg, outBorderVertexs);
-
+                    //borderSamperPointOff(&m, &em, outPaths, &m_PoissonAlgCfg, outBorderVertexs);
+                    borderSamperClipPoint(&m, &em, outPaths, &m_PoissonAlgCfg, outBorderVertexs, outExternVertexes);
                 }
 #endif
-                mainSecond(&m, &m_PoissonAlgCfg, outBorderVertexs, sampleNum + outBorderVertexs.size(), outSecondVertexs);
+                mainSecond(&m, &m_PoissonAlgCfg, outBorderVertexs, outExternVertexes, sampleNum + outBorderVertexs.size(), outSecondVertexs);
                 //if (outBorderVertexs.size())
                 //{
 

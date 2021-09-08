@@ -837,6 +837,7 @@ namespace mmesh
 		vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
 		poissonAlgcfg.baseSampleRad = autoParam->baseSpace;//m_triangleChunk->m_width;
 		poissonAlgcfg.userSampleRad = autoParam->space > poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
+		poissonAlgcfg.borderSampleOff = autoParam->borderSampleOff;
 		poissonAlgcfg.ratio = autoParam->density;//m_triangleChunk->m_width;
 		//poissonAlgcfg.baseSampleRad = poissonAlgcfg.userSampleRad;//m_triangleChunk->m_width;
 		#ifdef USE_TBB_MODULE

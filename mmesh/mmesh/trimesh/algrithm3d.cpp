@@ -125,4 +125,16 @@ namespace mmesh
 		return u + v <= 1;
 	}
 
+	trimesh::box3 extendBox(const trimesh::box3& b, float r)
+	{
+		if (r <= 0.0f)
+			r = 0.1f;
+
+		trimesh::box3 rb = b;
+		trimesh::vec3 offset = rb.size() * r;
+		rb += (b.max + offset);
+		rb += (b.min - offset);
+		return rb;
+	}
+
 }
