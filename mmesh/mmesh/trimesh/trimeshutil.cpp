@@ -6,9 +6,23 @@
 #include <assert.h>
 
 #include "mmesh/create/ballcreator.h"
+#include "ccglobal/tracer.h"
 
 namespace mmesh
 {
+	void formartPrint(ccglobal::Tracer* tracer, const char* format, ...)
+	{
+		if (!tracer)
+			return;
+
+		char buf[1024] = { 0 };
+		va_list args;
+		va_start(args, format);
+		vsprintf(buf, format, args);
+		tracer->message(buf);
+		va_end(args);
+	}
+
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
 	{
 		assert(outMesh);
@@ -224,7 +238,7 @@ namespace mmesh
 		return outMesh;
 	}
 
-	void dumplicateMesh(trimesh::TriMesh* mesh)
+	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
 		if (!mesh)
 			return;
@@ -260,6 +274,8 @@ namespace mmesh
 		std::vector<int> vertexMapper;
 		vertexMapper.resize(vertexNum, -1);
 
+		formartPrint(tracer, "dumplicateMesh %d", (int)vertexNum);
+
 		for (size_t i = 0; i < vertexNum; ++i)
 		{
 			trimesh::point p = mesh->vertices.at(i);
@@ -276,7 +292,12 @@ namespace mmesh
 
 				vertexMapper.at(i) = index;
 			}
+
+			if(i % 300 == 1)
+				formartPrint(tracer, "dumplicateMesh %i", (int)i);
 		}
+
+		formartPrint(tracer, "dumplicateMesh over %d", (int)points.size());
 
 		trimesh::TriMesh* omesh = optimizeMesh;
 		omesh->vertices.resize(points.size());
