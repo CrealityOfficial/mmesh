@@ -249,8 +249,13 @@ namespace mmesh
 		{
 			size_t operator()(const trimesh::vec3& v)const
 			{
+#if _WIN32
 				return abs(v.x) * 10000.0f / 23.0f + abs(v.y) * 10000.0f / 19.0f + abs(v.z) * 10000.0f / 17.0f;
+#else
+				return fabs(v.x) * 10000.0f / 23.0f + fabs(v.y) * 10000.0f / 19.0f + abs(v.z) * 10000.0f / 17.0f;
+#endif
 			}
+
 		};
 		struct equal_vec3
 		{
