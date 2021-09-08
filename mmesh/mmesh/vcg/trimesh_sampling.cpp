@@ -83,7 +83,7 @@ namespace vcg
             typename MeshType::ScalarType _poissonRadiusSurface,
             std::vector<typename MeshType::CoordType>& outVertexes)
         {
-            MeshType::ScalarType poissonRadiusSurface;
+            typename MeshType::ScalarType poissonRadiusSurface;
             MeshType poissonSurfaceMesh;
 
             MeshType montecarloSurfaceMesh;
@@ -341,8 +341,14 @@ namespace vcg
             if (0)
             {
                 char edgefilename[128];
+
                 char str[25];
+#if _WIN32
                 itoa(em.vert.size(), str, 10);
+#else
+                snprintf(str, 25, "%d", (int)em.vert.size());
+#endif
+
                 string gFilenamePre = str;
                 sprintf(edgefilename, "./SVG/edgeMesh_%d.obj", em.vert.size());
                 tri::io::ExporterOBJ<EdgeMeshType>::Save(em, edgefilename, io::Mask::IOM_EDGEINDEX);
@@ -453,7 +459,11 @@ namespace vcg
 
                     svg.AddPaths(outPaths);
                     char str[25];
+#if _WIN32
                     itoa(em.vert.size(), str, 10);
+#else
+                    snprintf(str, 25, "%d", (int)em.vert.size());
+#endif
                     string gFilenamePre = str;
 
                     string filename = "./SVG/contours_" + gFilenamePre + ".svg";
@@ -542,7 +552,11 @@ namespace vcg
 
                     svg.AddPaths(solution);
                     char str[25];
+#if _WIN32
                     itoa(em->vert.size(), str, 10);
+#else
+                    snprintf(str, 25, "%d", (int)em->vert.size());
+#endif
                     string gFilenamePre = str;
                     string filename = "./SVG/off_" + gFilenamePre + ".svg";
                     svg.SaveToFile(filename, 0.01);
@@ -768,7 +782,11 @@ namespace vcg
 
                 svg.AddPaths(solution);
                 char str[25];
+#if _WIN32
                 itoa(em->vert.size(), str, 10);
+#else
+                snprintf(str, 25, "%d", (int)em->vert.size());
+#endif
                 string gFilenamePre = str;
                 string filename = "./SVG/off_" + gFilenamePre + ".svg";
                 svg.SaveToFile(filename, 0.01);
