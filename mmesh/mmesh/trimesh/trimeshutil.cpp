@@ -260,7 +260,8 @@ namespace mmesh
 			}
 		};
 		typedef std::unordered_map<trimesh::vec3, int, hash_vec3, equal_vec3> unique_point;
-		unique_point points(vertexNum * 3 / 10 + 1);
+		//unique_point points(vertexNum * 3 / 10 + 1);
+		unique_point points;
 
 		typedef unique_point::iterator point_iterator;
 
