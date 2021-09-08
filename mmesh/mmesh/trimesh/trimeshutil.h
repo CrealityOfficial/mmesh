@@ -9,6 +9,11 @@ namespace trimesh
 	class TriMesh;
 }
 
+namespace ccglobal
+{
+	class Tracer;
+}
+
 namespace mmesh
 {
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan = false);
@@ -20,7 +25,7 @@ namespace mmesh
 
 	trimesh::TriMesh* partMesh(const std::vector<int>& indices, trimesh::TriMesh* inMesh);
 
-	void dumplicateMesh(trimesh::TriMesh* mesh);
+	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
 
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan);
 
