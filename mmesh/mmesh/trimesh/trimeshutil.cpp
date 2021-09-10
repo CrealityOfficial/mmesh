@@ -294,7 +294,7 @@ namespace mmesh
 				vertexMapper.at(i) = index;
 			}
 
-			if(i % 300 == 1)
+			if(i % 100000 == 1)
 				formartPrint(tracer, "dumplicateMesh %i", (int)i);
 		}
 
