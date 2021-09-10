@@ -113,11 +113,17 @@ namespace vcg
         bool mainSecond(MyMesh* surfaceMeshPtr, PoissonAlgCfg* poissonCfgPtr, std::vector<CoordType> inVertexes, std::vector<CoordType> inExternVertexes, int sampleNum, std::vector<CoordType>& outVertexes)
         {
             //std::cout << __LINE__ << "  " << __FUNCTION__ << std::endl;
+            if (inExternVertexes.size() < 3)
+            {
+                outVertexes.swap(inExternVertexes);
+                return true;
+            }
             {
                 //----------------------------------------------------------------------
                 // Advanced Sample
                 // Make a feature dependent Poisson Disk sampling
                 MyMesh PoissonEdgeMesh;
+                MyMesh MontecarloSurfaceMesh;
 
                 float rad = poissonCfgPtr->userSampleRad*1000;
                 //rad = ComputePoissonDiskRadius(*surfaceMeshPtr, sampleNum);
@@ -126,30 +132,34 @@ namespace vcg
                 tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::SamplingRandomGenerator().initialize(time(0));
 
 
-                tri::BuildMeshFromCoordVector(PoissonEdgeMesh, inVertexes);
 
                 std::vector<CoordType> sampleVec;
                 tri::TrivialSampler<MyMesh> mps(sampleVec);
                 tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskParam pp;
 
                 sampleVec.clear();
-                MyMesh MontecarloSurfaceMesh;
-                tri::BuildMeshFromCoordVector(MontecarloSurfaceMesh, inExternVertexes);
                 //tri::io::ExporterOFF<MyMesh>::Save(MontecarloSurfaceMesh, "MontecarloSurfaceMesh.off");
 
-                pp.preGenMesh = &PoissonEdgeMesh;
-                pp.preGenFlag = true;
-                sampleVec.clear();
+                if (inVertexes.size() )
+                {
+                    tri::BuildMeshFromCoordVector(PoissonEdgeMesh, inVertexes);
+                    pp.preGenMesh = &PoissonEdgeMesh;
+                    pp.preGenFlag = true;
+                }
+                else
+                {
+                    pp.preGenFlag = false;
+                }
+                tri::BuildMeshFromCoordVector(MontecarloSurfaceMesh, inExternVertexes);
 
                 tri::SurfaceSampling<MyMesh, tri::MeshSampler<MyMesh> >::PoissonDiskParam pptest;
                 pptest.preGenMesh = &PoissonEdgeMesh;
                 pptest.preGenFlag = true;
 
-                tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, MontecarloSurfaceMesh, rad, pp);
-
                 //poissonRadiusSurface<MyMesh>(*surfaceMeshPtr, pptest, rad, sampleVec);
                 //PoissonSamplingTest < MyMesh>(*surfaceMeshPtr, inVertexes, sampleVec, sampleNum, rad);
                 //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, MontecarloSurfaceMesh, rad, pp);
+                tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, MontecarloSurfaceMesh, rad, pp);
                 //tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruning(mps, *surfaceMeshPtr, rad, pp);
                // tri::SurfaceSampling<MyMesh, tri::TrivialSampler<MyMesh> >::PoissonDiskPruningByNumber(mps, *surfaceMeshPtr, sampleNum, rad, pp,0.04,5);
                // tri::PoissonSampling<MyMesh>(*surfaceMeshPtr, sampleVec, sampleNum, rad);
@@ -283,7 +293,7 @@ namespace vcg
             //tri::io::ExporterOFF<MyMesh>::Save(poissonEdgeMesh, "poissonEdgeMesh.off");
         }
 
-        void borderPaths(MyMesh* surfaceMeshPtr, ClipperLib::Paths& outPaths, EdgeMeshType &em)
+        void borderPaths(MyMesh* surfaceMeshPtr, ClipperLib::Paths& outPaths, ClipperLib::Paths& outDiffPaths, EdgeMeshType &em)
         {
 
             typedef typename EdgeMeshType::CoordType EdgeCoord;
@@ -341,7 +351,6 @@ namespace vcg
             if (0)
             {
                 char edgefilename[128];
-
                 char str[25];
 #if _WIN32
                 itoa(em.vert.size(), str, 10);
@@ -442,6 +451,7 @@ namespace vcg
                 }
                 outPaths.clear();
                 c.Execute(ctUnion, outPaths, pftEvenOdd);
+                c.Execute(ctDifference, outDiffPaths, pftEvenOdd);
                 if(0)
                 {
                     SVGBuilder svg;
@@ -475,15 +485,18 @@ namespace vcg
        void borderSamperClipPoint(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Paths& contourpaths, PoissonAlgCfg* poissonCfgPtr, std::vector<CoordType>& outContoursVertexs, std::vector<CoordType>& outBorderVertexs)
         {
             bool firstflg = true;
+            bool firstContourflg = true;
             ClipperLib::Paths solution;
             TriMeshGrid static_grid;
+            float borderSampleOff = poissonCfgPtr->borderSampleOff * 1000;
+            float sampleDist = poissonCfgPtr->userSampleRad * 1000;
             static_grid.Set(MeshSource->face.begin(), MeshSource->face.end());
             float maxDist = MeshSource->bbox.max.Z() + 100;
 
-            ScalarType  sampleDist = poissonCfgPtr->userSampleRad * 1000;
             bool hitflg = false;
             outBorderVertexs.clear();
             //std::cout << __LINE__ << "  " << __FUNCTION__ << "contourpaths.size==" << contourpaths.size() << std::endl;
+            //std::cout << __LINE__ << "  " << __FUNCTION__ << "borderSampleOff==" << poissonCfgPtr->borderSampleOff << std::endl;
             if (contourpaths.size() == 0)
                 return;
             if (0)
@@ -521,15 +534,35 @@ namespace vcg
                 if (firstflg == true)
                 {
                     co.AddPaths(contourpaths, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
-                    co.Execute(solution, poissonCfgPtr->borderSampleOff * 1000);
+                    co.Execute(solution, borderSampleOff);
+                    if (solution.size() == 0)
+                    {
+                        co.Clear();
+                        borderSampleOff = -poissonCfgPtr->baseSampleRad * 1000;
+
+                        co.AddPaths(contourpaths, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
+                        co.Execute(solution, -0.1*1000);
+                    }
+                    else
+                        borderSampleOff = -poissonCfgPtr->userSampleRad * 1000;
                 }
                 else
                 {
+                    ClipperLib::Paths solutionNext= solution;
+
                     if (solution.size() == 0)
                         return;
 
                     co.AddPaths(solution, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
-                    co.Execute(solution, -sampleDist);
+                    co.Execute(solution, borderSampleOff);
+                    if (solution.size() == 0)
+                    {
+                        co.Clear();
+                        borderSampleOff = -poissonCfgPtr->baseSampleRad * 1000;
+                        co.AddPaths(solutionNext, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
+                        co.Execute(solution, borderSampleOff);
+                    }
+
                 }
 
 
@@ -677,6 +710,7 @@ namespace vcg
                 {
                     if (firstflg == true)
                     {
+                        if (areaTotal  >(ClipperLib::pi * std::pow(poissonCfgPtr->baseSampleRad * 1000, 2) * 0.7))
                         {
                             CoordType lowCenterPos(MeshSource->bbox.Center().X(), MeshSource->bbox.Center().Y(), 0.0);
                             MyMesh::FaceType* rf;
@@ -699,17 +733,9 @@ namespace vcg
 
                 {
 
-                    ClipperLib::Paths solutionNext = solution;
-                    co.Execute(solutionNext, -sampleDist);
                     outBorderVertexs.insert(outBorderVertexs.end(), borderVertexs.begin(), borderVertexs.end());
-                    if (solutionNext.size() == 0)
-                    {
+                    if (areaTotal < (ClipperLib::pi * std::pow(poissonCfgPtr->baseSampleRad * 1000, 2) * 0.7))
                         break;
-                    }
-                    if (areaTotal < (ClipperLib::pi * std::pow(sampleDist, 2) * 0.7))
-                        break;
-
-
                 }
 
 
@@ -942,7 +968,12 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
 
         svg.AddPaths(contourpaths);
         char str[25];
-        itoa(em->vert.size(), str, 10);
+		#if _WIN32
+                itoa(em.vert.size(), str, 10);
+		#else
+                snprintf(str, 25, "%d", (int)em.vert.size());
+		#endif
+
         string gFilenamePre = str;
 
         string filename = "./SVG/contours_" + gFilenamePre + ".svg";
@@ -996,7 +1027,12 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
 
         svg.AddPaths(solution);
         char str[25];
+		#if _WIN32
         itoa(MeshSource->vert.size(), str, 10);
+		#else
+        snprintf(str, 25, "%d", (int)MeshSource->vert.size());
+		#endif
+
         string gFilenamePre = str;
         string filename = "./SVG/off_" + gFilenamePre + ".svg";
         svg.SaveToFile(filename, 0.01);
@@ -1298,8 +1334,9 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
 #else
                 {
                     ClipperLib::Paths outPaths;
+                    ClipperLib::Paths outDiffPaths;
                     EdgeMeshType em;
-                    borderPaths(&m, outPaths, em);
+                    borderPaths(&m, outPaths, outDiffPaths, em);
                     //borderSamperPointOff(&m, &em, outPaths, &m_PoissonAlgCfg, outBorderVertexs);
                     borderSamperClipPoint(&m, &em, outPaths, &m_PoissonAlgCfg, outBorderVertexs, outExternVertexes);
                 }
@@ -1321,7 +1358,7 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
                 //    outSampleVec.swap(sampleVec);
                 //}
             }
-            for (Point3f pt : outSecondVertexs)
+            for (auto &pt : outSecondVertexs)
             {
                 outVertexes.emplace_back(trimesh::vec3(pt.X()/1000, pt.Y()/1000, pt.Z()/1000));
             }

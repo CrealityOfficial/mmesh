@@ -837,7 +837,7 @@ namespace mmesh
 		vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
 		poissonAlgcfg.baseSampleRad = autoParam->baseSpace;//m_triangleChunk->m_width;
 		poissonAlgcfg.userSampleRad = autoParam->space > poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
-		poissonAlgcfg.borderSampleOff = autoParam->borderSampleOff;
+		poissonAlgcfg.borderSampleOff = autoParam->borderSampleOff-0.1;
 		poissonAlgcfg.ratio = autoParam->density;//m_triangleChunk->m_width;
 		//poissonAlgcfg.baseSampleRad = poissonAlgcfg.userSampleRad;//m_triangleChunk->m_width;
 		#ifdef USE_TBB_MODULE
@@ -885,28 +885,6 @@ namespace mmesh
 						PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
 
 						PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs, true);
-						//PoissonFuncObj.borderSamper(outBorderVertexs);
-						//if (outfirstVertexs.size() > 0)
-						//{
-						//	PoissonFuncObj.mainSecond(outBorderVertexs, outSecondVertexs);
-						//	if(outBorderVertexs.size()< outSecondVertexs.size())
-						//		outVertexs.swap(outSecondVertexs);
-						//	else
-						//		outVertexs.swap(outBorderVertexs);
-
-
-						//}
-						//else
-						//	outVertexs.swap(outBorderVertexs);
-
-						//std::cout << "outfirstVertexs===" << outfirstVertexs.size() << std::endl;
-						//std::cout << "outSecondVertexs===" << outSecondVertexs.size() << std::endl;
-						//std::cout << "outBorderVertexs===" << outBorderVertexs.size() << std::endl;
-
-						//outVertexs.clear();
-						//outVertexs.insert(outVertexs.end(),outfirstVertexs.begin(), outfirstVertexs.end());
-						//outVertexs.insert(outVertexs.end(), outSecondVertexs.begin(), outSecondVertexs.end());
-						//outVertexs.insert(outVertexs.end(), outBorderVertexs.begin(), outBorderVertexs.end());
 #ifdef DEBUG
 						std::cout << "extract_poisson_point===" << outVertexs.size() << std::endl;
 #endif
@@ -942,8 +920,8 @@ namespace mmesh
 							dlpSource.typeflg = SUPPORT_FACE;
 							sources.push_back(dlpSource);
 						}
-						if (sources.size() <= 1)
-							//if (0)
+						//if (sources.size() <= 1)
+						if (0)
 						{
 							//if ((sources.size() == 1) || (supportEnable == true))
 							{
@@ -1120,28 +1098,7 @@ namespace mmesh
 				PoissonFuncObj.setPoissonCfg(&poissonAlgcfg);
 
 				PoissonFuncObj.main(m_vertexes, sectFacesIndex, outVertexs, true);
-				//PoissonFuncObj.borderSamper(outBorderVertexs);
-				//if (outfirstVertexs.size() > 0)
-				//{
-				//	PoissonFuncObj.mainSecond(outBorderVertexs, outSecondVertexs);
-				//	if(outBorderVertexs.size()< outSecondVertexs.size())
-				//		outVertexs.swap(outSecondVertexs);
-				//	else
-				//		outVertexs.swap(outBorderVertexs);
 
-
-				//}
-				//else
-				//	outVertexs.swap(outBorderVertexs);
-
-				//std::cout << "outfirstVertexs===" << outfirstVertexs.size() << std::endl;
-				//std::cout << "outSecondVertexs===" << outSecondVertexs.size() << std::endl;
-				//std::cout << "outBorderVertexs===" << outBorderVertexs.size() << std::endl;
-
-				//outVertexs.clear();
-				//outVertexs.insert(outVertexs.end(),outfirstVertexs.begin(), outfirstVertexs.end());
-				//outVertexs.insert(outVertexs.end(), outSecondVertexs.begin(), outSecondVertexs.end());
-				//outVertexs.insert(outVertexs.end(), outBorderVertexs.begin(), outBorderVertexs.end());
 #ifdef DEBUG
 				std::cout << "extract_poisson_point===" << outVertexs.size() << std::endl;
 #endif
@@ -1177,8 +1134,8 @@ namespace mmesh
 					dlpSource.typeflg = SUPPORT_FACE;
 					sources.push_back(dlpSource);
 				}
-				if (sources.size() <= 1)
-				//if (0)
+				//if (sources.size() <= 1)
+				if (0)
 				{
 					//if ((sources.size() == 1) || (supportEnable == true))
 					{

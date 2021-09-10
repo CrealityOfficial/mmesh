@@ -49,6 +49,9 @@ if(NOT EIGEN_INCLUDE_DIRS)
 	message(FATAL_ERROR "Please Specified EIGEN_INCLUDE_DIRS")
 endif()
 
+add_definitions(-DUSE_VCG_POISSON_SAMPLE)
+add_definitions(-DUSE_VCG)
+
 include_directories(${VCG_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
 __enable_openmp()
