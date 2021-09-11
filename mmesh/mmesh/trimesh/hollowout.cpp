@@ -9,7 +9,7 @@ namespace mmesh
 		trimesh::TriMesh* boxMesh = new trimesh::TriMesh();
 		
 		inputMesh->need_bbox();
-		boxMesh = mmesh::createCube(inputMesh->bbox,1.0);
+		boxMesh = mmesh::createCube(inputMesh->bbox,1.05);
 
 		std::vector<trimesh::TriMesh*> inMeshes;
 		mmesh::reverseTriMesh(inputMesh);
