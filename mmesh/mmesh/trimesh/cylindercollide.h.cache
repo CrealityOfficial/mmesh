@@ -1,0 +1,62 @@
+#ifndef MMESH_CYLINDERCOLLIDE_1631348831075_H
+#define MMESH_CYLINDERCOLLIDE_1631348831075_H
+#include "trimesh2/TriMesh.h"
+
+namespace ccglobal
+{
+	class Tracer;
+}
+
+namespace mmesh
+{
+	class DrillDebugger
+	{
+	public:
+		virtual ~DrillDebugger() {}
+
+		virtual void onCylinderBoxFocus(std::vector<trimesh::TriMesh::Face>& focus) = 0;
+	};
+
+	typedef std::vector<trimesh::TriMesh::Face> IndexPatch;
+	typedef std::vector<trimesh::vec3> TriPatch;
+
+	trimesh::TriMesh* generateNewMesh(trimesh::TriMesh* oldMesh, IndexPatch& reservedFaces, TriPatch& newTriangles);
+
+	class OptimizeCylinderCollide
+	{
+	public:
+		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
+			ccglobal::Tracer* tracer, DrillDebugger* debugger);
+		~OptimizeCylinderCollide();
+
+		bool valid();
+
+		trimesh::TriMesh* drill();
+	protected:
+		void calculate();
+
+		trimesh::TriMesh* postProcess(trimesh::TriMesh* Mout, trimesh::TriMesh* Cin);
+	protected:
+		trimesh::TriMesh* m_mesh;
+		trimesh::TriMesh* m_cylinder;
+
+		IndexPatch meshFocusFaces;
+		int focusTriangle;
+		std::vector<trimesh::vec3> focusNormals;
+
+		int cylinderTriangles;
+		std::vector<trimesh::vec3> cylinderNormals;
+
+		IndexPatch meshOuterFaces;
+		IndexPatch meshInnerFaces;
+		TriPatch newMeshTriangles;
+		IndexPatch cylinderOuterFaces;
+		IndexPatch cylinderInnerFaces;
+		TriPatch newCylinderTriangles;
+
+		ccglobal::Tracer* m_tracer;
+		DrillDebugger* m_debugger;
+	};
+}
+
+#endif // MMESH_CYLINDERCOLLIDE_1631348831075_H

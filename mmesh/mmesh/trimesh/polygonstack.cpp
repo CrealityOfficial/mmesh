@@ -5,6 +5,7 @@
 #include "mmesh/trimesh/polygon.h"
 #include "mmesh/trimesh/polygon2util.h"
 #include "mmesh/trimesh/savepolygonstack.h"
+#include "trimesh2/Vec3Utils.h"
 #include <assert.h>
 
 #include "ccglobal/spycc.h"
@@ -553,5 +554,49 @@ namespace mmesh
 	void PolygonStack::setMergeCount(int count)
 	{
 		m_mregeCount = count;
+	}
+
+	void transform3to2(std::vector<trimesh::vec3>& d3points, const trimesh::vec3& normal, std::vector<trimesh::dvec2>& d2points)
+	{
+		int size = (int)d3points.size();
+		if (size <= 0)
+			return;
+
+		d2points.resize(size);
+		trimesh::vec3 zn = trimesh::vec3(0.0f, 0.0f, 1.0f);
+		float angle = trimesh::vv_angle(normal, zn);
+		trimesh::vec3 axis = normal TRICROSS zn;
+		if (angle >= 3.141592f)
+			axis = trimesh::vec3(1.0f, 0.0f, 0.0f);
+
+		trimesh::xform r = trimesh::xform::rot((double)angle, axis);
+		for (size_t i = 0; i < d3points.size(); ++i)
+		{
+			trimesh::vec3 v = d3points.at(i);
+			trimesh::dvec3 dv = trimesh::dvec3(v.x, v.y, v.z);
+			trimesh::dvec3 p = r * dv;
+			d2points.at(i) = trimesh::dvec2(p.x, p.y);
+		}
+	}
+
+	void generateTriangleSoup(std::vector<trimesh::vec3>& points, const trimesh::vec3& normal, std::vector<std::vector<int>>& polygons,
+		std::vector<trimesh::vec3>& newTriangles)
+	{
+		std::vector<trimesh::dvec2> d2points;
+		transform3to2(points, normal, d2points);
+
+		mmesh::PolygonStack pstack;
+		std::vector<trimesh::TriMesh::Face> faces;
+		pstack.generates(polygons, d2points, faces, 0);
+
+		for (int j = 0; j < (int)faces.size(); ++j)
+		{
+			trimesh::TriMesh::Face& face = faces.at(j);
+
+			for (int k = 0; k < 3; ++k)
+			{
+				newTriangles.push_back(points.at(face[k]));
+			}
+		}
 	}
 }

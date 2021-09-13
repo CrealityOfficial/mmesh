@@ -45,5 +45,9 @@ namespace mmesh
 
 		int m_mregeCount;
 	};
+
+	void transform3to2(std::vector<trimesh::vec3>& d3points, const trimesh::vec3& normal, std::vector<trimesh::dvec2>& d2points);
+	void generateTriangleSoup(std::vector<trimesh::vec3>& points, const trimesh::vec3& normal, std::vector<std::vector<int>>& polygons,
+		std::vector<trimesh::vec3>& newTriangles);
 }
 #endif // CREATIVE_KERNEL_POLYGONSTACK_1592554738233_H
