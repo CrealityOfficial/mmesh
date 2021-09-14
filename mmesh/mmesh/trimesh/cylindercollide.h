@@ -1,6 +1,7 @@
 #ifndef MMESH_CYLINDERCOLLIDE_1631348831075_H
 #define MMESH_CYLINDERCOLLIDE_1631348831075_H
 #include "trimesh2/TriMesh.h"
+#include "mmesh/trimesh/trianglesplit.h"
 
 namespace ccglobal
 {
@@ -13,10 +14,14 @@ namespace mmesh
 	{
 		trimesh::vec3 v1;
 		trimesh::vec3 v2;
-		int topIndex;
-		float d[3];
+		bool topPositive;
 
 		trimesh::ivec2 index; // -1 not edge, 1 edge
+
+		//cylinder 
+		trimesh::ivec2 cindex;
+		int cylinderTopIndex;
+		bool cylinderTopPositive;
 	};
 
 	struct FaceCollide
@@ -39,12 +44,14 @@ namespace mmesh
 		virtual void onMeshOuter(trimesh::TriMesh* mesh) = 0;
 		virtual void onMeshCollide(trimesh::TriMesh* mesh) = 0;
 		virtual void onMeshInner(trimesh::TriMesh* mesh) = 0;
+		virtual void onTriangleSplitCache(const SplitTriangleCache& cache) = 0;
 	};
 
 	//flags -1 inner, 0 collide, 1 outer
 	const int CylinderCollideOuter = 1;
 	const int CylinderCollideCollide = 0;
 	const int CylinderCollideInner = -1;
+	const int CylinderCollideInvalid = -2;
 
 	class OptimizeCylinderCollide
 	{
@@ -75,7 +82,7 @@ namespace mmesh
 		std::vector<trimesh::vec3> cylinderNormals;
 
 		std::vector<int> totalMeshFlag;
-		//TriPatch newCylinderTriangles;
+		std::vector<int> cylinderFlag;
 
 		ccglobal::Tracer* m_tracer;
 		DrillDebugger* m_debugger;

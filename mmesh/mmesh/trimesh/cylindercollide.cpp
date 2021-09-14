@@ -184,11 +184,18 @@ namespace mmesh
 							swapped = true;
 						}
 
+						float d[3] = {};
+						d[0] = mesh2Cylinder1;
+						d[1] = mesh2Cylinder2;
+						d[2] = mesh2Cylinder3;
+						float dd[3] = {};
+						dd[0] = Cylinder2mesh1;
+						dd[1] = Cylinder2mesh2;
+						dd[2] = Cylinder2mesh3;
 						TriTri mt;
-						mt.topIndex = temps[0].index;
-						mt.d[0] = mesh2Cylinder1;
-						mt.d[1] = mesh2Cylinder2;
-						mt.d[2] = mesh2Cylinder3;
+						mt.topPositive = d[temps[0].index] >= 0.0f;
+						mt.cylinderTopIndex = temps[1].index;
+						mt.cylinderTopPositive = d[temps[1].index] >= 0.0f;
 
 						vec3 v1;
 						vec3 v2;
@@ -204,6 +211,7 @@ namespace mmesh
 									v1 = points.at(0);
 									v2 = points.at(3);
 									mtIndex[0] = temps[0].e1;
+									mcIndex[1] = temps[1].e2;
 								}
 								else
 								{
@@ -219,12 +227,15 @@ namespace mmesh
 								{
 									v1 = points.at(2);
 									v2 = points.at(3);
+									mcIndex[0] = temps[1].e1;
+									mcIndex[1] = temps[1].e2;
 								}
 								else
 								{
 									v1 = points.at(2);
 									v2 = points.at(1);
 									mtIndex[1] = temps[0].e2;
+									mcIndex[0] = temps[1].e1;
 								}
 							}
 
@@ -232,6 +243,7 @@ namespace mmesh
 							mt.v2 = v2;
 
 							mt.index = mtIndex;
+							mt.cindex = mcIndex;
 							meshTri.push_back(mt);
 							fc.flag = 0;
 						}
@@ -241,444 +253,56 @@ namespace mmesh
 		}
 	}
 
-	void generatePolygon(TriMesh::Face& face, trimesh::TriMesh* mesh, std::vector<TriTri>& tri, bool positive,
-		std::vector<std::vector<int>>& polygons, std::vector<trimesh::vec3>& d3points)
+	void generateNewTriangles(std::vector<trimesh::TriMesh::Face>& focusFaces, trimesh::TriMesh* mesh, std::vector<trimesh::vec3>& normals,
+		std::vector<FaceCollide>& tris, std::vector<trimesh::vec3>& newTriangles, bool positive, DrillDebugger* debugger)
 	{
-		UniformPoints uniformPoints;
-
-		struct segment
+		int meshNum = (int)focusFaces.size();
+		for (int i = 0; i < meshNum; ++i)
 		{
-			int start;
-			int end;
-
-			int startEdge;
-			int endEdge;
-		};
-
-		int triSize = tri.size();
-		std::vector<segment> segments(triSize);
-
-		for (int j = 0; j < tri.size(); ++j)
-		{
-			TriTri& tt = tri.at(j);
-			segment& seg = segments.at(j);
-
-			if (positive)
+			trimesh::TriMesh::Face& face = focusFaces.at(i);
+			FaceCollide& fcollide = tris.at(i);
+			std::vector<TriTri>& tritri = fcollide.tris;
+			size_t size = tritri.size();
+			if (size > 0)
 			{
-				if (tt.d[tt.topIndex] >= 0.0f)
+				std::vector<TriSegment> trisegments(size);
+				for (int j = 0; j < size; ++j)
 				{
-					seg.start = uniformPoints.add(tt.v1);
-					seg.end = uniformPoints.add(tt.v2);
-
-					seg.startEdge = tt.index[0];
-					seg.endEdge = tt.index[1];
+					TriSegment& seg = trisegments.at(j);
+					TriTri& tri = tritri.at(j);
+					seg.index = tri.index;
+					seg.topPositive = tri.topPositive;
+					seg.v1 = tri.v1;
+					seg.v2 = tri.v2;
+				}
+				std::vector<trimesh::vec3> triangles;
+				if (splitTriangle(mesh->vertices[face[0]], mesh->vertices[face[1]], mesh->vertices[face[2]],
+					trisegments, positive, triangles))
+				{
+					newTriangles.insert(newTriangles.end(), triangles.begin(), triangles.end());
 				}
 				else
 				{
-					seg.start = uniformPoints.add(tt.v2);
-					seg.end = uniformPoints.add(tt.v1);
-
-					seg.startEdge = tt.index[1];
-					seg.endEdge = tt.index[0];
-				}
-			}
-			else
-			{
-				if (tt.d[tt.topIndex] >= 0.0f)
-				{
-					seg.start = uniformPoints.add(tt.v2);
-					seg.end = uniformPoints.add(tt.v1);
-
-					seg.startEdge = tt.index[1];
-					seg.endEdge = tt.index[0];
-				}
-				else
-				{
-					seg.start = uniformPoints.add(tt.v1);
-					seg.end = uniformPoints.add(tt.v2);
-
-					seg.startEdge = tt.index[0];
-					seg.endEdge = tt.index[1];
-				}
-			}
-		}
-
-		int unionSize = (int)uniformPoints.uniformSize();
-		d3points.reserve(unionSize + 3);
-		uniformPoints.toVector(d3points);
-
-		for (int i = 0; i < 3; ++i)
-		{
-			d3points.push_back(mesh->vertices.at(face[i]));
-		}
-
-		std::vector<int> types(unionSize + 3, -2); // -2 outer, -1 inner, >= 0 edge
-		std::vector<bool> edgeIsFirst(unionSize, true);
-		for (int i = 0; i < triSize; ++i)
-		{
-			segment& s = segments.at(i);
-
-			if (s.startEdge >= 0)
-			{
-				assert(types.at(s.start) != -1);
-				if (types.at(s.start) == -2)
-				{
-					types.at(s.start) = s.startEdge;
-				}
-			}
-			else
-			{
-				assert(types.at(s.start) < 0);
-				if (types.at(s.start) == -2)
-				{
-					types.at(s.start) = -1;
-				}
-			}
-
-			if (s.endEdge >= 0)
-			{
-				assert(types.at(s.end) != -1);
-				if (types.at(s.end) == -2)
-				{
-					types.at(s.end) = s.endEdge;
-					edgeIsFirst.at(s.end) = false;
-				}
-			}
-			else
-			{
-				assert(types.at(s.end) < 0);
-				if (types.at(s.end) == -2)
-				{
-					types.at(s.end) = -1;
-				}
-			}
-		}
-
-		struct IndexPolygon
-		{
-			std::list<int> polygon;
-			int start;
-			int end;
-
-			bool closed()
-			{
-				return (polygon.size() >= 2) && (polygon.front() == polygon.back());
-			}
-		};
-
-		std::vector<IndexPolygon> indexPolygons;
-		for (int i = 0; i < triSize; ++i)
-		{
-			IndexPolygon ipolygon;
-			segment& seg = segments.at(i);
-			ipolygon.start = seg.start;
-			ipolygon.end = seg.end;
-			ipolygon.polygon.push_back(ipolygon.start);
-			ipolygon.polygon.push_back(ipolygon.end);
-
-			indexPolygons.emplace_back(ipolygon);
-		}
-
-		size_t indexPolygonSize = indexPolygons.size();
-		std::map<int, IndexPolygon*> IndexPolygonMap;
-		for (size_t i = 0; i < indexPolygonSize; ++i)
-		{
-			IndexPolygon& p1 = indexPolygons.at(i);
-			if (!p1.closed())
-				IndexPolygonMap.insert(std::pair<int, IndexPolygon*>(p1.start, &p1));
-		}
-
-		//combime
-		for (size_t i = 0; i < indexPolygonSize; ++i)
-		{
-			IndexPolygon& p1 = indexPolygons.at(i);
-
-			if (p1.polygon.size() == 0 || p1.closed())
-				continue;
-
-			auto it = IndexPolygonMap.find(p1.end);
-			while (it != IndexPolygonMap.end())
-			{
-
-				IndexPolygon& p2 = *(*it).second;
-				if (p2.polygon.size() == 0)
-					break;
-
-				bool merged = false;
-				if (p1.start == p2.end)
-				{
-					p1.start = p2.start;
-					for (auto iter = p2.polygon.rbegin(); iter != p2.polygon.rend(); ++iter)
-					{
-						if ((*iter) != p1.polygon.front()) p1.polygon.push_front((*iter));
-					}
-					merged = true;
-				}
-				else if (p1.end == p2.start)
-				{
-					p1.end = p2.end;
-					for (auto iter = p2.polygon.begin(); iter != p2.polygon.end(); ++iter)
-					{
-						if ((*iter) != p1.polygon.back()) p1.polygon.push_back((*iter));
-					}
-					merged = true;
+					assert("error cylinder is watertight");
 				}
 
-				if (merged)
+				if (debugger)
 				{
-					p2.polygon.clear();
-				}
-				else
-					break;
-
-				it = IndexPolygonMap.find(p1.end);
-			}
-		}
-
-		std::vector<IndexPolygon> validIndexPolygons;
-		for (size_t i = 0; i < indexPolygons.size(); ++i)
-		{
-			if (indexPolygons.at(i).polygon.size() > 0)
-			{
-				validIndexPolygons.push_back(indexPolygons.at(i));
-			}
-		}
-
-		int polygonSize = (int)validIndexPolygons.size();
-		std::vector<int> edgePolygon;
-		std::vector<int> innerPolygon;
-		for (int i = 0; i < polygonSize; ++i)
-		{
-			IndexPolygon& ip = validIndexPolygons.at(i);
-			if (types.at(ip.start) >= 0 && types.at(ip.end) >= 0)
-			{
-				edgePolygon.push_back(i);
-			}
-			else
-			{
-				innerPolygon.push_back(i);
-			}
-		}
-
-		int edgePolygonSize = edgePolygon.size();
-		int innerPolygonSize = innerPolygon.size();
-		for (int i = 0; i < innerPolygonSize; ++i)
-		{
-			int index = innerPolygon.at(i);
-			IndexPolygon& ipolygon = validIndexPolygons.at(index);
-			if (ipolygon.closed())
-			{
-				std::vector<int> polygon;
-				polygon.insert(polygon.end(), ipolygon.polygon.begin(), ipolygon.polygon.end());
-				polygons.push_back(polygon);
-			}
-		}
-
-		if (edgePolygonSize == 0 && positive)
-		{
-			std::vector<int> polygon;
-			for (int i = 0; i < 3; ++i)
-			{
-				polygon.push_back(unionSize + i);
-			}
-			polygon.push_back(unionSize);
-
-			polygons.push_back(polygon);
-		}
-		else
-		{
-			std::vector<std::vector<int>> edgesPoints(3);
-			for (int i = 0; i < unionSize; ++i)
-			{
-				if (types.at(i) >= 0)
-					edgesPoints.at(types.at(i)).push_back(i);
-			}
-
-			std::vector<IndexPolygon> indexedgePolygons;
-			for (int i = 0; i < edgePolygonSize; ++i)
-			{
-				indexedgePolygons.push_back(validIndexPolygons.at(edgePolygon.at(i)));
-			}
-
-			//add triangle edge
-			for (int i = 0; i < 3; ++i)
-			{
-				std::vector<int> edgePoints = edgesPoints.at(i);
-				int startIndex = unionSize + i;
-				int endIndex = unionSize + (i + 1) % 3;
-
-				std::sort(edgePoints.begin(), edgePoints.end(), [&startIndex, &d3points](int i1, int i2)->bool {
-					vec3 v1 = d3points.at(i1);
-					vec3 v2 = d3points.at(i2);
-					vec3 o = d3points.at(startIndex);
-					return len(v1 - o) < len(v2 - o);
-					});
-
-				struct PP
-				{
-					int start;
-					int end;
-				};
-
-				std::vector<PP> pairs;
-				if (edgePoints.size() == 0)
-				{
-					PP pp;
-					pp.start = startIndex;
-					pp.end = endIndex;
-					pairs.push_back(pp);
-				}
-				else
-				{
-					if (edgeIsFirst.at(edgePoints.at(0)))
-					{
-						PP pp;
-						pp.start = startIndex;
-						pp.end = edgePoints.at(0);
-						pairs.push_back(pp);
-					}
-					if (!edgeIsFirst.at(edgePoints.back()))
-					{
-						PP pp;
-						pp.start = edgePoints.back();
-						pp.end = endIndex;
-						pairs.push_back(pp);
-					}
-
-					if (positive)
-					{
-						for (int ii = 1; ii < (int)edgePoints.size(); ii += 2)
-						{
-							if (ii + 1 < edgePoints.size())
-							{
-								int s = edgePoints.at(ii);
-								int e = edgePoints.at(ii + 1);
-								if (edgeIsFirst.at(s) && !edgeIsFirst.at(e))
-								{
-									PP pp;
-									pp.start = s;
-									pp.end = e;
-									pairs.push_back(pp);
-								}
-							}
-						}
-					}
-					else
-					{
-						for (int ii = 0; ii < (int)edgePoints.size() - 1; ii += 2)
-						{
-							int s = edgePoints.at(ii);
-							int e = edgePoints.at(ii + 1);
-							if (!edgeIsFirst.at(s) && edgeIsFirst.at(e))
-							{
-								PP pp;
-								pp.start = s;
-								pp.end = e;
-								pairs.push_back(pp);
-							}
-						}
-					}
-				}
-
-
-				for (PP& pp : pairs)
-				{
-					IndexPolygon ip;
-					ip.start = pp.start;
-					ip.end = pp.end;
-					ip.polygon.push_back(ip.start);
-					ip.polygon.push_back(ip.end);
-					indexedgePolygons.push_back(ip);
-				}
-			}
-
-			size_t indexedgePolygonSize = indexedgePolygons.size();
-			std::map<int, IndexPolygon*> IndexEdgePolygonMap;
-			for (size_t i = 0; i < indexedgePolygonSize; ++i)
-			{
-				IndexPolygon& p1 = indexedgePolygons.at(i);
-				if (!p1.closed())
-					IndexEdgePolygonMap.insert(std::pair<int, IndexPolygon*>(p1.start, &p1));
-			}
-
-			//combime
-			for (size_t i = 0; i < indexedgePolygonSize; ++i)
-			{
-				IndexPolygon& p1 = indexedgePolygons.at(i);
-
-				if (p1.polygon.size() == 0 || p1.closed())
-					continue;
-
-				auto it = IndexEdgePolygonMap.find(p1.end);
-				while (it != IndexEdgePolygonMap.end())
-				{
-
-					IndexPolygon& p2 = *(*it).second;
-					if (p2.polygon.size() == 0)
-						break;
-
-					bool merged = false;
-					if (p1.start == p2.end)
-					{
-						p1.start = p2.start;
-						for (auto iter = p2.polygon.rbegin(); iter != p2.polygon.rend(); ++iter)
-						{
-							if ((*iter) != p1.polygon.front()) p1.polygon.push_front((*iter));
-						}
-						merged = true;
-					}
-					else if (p1.end == p2.start)
-					{
-						p1.end = p2.end;
-						for (auto iter = p2.polygon.begin(); iter != p2.polygon.end(); ++iter)
-						{
-							if ((*iter) != p1.polygon.back()) p1.polygon.push_back((*iter));
-						}
-						merged = true;
-					}
-
-					if (merged)
-					{
-						p2.polygon.clear();
-					}
-					else
-						break;
-
-					it = IndexEdgePolygonMap.find(p1.end);
-				}
-			}
-
-			for (int i = 0; i < (int)indexedgePolygons.size(); ++i)
-			{
-				if (indexedgePolygons.at(i).polygon.size() > 0)
-				{
-					std::list<int>& polygon = indexedgePolygons.at(i).polygon;
-
-					std::vector<int> inpolygon;
-					inpolygon.insert(inpolygon.end(), polygon.begin(), polygon.end());
-					polygons.push_back(inpolygon);
+					SplitTriangleCache cache;
+					cache.v0 = mesh->vertices[face[0]];
+					cache.v1 = mesh->vertices[face[1]];
+					cache.v2 = mesh->vertices[face[2]];
+					cache.segments = trisegments;
+					debugger->onTriangleSplitCache(cache);
 				}
 			}
 		}
 	}
 
-	void generateNewTriangles(std::vector<trimesh::TriMesh::Face>& focusFaces, trimesh::TriMesh* mesh, std::vector<trimesh::vec3>& normals,
+	void generateCylinderTriangles(trimesh::TriMesh* cylinder, std::vector<trimesh::vec3>& normals,
 		std::vector<FaceCollide>& tris, std::vector<trimesh::vec3>& newTriangles, bool positive)
 	{
-		int meshNum = (int)focusFaces.size();
-		for (int i = 0; i < meshNum; ++i)
-		{
-			FaceCollide& fcollide = tris.at(i);
-			std::vector<TriTri>& tri = fcollide.tris;
-			if (tri.size() > 0)
-			{
-				std::vector<std::vector<int>> polygons;
-				std::vector<vec3> points;
-				generatePolygon(focusFaces.at(i), mesh, tri, positive, polygons, points);
 
-				generateTriangleSoup(points, normals.at(i), polygons, newTriangles);
-			}
-		}
 	}
 
 	trimesh::TriMesh* generatePatchMesh(trimesh::TriMesh* oldMesh, FlagPatch& flagFaces, int flag)
@@ -715,12 +339,13 @@ namespace mmesh
 		return newMesh;
 	}
 
-	trimesh::TriMesh* generateAppendMesh(trimesh::TriMesh* oldMesh, FlagPatch& flagFaces, TriPatch& newTriangles)
+	trimesh::TriMesh* generateAppendMesh(trimesh::TriMesh* oldMesh, FlagPatch& flagFaces,
+		TriPatch& newTriangles, int flag)
 	{
 		if (!oldMesh)
 			return nullptr;
 
-		trimesh::TriMesh* newMesh = generatePatchMesh(oldMesh, flagFaces, CylinderCollideOuter);
+		trimesh::TriMesh* newMesh = generatePatchMesh(oldMesh, flagFaces, flag);
 		
 		auto addmesh = [](trimesh::TriMesh* mesh, const trimesh::vec3& v1,
 			const trimesh::vec3& v2, const trimesh::vec3& v3) {
@@ -790,6 +415,7 @@ namespace mmesh
 		cylinderTriangles = (int)m_cylinder->faces.size();
 		focusNormals.resize(focusTriangle);
 		cylinderNormals.resize(cylinderTriangles);
+		cylinderFlag.resize(cylinderTriangles);
 		for (int j = 0; j < cylinderTriangles; ++j)
 		{
 			TriMesh::Face& cylinderFace = m_cylinder->faces.at(j);
@@ -825,10 +451,17 @@ namespace mmesh
 		testCollide(m_mesh, m_cylinder, focusNormals, cylinderNormals,
 			meshFocusFaces, m_cylinder->faces, meshTris);
 
+		testCollide(m_cylinder, m_mesh, cylinderNormals, focusNormals,
+			m_cylinder->faces, meshFocusFaces, cylinderTris);
+
 		for (int i = 0; i < focusTriangle; ++i)
 		{
 			int index = meshFocusFacesMapper.at(i);
 			totalMeshFlag.at(index) = meshTris.at(i).flag;
+		}
+		for (int i = 0; i < cylinderTriangles; ++i)
+		{
+			cylinderFlag.at(i) = cylinderTris.at(i).flag;
 		}
 
 		if (m_debugger)
@@ -860,10 +493,11 @@ namespace mmesh
 	trimesh::TriMesh* OptimizeCylinderCollide::drill()
 	{
 		TriPatch newMeshTriangles;
-		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true);
-
-		trimesh::TriMesh* Mout = generateAppendMesh(m_mesh, totalMeshFlag, newMeshTriangles);
-		trimesh::TriMesh* Cyin = nullptr; // generateNewMesh(m_cylinder, cylinderInnerFaces, newCylinderTriangles);
+		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, nullptr);
+		TriPatch newCylinderTriangles;
+		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, m_debugger);
+		trimesh::TriMesh* Mout = generateAppendMesh(m_mesh, totalMeshFlag, newMeshTriangles, CylinderCollideOuter);
+		trimesh::TriMesh* Cyin = generateAppendMesh(m_cylinder, cylinderFlag, newCylinderTriangles, CylinderCollideInner);
 		return postProcess(Mout, Cyin);
 	}
 

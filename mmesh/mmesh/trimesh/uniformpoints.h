@@ -43,6 +43,31 @@ namespace mmesh
 	protected:
 		unique_point upoints;
 	};
+
+	struct IndexPolygon
+	{
+		std::list<int> polygon;
+		int start;
+		int end;
+
+		bool closed()
+		{
+			return (polygon.size() >= 2) && (polygon.front() == polygon.back());
+		}
+	};
+
+	struct IndexSegment
+	{
+		int start;
+		int end;
+
+		void swap()
+		{
+			std::swap(start, end);
+		}
+	};
+
+	void mergeIndexPolygon(std::vector<IndexPolygon>& polygons);
 }
 
 #endif // MMESH_UNIFORMPOINTS_1631469381297_H

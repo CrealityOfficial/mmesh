@@ -599,4 +599,22 @@ namespace mmesh
 			}
 		}
 	}
+
+	void generateTriangleSoup(std::vector<trimesh::vec3>& points, std::vector<trimesh::dvec2>& d2points, std::vector<std::vector<int>>& polygons,
+		std::vector<trimesh::vec3>& newTriangles)
+	{
+		mmesh::PolygonStack pstack;
+		std::vector<trimesh::TriMesh::Face> faces;
+		pstack.generates(polygons, d2points, faces, 0);
+
+		for (int j = 0; j < (int)faces.size(); ++j)
+		{
+			trimesh::TriMesh::Face& face = faces.at(j);
+
+			for (int k = 0; k < 3; ++k)
+			{
+				newTriangles.push_back(points.at(face[k]));
+			}
+		}
+	}
 }
