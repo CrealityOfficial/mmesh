@@ -3,6 +3,9 @@
 #include "trimesh2/Vec.h"
 #include <unordered_map>
 #include <map>
+#include <float.h>
+#include <list>
+#include <vector>
 
 namespace mmesh
 {
