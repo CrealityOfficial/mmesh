@@ -466,23 +466,14 @@ namespace mmesh
 
 		if (m_debugger)
 		{
-			m_debugger->onMeshOuter(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideOuter));
-			m_debugger->onMeshCollide(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideCollide));
-			m_debugger->onMeshInner(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideInner));
+			//m_debugger->onMeshOuter(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideOuter));
+			//m_debugger->onMeshCollide(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideCollide));
+			//m_debugger->onMeshInner(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideInner));
+
+			m_debugger->onMeshOuter(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideOuter));
+			m_debugger->onMeshCollide(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideCollide));
+			m_debugger->onMeshInner(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideInner));
 		}
-		//std::vector<std::vector<TriTri>> cylinderTris(cylinderTriangles);
-		//testCollide(cylinderFlag, m_cylinder, m_mesh, cylinderNormals, focusNormals, m_cylinder->faces, meshFocusFaces, cylinderTris);
-		//generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false);
-		//
-		//for (int i = 0; i < cylinderTriangles; ++i)
-		//{
-		//	TriMesh::Face& f = m_cylinder->faces.at(i);
-		//	std::vector<TriTri>& tri = cylinderTris.at(i);
-		//	if (cylinderFlag.at(i) == -1)
-		//		cylinderInnerFaces.push_back(f);
-		//	if (cylinderFlag.at(i) == 1 && (tri.size() == 0))
-		//		cylinderOuterFaces.push_back(f);
-		//}
 	}
 
 	bool OptimizeCylinderCollide::valid()

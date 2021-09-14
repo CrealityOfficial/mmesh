@@ -200,7 +200,7 @@ namespace mmesh
 							pairs.push_back(pp);
 						}
 
-						for (int ii = 0; ii < (int)edgePoints.size(); ii += 2)
+						for (int ii = 0; ii < (int)edgePoints.size(); ii += 1)
 						{
 							int nextIndex = ii + 1;
 							if (nextIndex < edgePoints.size())
@@ -314,7 +314,7 @@ namespace mmesh
 							pairs.push_back(pp);
 						}
 
-						for (int ii = 0; ii < (int)edgePoints.size(); ii += 2)
+						for (int ii = 0; ii < (int)edgePoints.size(); ii += 1)
 						{
 							int nextIndex = ii + 1;
 							if (nextIndex < edgePoints.size())
