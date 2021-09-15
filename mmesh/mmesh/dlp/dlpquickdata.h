@@ -68,6 +68,10 @@ namespace mmesh
 		void takeAutoTest(const trimesh::vec3& point);
 	private:
 		CallBackParams* m_cbParamsPtr;
+		std::vector<DLPISource> m_SupportFaceSources;
+		std::vector<DLPISource> m_SupportEdgeSources;
+		std::vector<DLPISource> m_SupportVertexSources;
+
 		std::function<void(CallBackParams*)> m_throwFunc;
 		std::function<bool(CallBackParams*)> m_interruptFunc;
 

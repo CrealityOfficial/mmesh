@@ -225,9 +225,6 @@ namespace mmesh
 #ifdef USE_VCG_POISSON_SAMPLE
 	void DLPQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag, std::function<void(CallBackParams*)> callback, std::function<bool(CallBackParams*)> cb_interrupt, CallBackParams* cbParams)
 	{
-		std::vector<DLPISource> m_SupportFaceSources;
-		std::vector<DLPISource> m_SupportEdgeSources;
-		std::vector<DLPISource> m_SupportVertexSources;
 
 		m_throwFunc = callback;
 		m_interruptFunc = cb_interrupt;
@@ -252,12 +249,18 @@ namespace mmesh
 		}
 
 		//flag = SUPPORT_FACE|SUPPORT_EDGE|SUPPORT_VERTEX;
-		//flag = SUPPORT_FACE  ;
+		//flag = SUPPORT_EDGE;
 		if (m_DLPISourceInited == false)
 		{
 			if ((flag & SUPPORT_VERTEX) == SUPPORT_VERTEX)
 			{
+				m_SupportVertexSources.clear();
 				autoDlpVertexSource(m_SupportVertexSources, autoParam);
+			}
+			if ((flag & SUPPORT_EDGE) == SUPPORT_EDGE)
+			{
+				m_SupportEdgeSources.clear();
+				autoDlpEdgeSource(m_SupportEdgeSources, autoParam);
 			}
 			if ((flag & SUPPORT_FACE) == SUPPORT_FACE)
 			{
@@ -265,38 +268,10 @@ namespace mmesh
 				//m_SupportFaceSources
 				autoDlpFaceSource(sectionSources, autoParam);
 				m_SupportFaceSources.clear();
-				for (std::vector<DLPISource>& sectionSrcs: sectionSources)
+				for (std::vector<DLPISource>& sectionSrcs : sectionSources)
 				{
 					if (sectionSrcs.size())
 						m_SupportFaceSources.insert(m_SupportFaceSources.end(), sectionSrcs.begin(), sectionSrcs.end());
-				}
-			}
-			if ((flag & SUPPORT_EDGE) == SUPPORT_EDGE)
-			{
-				autoDlpEdgeSource(m_SupportEdgeSources, autoParam);
-				if (0)
-				{
-					//去除相同点、邻近点
-					auto cmp_elements_sort = [](const DLPISource& e1, const DLPISource& e2) -> bool {
-						trimesh::vec3 zeropos(0.0, 0.0, 0.0);
-						float len1 = trimesh::dist2(e1.position, zeropos);
-						float len2 = trimesh::dist2(e2.position, zeropos);
-						return len1 < len2;
-
-					};
-					auto cmp_elements_unique = [this](DLPISource& e1, DLPISource& e2)->bool {
-
-						//float faceCosValue = cosf(m_autoParam.autoAngle * M_PIf / 180.0f);
-						float filterValue = m_autoParam.space;
-						float distanceValue = trimesh::dist(e1.position, e2.position);
-						bool ret = distanceValue < filterValue;
-						//std::cout << "cmp_elements_unique=== " << trimesh::dist(e1.position, e2.position) << std::endl;
-						return ret;
-					};
-					std::vector<DLPISource>::iterator iterator;
-					std::sort(m_SupportEdgeSources.begin(), m_SupportEdgeSources.end(), cmp_elements_sort);
-					iterator = std::unique(m_SupportEdgeSources.begin(), m_SupportEdgeSources.end(), cmp_elements_unique);
-					m_SupportEdgeSources.resize(std::distance(m_SupportEdgeSources.begin(), iterator));
 				}
 			}
 
@@ -324,9 +299,33 @@ namespace mmesh
 		if ((flag & SUPPORT_FACE) == SUPPORT_FACE)
 		{
 
-			for (DLPISource src : m_SupportFaceSources)
+			std::vector<trimesh::vec3> fixEdgeVertexes;
+			std::vector<trimesh::vec3> intVertexs;
+			std::vector<trimesh::vec3> outVertexs;
+			for (DLPISource& edgept : sources)
 			{
-				sources.emplace_back(src);
+				fixEdgeVertexes.emplace_back(edgept.position);
+			}
+			for (DLPISource& edgept : m_SupportFaceSources)
+			{
+				intVertexs.emplace_back(edgept.position);
+			}
+			vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
+			vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
+			poissonAlgcfg.baseSampleRad = autoParam->baseSpace;//m_triangleChunk->m_width;
+			poissonAlgcfg.userSampleRad = autoParam->space > poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
+			poissonAlgcfg.borderSampleOff = autoParam->borderSampleOff - 0.1;
+			poissonAlgcfg.ratio = autoParam->density;//m_triangleChunk->m_width;
+
+			PoissonFuncObj.poissonSamplePt(fixEdgeVertexes, intVertexs,&poissonAlgcfg, outVertexs);
+
+			sources.clear();
+			for (trimesh::vec3 &src : outVertexs)
+			{
+				DLPISource dlpSource = generateSource(src, DOWN_NORMAL);
+				dlpSource.typeflg = SUPPORT_VERTEX;
+				sources.push_back(dlpSource);
+
 			}
 		}
 		/////
@@ -751,67 +750,59 @@ namespace mmesh
 
 		m_meshTopo->hangEdge(m_vertexes, m_faceNormals, m_dotValues, faceCosValue, supportEdges);
 
-		float minDelta = autoParam->space;
-
+		float minDelta = autoParam->baseSpace;
+		std::cout << "autoParam->baseSpace==" << autoParam->baseSpace << std::endl;
 		int percentage_Count = 0;
 		sources.clear();
-		for (ivec2 vertexesID : supportEdges)
-		{
-			int vertexID1 = vertexesID.x;
-			int vertexID2 = vertexesID.y;
-			vec3& vertex1 = m_vertexes.at(vertexID1);
-			vec3& vertex2 = m_vertexes.at(vertexID2);
-			vec3 vertex21 = vertex2 - vertex1;
-			////////////////////////////////////////
-			float edgeLenXY = trimesh::len(vertex21);
-			if (edgeLenXY < minDelta)//长度小于自支撑长度
-				continue;
+		std::vector<trimesh::vec3> poissonInVertexes;
 
-#if 1
-			int sampleEdgeNum = ceilf(edgeLenXY / minDelta) + 1;
-			if (sampleEdgeNum > 0)
+			for (ivec2& vertexesID : supportEdges)
 			{
-				float dt = 1.0f / (float)sampleEdgeNum;
-				for (int sampleIndex = 0; sampleIndex <= sampleEdgeNum; sampleIndex++)
-				{
-					float t = sampleIndex * dt;
-					vec3 samplePoint = vertex1 * (1.0f - t) + vertex2 * t;
+				int vertexID1 = vertexesID.x;
+				int vertexID2 = vertexesID.y;
+				vec3& vertex1 = m_vertexes.at(vertexID1);
+				vec3& vertex2 = m_vertexes.at(vertexID2);
+				vec3 vertex21 = vertex2 - vertex1;
+				//if (trimesh::len(vertex21) < minDelta / 2.0)
+				//	continue;
+				////////////////////////////////////////
+				poissonInVertexes.emplace_back(vertex1);
+				poissonInVertexes.emplace_back(vertex2);
+			}
+		{
+			std::vector<trimesh::vec3> outVertexes;
+			vcg::CX_PoissonAlg::PoissonFunc PoissonFuncObj;
+			vcg::CX_PoissonAlg::PoissonAlgCfg poissonAlgcfg;
+			poissonAlgcfg.baseSampleRad = autoParam->baseSpace;//m_triangleChunk->m_width;
+			poissonAlgcfg.userSampleRad = autoParam->space > poissonAlgcfg.baseSampleRad ? autoParam->space : poissonAlgcfg.baseSampleRad;
+			poissonAlgcfg.borderSampleOff = autoParam->borderSampleOff - 0.1;
+			poissonAlgcfg.ratio = autoParam->density;//m_triangleChunk->m_width;
+
+			std::vector<trimesh::vec3> fixEdgeVertexes;
+			PoissonFuncObj.poissonSamplePt(fixEdgeVertexes,poissonInVertexes, &poissonAlgcfg, outVertexes);
+			for (trimesh::vec3 &samplePoint :outVertexes)
+			{
 					DLPISource dlpSource = generateSource(samplePoint, DOWN_NORMAL);
 					dlpSource.typeflg = SUPPORT_EDGE;
 					sources.push_back(dlpSource);
-				}
-			}
-#endif
-			//std::vector<int> NearFaceIDIgnored;
-			//{
-			//	std::vector<int> supportVertexes;
-			//	supportVertexes.emplace_back(vertexID1);
-			//	supportVertexes.emplace_back(vertexID2);
-			//	for (int vertexID : supportVertexes)
-			//	{
-			//		std::vector<int>& vertexHalfs = m_meshTopo->m_outHalfEdges.at(vertexID);
-			//		int halfSize = (int)vertexHalfs.size();
-			//		for (int halfIndex = 0; halfIndex < halfSize; ++halfIndex)
-			//		{
-			//			int indexFace = m_meshTopo->faceid(vertexHalfs.at(halfIndex));
-			//			NearFaceIDIgnored.emplace_back(indexFace);
-			//		}
-			//	}
 
-			//}
-
-			percentage_Count++;
-
-			if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
-			{
-				m_cbParamsPtr->percentage = 0.3 + (float)percentage_Count / (float)supportEdges.size() * 0.2;
-				m_throwFunc(m_cbParamsPtr);
-			}
-			if (m_interruptFunc && m_interruptFunc(m_cbParamsPtr))
-			{
-				return;
 			}
 		}
+
+
+
+
+				percentage_Count++;
+
+				if ((m_throwFunc != NULL) && (percentage_Count % 100 == 0))
+				{
+					m_cbParamsPtr->percentage = 0.3 + (float)percentage_Count / (float)supportEdges.size() * 0.2;
+					m_throwFunc(m_cbParamsPtr);
+				}
+				if (m_interruptFunc && m_interruptFunc(m_cbParamsPtr))
+				{
+					return;
+				}
 		if (m_throwFunc != NULL)
 		{
 			m_cbParamsPtr->percentage = 0.5;
