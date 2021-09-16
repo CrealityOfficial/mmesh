@@ -58,6 +58,10 @@ namespace mmesh
 	public:
 		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
+			
+		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
+			trimesh::point pointStart, trimesh::point pointEnd, float radius,
+			ccglobal::Tracer* tracer, DrillDebugger* debugger);
 		~OptimizeCylinderCollide();
 
 		bool valid();
@@ -65,6 +69,7 @@ namespace mmesh
 		trimesh::TriMesh* drill();
 	protected:
 		void calculate();
+		void mycalculate();
 
 		trimesh::TriMesh* postProcess(trimesh::TriMesh* Mout, trimesh::TriMesh* Cin);
 	protected:
@@ -86,6 +91,10 @@ namespace mmesh
 
 		ccglobal::Tracer* m_tracer;
 		DrillDebugger* m_debugger;
+
+		trimesh::point m_pointStart; 
+		trimesh::point m_pointEnd; 
+		float m_radius;
 	};
 }
 

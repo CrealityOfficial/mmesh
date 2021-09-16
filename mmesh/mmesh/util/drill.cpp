@@ -31,7 +31,38 @@ namespace mmesh
 				tracer->failed("mesh or cylinder (vertex, face) is empty.");
 			return nullptr;
 		}
-		
+
+
+		//trimesh::point pointStart;
+		//trimesh::point pointEnd;
+		//float radius;
+		//std::string filenemae ="F:/GitSource/Gerrit_DockerViz/DockerViz/data/drill/cyPosition.txt";
+		//FILE* F2 = fopen(filenemae.c_str(), "rb");
+		//if (F2)
+		//{
+
+		//	float X;
+		//	float Y;
+		//	float Z;
+
+		//	fread(&X, sizeof(float), 1, F2);
+		//	fread(&Y, sizeof(float), 1, F2);
+		//	fread(&Z, sizeof(float), 1, F2);
+		//	pointStart.at(0) = X;
+		//	pointStart.at(1) = Y;
+		//	pointStart.at(2) = Z;
+
+		//	fread(&X, sizeof(float), 1, F2);
+		//	fread(&Y, sizeof(float), 1, F2);
+		//	fread(&Z, sizeof(float), 1, F2);
+		//	pointEnd.at(0) = X;
+		//	pointEnd.at(1) = Y;
+		//	pointEnd.at(2) = Z;
+		//	fread(&radius, sizeof(float), 1, F2);
+		//	fclose(F2);
+		//}
+		//OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, pointStart, pointEnd, radius,tracer, debugger);
+
 		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, tracer, debugger);
 		if (!cylinderCollider.valid())
 		{

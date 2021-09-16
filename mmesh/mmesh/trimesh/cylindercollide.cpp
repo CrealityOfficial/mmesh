@@ -8,6 +8,9 @@
 #include <map>
 #include <list>
 #include <assert.h>
+#include <cmath>
+#include "mmesh/trimesh/quaternion.h"
+#include "mmesh/util/mnode.h"
 
 namespace mmesh
 {
@@ -376,6 +379,23 @@ namespace mmesh
 		if (m_mesh && m_cylinder && m_mesh->faces.size() > 0)
 			calculate();
 	}
+	
+		OptimizeCylinderCollide::OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
+		trimesh::point pointStart, trimesh::point pointEnd, float radius,
+		ccglobal::Tracer* tracer, DrillDebugger* debugger)
+		:m_mesh(mesh)
+		, m_cylinder(cylinder)
+		, focusTriangle(0)
+		, m_tracer(tracer)
+		, m_debugger(debugger)
+		, cylinderTriangles(0)
+		, m_pointStart(pointStart)
+		, m_pointEnd(pointEnd)
+		, m_radius(radius)
+	{
+		if (m_mesh && m_cylinder && m_mesh->faces.size() > 0)
+			mycalculate();
+	}
 
 	OptimizeCylinderCollide::~OptimizeCylinderCollide()
 	{
@@ -410,6 +430,116 @@ namespace mmesh
 				totalMeshFlag.at(i) = 1;
 			}
 		}
+
+		focusTriangle = (int)meshFocusFaces.size();
+		cylinderTriangles = (int)m_cylinder->faces.size();
+		focusNormals.resize(focusTriangle);
+		cylinderNormals.resize(cylinderTriangles);
+		cylinderFlag.resize(cylinderTriangles);
+		for (int j = 0; j < cylinderTriangles; ++j)
+		{
+			TriMesh::Face& cylinderFace = m_cylinder->faces.at(j);
+
+			vec3& cylinderV1 = m_cylinder->vertices.at(cylinderFace[0]);
+			vec3& cylinderV2 = m_cylinder->vertices.at(cylinderFace[1]);
+			vec3& cylinderV3 = m_cylinder->vertices.at(cylinderFace[2]);
+
+			vec3 n = (cylinderV2 - cylinderV1) TRICROSS(cylinderV3 - cylinderV1);
+			cylinderNormals.at(j) = normalized(n);
+		}
+
+		for (int j = 0; j < focusTriangle; ++j)
+		{
+			TriMesh::Face& focusFace = meshFocusFaces.at(j);
+
+			vec3& meshV1 = m_mesh->vertices.at(focusFace[0]);
+			vec3& meshV2 = m_mesh->vertices.at(focusFace[1]);
+			vec3& meshV3 = m_mesh->vertices.at(focusFace[2]);
+
+			vec3 n = (meshV2 - meshV1) TRICROSS(meshV3 - meshV1);
+			focusNormals.at(j) = normalized(n);
+		}
+
+		tracerFormartPrint(m_tracer, "OptimizeCylinderCollide meshFocus [%d], cylinder [%d]",
+			focusTriangle, cylinderTriangles);
+		if (m_debugger)
+			m_debugger->onCylinderBoxFocus(meshFocusFaces);
+
+		meshTris.resize(focusTriangle);
+		cylinderTris.resize(cylinderTriangles);
+
+		testCollide(m_mesh, m_cylinder, focusNormals, cylinderNormals,
+			meshFocusFaces, m_cylinder->faces, meshTris);
+
+		testCollide(m_cylinder, m_mesh, cylinderNormals, focusNormals,
+			m_cylinder->faces, meshFocusFaces, cylinderTris);
+
+		for (int i = 0; i < focusTriangle; ++i)
+		{
+			int index = meshFocusFacesMapper.at(i);
+			totalMeshFlag.at(index) = meshTris.at(i).flag;
+		}
+		for (int i = 0; i < cylinderTriangles; ++i)
+		{
+			cylinderFlag.at(i) = cylinderTris.at(i).flag;
+		}
+
+		if (m_debugger)
+		{
+			//m_debugger->onMeshOuter(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideOuter));
+			//m_debugger->onMeshCollide(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideCollide));
+			//m_debugger->onMeshInner(generatePatchMesh(m_mesh, totalMeshFlag, CylinderCollideInner));
+
+			m_debugger->onMeshOuter(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideOuter));
+			m_debugger->onMeshCollide(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideCollide));
+			m_debugger->onMeshInner(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideInner));
+		}
+	}
+
+
+	void OptimizeCylinderCollide::mycalculate()
+	{
+		int faces = (int)m_mesh->faces.size();
+		totalMeshFlag.resize(faces, 0);
+		m_cylinder->need_bbox();
+		box3 cylinderBox_old = m_cylinder->bbox;
+
+		mmesh::point ZAXIS(0.0f,0.0f,1.0f);
+		trimesh::vec3 ax = trimesh::normalized(m_pointEnd- m_pointStart);
+		trimesh::quaternion quat= trimesh::quaternion::fromDirection(ax, ZAXIS);
+
+		trimesh::fxform xf = mmesh::fromQuaterian(quat);
+
+
+		box3 cylinderBox_new;
+		int cylinderVertexNum = (int)m_cylinder->vertices.size();
+		for (int i = 0; i < cylinderVertexNum; ++i)
+		{
+			trimesh::vec3 v = xf * m_cylinder->vertices.at(i);
+			cylinderBox_new += v;
+		}
+
+		for (int i = 0; i < faces; ++i)
+		{
+			TriMesh::Face& face = m_mesh->faces.at(i);
+			box3 b;
+			for (int j = 0; j < 3; ++j)
+			{
+				b += xf * m_mesh->vertices.at(face[j]);
+			}
+
+			if (cylinderBox_new.intersects(b))
+			{
+				meshFocusFacesMapper.push_back(i);
+				meshFocusFaces.push_back(face);
+			}
+			else
+			{
+				totalMeshFlag.at(i) = 1;
+			}
+		}
+
+
 
 		focusTriangle = (int)meshFocusFaces.size();
 		cylinderTriangles = (int)m_cylinder->faces.size();
