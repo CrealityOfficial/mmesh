@@ -1575,7 +1575,7 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
                 outVertexes.emplace_back(trimesh::vec3(pt.X(), pt.Y(), pt.Z()));
             }
 
-
+			return true;
         }
 /////////////////
 }//CX_PoissonAlg End
