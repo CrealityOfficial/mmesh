@@ -1,6 +1,7 @@
 #ifndef MMESH_TCONTAINER_1620036442293_H
 #define MMESH_TCONTAINER_1620036442293_H
 #include <list>
+#include <algorithm>
 
 namespace mmesh
 {
@@ -30,11 +31,11 @@ namespace mmesh
 			if (!element)
 				return;
 
-			TIterator it = m_elements.find(element);
+			TIterator it = std::find(m_elements.begin(), m_elements.end(), element);
 			if (it == m_elements.end())
 				return;
 
-			m_elements.erase(element);
+			m_elements.erase(it);
 		}
 
 		template<class Callback>
