@@ -21,6 +21,8 @@
 *                                                                           *
 ****************************************************************************/
 
+#if __APPLE__
+#else
 #include <vector>
 #include "trimesh2/TriMesh.h"
 
@@ -41,10 +43,13 @@ namespace vcg
 		public:
 			PoissonFunc();
 			~PoissonFunc();
-
+			void faceEdgeCrease(const std::vector<trimesh::vec3>& inVertexes, const std::vector<trimesh::TriMesh::Face>& inFaces, std::vector<trimesh::vec3>& outVertexes);
 			bool main(const std::vector<trimesh::vec3> &inVertexes, const std::vector<trimesh::TriMesh::Face> &inFaces, std::vector<trimesh::vec3>& outVertexes, bool secondflg=false);
 			void setPoissonCfg(PoissonAlgCfg* cfgPtr);
 			void releaseData();
+			bool poissonSamplePt(const std::vector<trimesh::vec3>& fixVertexes, const std::vector<trimesh::vec3>& inVertexes, PoissonAlgCfg* poissonCfgPtr, std::vector<trimesh::vec3>& outVertexes);
+			bool poissonEdgeCornerPt(const std::vector<trimesh::vec3>& inVertexes, const std::vector<trimesh::TriMesh::Face>& inFaces, PoissonAlgCfg* poissonCfgPtr, std::vector<trimesh::vec3>& outVertexes);
+
 		private:
 			PoissonAlgCfg m_PoissonAlgCfg;
 			void* m_BasicPoissonMesh;
@@ -53,5 +58,5 @@ namespace vcg
     }//PoissonAlg
 }//vcg
 
-#endif USE_VCG
-
+#endif //USE_VCG
+#endif

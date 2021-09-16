@@ -192,7 +192,7 @@ namespace mmesh
 			vec3 baN = (A - B);
 
 			float t = -1;
-			if (rayIntersectPlane(A, (C - A), E, abN, t)&&(t>0&& t <= 1))
+			if (rayIntersectPlane(A, (C - A), E, abN, t)&&((t>0)&& (t <= 1)))
 			{
 				 middlept = A * (1 - t) + C * t;
 			}
@@ -200,7 +200,7 @@ namespace mmesh
 			{
 				//std::cout << "t====" << t << std::endl;
 
-				if (rayIntersectPlane(B, (C - B), E, baN, t) && (t > 0 && t <= 1))
+				if (rayIntersectPlane(B, (C - B), E, baN, t) && ((t > 0) && (t <= 1)))
 				{
 					middlept = B * (1 - t) + C * t;
 				}
@@ -333,7 +333,7 @@ namespace mmesh
 									continue;
 								}
 								vec3 E = (vertexes.at(vertexID1) + vertexes.at(vertexID2)) / 2;
-								if ((G.z - E.z >= 0.0) && (H.z - E.z >= 0.0))
+								if ((G.z - E.z > 0.0) && (H.z - E.z > 0.0))
 								{
 									vec3& faceNormal = normals.at(faceID);
 									vec3& oppoFaceNormal = normals.at(oppoFaceID);
@@ -349,7 +349,7 @@ namespace mmesh
 
 										if ((trimesh::dot(trimesh::normalized(faceNormalAdd), vec3(0.0f, 0.0f, -1.0f)) > 0.0))
 										{
-											if ((faceThresCosflg == false) && (oppofaceThresCosflg == false))
+											//if ((faceThresCosflg == false) && (oppofaceThresCosflg == false))
 											{
 												if (faceNormal_dot * oppoFaceNormal_dot < 0.0f)//两个面法向量一个向上，一个向下，法向量向下的面应当不是需要加支撑的面，不然单边都可以自支撑起来
 												{
@@ -379,14 +379,13 @@ namespace mmesh
 
 													}
 												}
-												else //两个面法向量同时向下
+												else//两个面法向量同时向下
 												{
 													float faceAngle = faceCosValue;
 													float oppoFaceAngle = oppofaceCosValue;
 													if (((faceAngle+ oppoFaceAngle-180.0) > EPSILON) &&
-														((faceAngle + oppoFaceAngle - 180.0) < 180.0) &&
-														  faceAngle<180&&
-														  oppoFaceAngle < 180
+														((faceAngle + oppoFaceAngle - 180.0) < 180.0)&&
+														(std::abs(faceAngle - oppoFaceAngle) > EPSILON)
 														)//只要不是共面
 													{
 
@@ -456,6 +455,27 @@ namespace mmesh
 
 
 									}
+								}
+								else if ((G.z - E.z >= 0.0) && (H.z - E.z >= 0.0))
+								{
+									//两个面法向量同时向下,且有一个是水平面
+									if(1)
+									{
+										float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
+										float oppofaceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
+
+										float faceAngle = faceCosValue;
+										float oppoFaceAngle = oppofaceCosValue;
+										if (((faceAngle + oppoFaceAngle - 180.0) > EPSILON) &&
+											((faceAngle + oppoFaceAngle - 180.0) < 180.0)&&
+											(std::abs(faceAngle - oppoFaceAngle)> 1.0)
+											)//只要不是共面
+										{
+
+											shouldAdd = true;
+										}
+									}
+
 								}
 
 							}
