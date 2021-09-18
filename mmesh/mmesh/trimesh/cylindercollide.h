@@ -60,7 +60,7 @@ namespace mmesh
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
 			
 		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
-			trimesh::point pointStart, trimesh::point pointEnd, float radius,
+			trimesh::point pointStart, trimesh::point pointEnd,
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
 		~OptimizeCylinderCollide();
 
@@ -94,7 +94,6 @@ namespace mmesh
 
 		trimesh::point m_pointStart; 
 		trimesh::point m_pointEnd; 
-		float m_radius;
 	};
 }
 
