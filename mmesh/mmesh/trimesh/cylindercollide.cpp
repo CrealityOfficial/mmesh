@@ -380,8 +380,8 @@ namespace mmesh
 			calculate();
 	}
 	
-		OptimizeCylinderCollide::OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
-		trimesh::point pointStart, trimesh::point pointEnd, float radius,
+	OptimizeCylinderCollide::OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
+		trimesh::point pointStart, trimesh::point pointEnd,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger)
 		:m_mesh(mesh)
 		, m_cylinder(cylinder)
@@ -391,7 +391,6 @@ namespace mmesh
 		, cylinderTriangles(0)
 		, m_pointStart(pointStart)
 		, m_pointEnd(pointEnd)
-		, m_radius(radius)
 	{
 		if (m_mesh && m_cylinder && m_mesh->faces.size() > 0)
 			mycalculate();
@@ -538,8 +537,6 @@ namespace mmesh
 				totalMeshFlag.at(i) = 1;
 			}
 		}
-
-
 
 		focusTriangle = (int)meshFocusFaces.size();
 		cylinderTriangles = (int)m_cylinder->faces.size();

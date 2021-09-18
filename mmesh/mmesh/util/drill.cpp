@@ -74,4 +74,40 @@ namespace mmesh
 
 		return cylinderCollider.drill();
 	}
+
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
+		const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
+		ccglobal::Tracer* tracer, DrillDebugger* debugger)
+	{
+		if (!mesh || !cylinderMesh)
+		{
+			if (tracer)
+				tracer->failed("mesh or cylinder mesh is empty.");
+
+			return nullptr;
+		}
+		int vertexNum = mesh->vertices.size();
+		int faceNum = mesh->faces.size();
+
+		tracerFormartPrint(tracer, "drill start.  vertexNum [%d] , faceNum [%d].", vertexNum, faceNum);
+		if (vertexNum == 0 || faceNum == 0 || cylinderMesh->vertices.size() == 0
+			|| cylinderMesh->faces.size() == 0)
+		{
+			if (tracer)
+				tracer->failed("mesh or cylinder (vertex, face) is empty.");
+			return nullptr;
+		}
+
+		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, startPosition, endPosition, tracer, debugger);
+
+		if (!cylinderCollider.valid())
+		{
+			if (tracer)
+				tracer->failed("OptimizeCylinderCollide is not valid.");
+
+			return nullptr;
+		}
+
+		return cylinderCollider.drill();
+	}
 }
