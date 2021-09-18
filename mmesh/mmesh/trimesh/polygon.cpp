@@ -38,7 +38,7 @@ namespace mmesh
 
 		ANALYSIS_TICK("setup node")
 		m_circleSize = size;
-		std::cout << "polygon vertex size " << m_circleSize << std::endl;
+		//std::cout << "polygon vertex size " << m_circleSize << std::endl;
 		m_debugNodes.resize(m_circleSize);
 		m_root = &m_debugNodes.at(0);
 
