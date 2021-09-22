@@ -15,7 +15,7 @@ namespace mmesh
 	};
 
 	bool splitTriangle(const trimesh::vec3& v0, const trimesh::vec3& v1, const trimesh::vec3& v2,
-		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& tris);
+		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& tris,std::vector<bool>& isInner);
 
 	struct SplitTriangleCache
 	{

@@ -8,8 +8,52 @@
 #include <assert.h>
 namespace mmesh
 {
+	int PointInPolygon(trimesh::dvec2 pt,const std::vector<int>& polygon, std::vector<trimesh::dvec2>& d2points)
+	{
+		//returns 0 if false, +1 if true, -1 if pt ON polygon boundary
+		int result = 0;
+		size_t cnt = polygon.size();
+		if (cnt < 3) return 0;
+		trimesh::dvec2 ip = d2points[polygon[0]];
+		for (size_t i = 1; i <= cnt; ++i)
+		{
+			trimesh::dvec2 ipNext = (i == cnt ? d2points[polygon[0]] : d2points[polygon[i]]);
+			if (ipNext.y == pt.y)
+			{
+				if ((ipNext.x == pt.x) || (ip.y == pt.y &&
+					((ipNext.x > pt.x) == (ip.x < pt.x)))) return -1;
+			}
+			if ((ip.y < pt.y) != (ipNext.y < pt.y))
+			{
+				if (ip.x >= pt.x)
+				{
+					if (ipNext.x > pt.x) result = 1 - result;
+					else
+					{
+						double d = (double)(ip.x - pt.x) * (ipNext.y - pt.y) -
+							(double)(ipNext.x - pt.x) * (ip.y - pt.y);
+						if (!d) return -1;
+						if ((d > 0) == (ipNext.y > ip.y)) result = 1 - result;
+					}
+				}
+				else
+				{
+					if (ipNext.x > pt.x)
+					{
+						double d = (double)(ip.x - pt.x) * (ipNext.y - pt.y) -
+							(double)(ipNext.x - pt.x) * (ip.y - pt.y);
+						if (!d) return -1;
+						if ((d > 0) == (ipNext.y > ip.y)) result = 1 - result;
+					}
+				}
+			}
+			ip = ipNext;
+		}
+		return result;
+	}
+
 	bool splitTriangle(const trimesh::vec3& v0, const trimesh::vec3& v1, const trimesh::vec3& v2,
-		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& newTriangles)
+		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& newTriangles,std::vector<bool>& isInner)
 	{
 		trimesh::vec3 normal = (v1 - v0) TRICROSS (v2 - v0);
 		trimesh::normalize(normal);
@@ -71,11 +115,18 @@ namespace mmesh
 		std::vector<std::vector<int>> polygons;
 		std::vector<trimesh::vec3> d3points;
 		std::vector<trimesh::dvec2> d2points;
+		std::vector<trimesh::dvec2> d2pointsVertices;
 		uniformPoints.toVector(d3points);
 		d3points.push_back(v0);
 		d3points.push_back(v1);
 		d3points.push_back(v2);
 		transform3to2(d3points, normal, d2points);
+
+		std::vector<trimesh::vec3> vpoints;
+		vpoints.push_back(v0);
+		vpoints.push_back(v1);
+		vpoints.push_back(v2);
+		transform3to2(vpoints, normal, d2pointsVertices);
 
 		std::vector<int> orderEdgesPoints;
 
@@ -355,8 +406,19 @@ namespace mmesh
 					polygons.push_back(inpolygon);
 				}
 			}
-		}
 
+			for (size_t i = 0; i < d2pointsVertices.size(); i++)
+			{
+				for (size_t j = 0; j < polygons.size(); j++)
+				{
+					int re = PointInPolygon(d2pointsVertices[i], polygons[j], d2points);
+					if (re != 0)
+					{
+						isInner[i] = false;
+					}
+				}
+			}
+		}
 
 		generateTriangleSoup(d3points, d2points, polygons, newTriangles);
 		return true;

@@ -256,10 +256,41 @@ namespace mmesh
 		}
 	}
 
+	void pointInner(std::vector<int>& pointPosition, std::vector<trimesh::TriMesh::Face>& focusFaces,int n)
+	{
+		TriMesh::Face& cylinderFace = focusFaces.at(n);
+		if (n >= pointPosition.size())
+		{
+			return;
+		}
+
+		if (pointPosition[cylinderFace[0]] != -1
+			&& pointPosition[cylinderFace[1]] != -1
+			&& pointPosition[cylinderFace[2]] != -1)
+		{
+			return;
+		}
+
+		if (pointPosition[cylinderFace[0]] != -1
+			|| pointPosition[cylinderFace[1]] != -1
+			|| pointPosition[cylinderFace[2]] != -1)
+		{
+			int index = std::max(pointPosition[cylinderFace[0]], pointPosition[cylinderFace[1]]);
+			index = std::max(index, pointPosition[cylinderFace[2]]);
+			pointPosition[cylinderFace[0]] = index;
+			pointPosition[cylinderFace[1]] = index;
+			pointPosition[cylinderFace[2]] = index;
+		}
+		pointInner(pointPosition,focusFaces,++n);
+		return;
+	}
+
 	void generateNewTriangles(std::vector<trimesh::TriMesh::Face>& focusFaces, trimesh::TriMesh* mesh, std::vector<trimesh::vec3>& normals,
-		std::vector<FaceCollide>& tris, std::vector<trimesh::vec3>& newTriangles, bool positive, DrillDebugger* debugger)
+		std::vector<FaceCollide>& tris, std::vector<trimesh::vec3>& newTriangles, bool positive, std::vector<int>& cylinderFlag, DrillDebugger* debugger)
 	{
 		int meshNum = (int)focusFaces.size();
+		std::vector<std::vector<bool>> vctInner;
+		vctInner.resize(meshNum, std::vector<bool>(3,true));
 		for (int i = 0; i < meshNum; ++i)
 		{
 			trimesh::TriMesh::Face& face = focusFaces.at(i);
@@ -280,7 +311,7 @@ namespace mmesh
 				}
 				std::vector<trimesh::vec3> triangles;
 				if (splitTriangle(mesh->vertices[face[0]], mesh->vertices[face[1]], mesh->vertices[face[2]],
-					trisegments, positive, triangles))
+					trisegments, positive, triangles, vctInner[i]))
 				{
 					newTriangles.insert(newTriangles.end(), triangles.begin(), triangles.end());
 				}
@@ -298,6 +329,42 @@ namespace mmesh
 					cache.segments = trisegments;
 					debugger->onTriangleSplitCache(cache);
 				}
+			}
+		}
+
+		if (!positive)
+		{
+			std::vector<int> pointPosition;
+			pointPosition.resize(mesh->vertices.size(), -1);
+			//init
+			for (size_t i = 0; i < tris.size(); i++)
+			{
+				if (tris[i].flag != 0)
+					continue;
+				TriMesh::Face& cylinderFace = mesh->faces.at(i);
+				pointPosition[cylinderFace[0]]= vctInner[i][0];
+				pointPosition[cylinderFace[1]] = vctInner[i][1];
+				pointPosition[cylinderFace[2]] = vctInner[i][2];
+			}
+			//recursion
+			for (size_t i = 0; i < tris.size(); i++)
+			{
+				if (tris[i].flag != 0)
+					continue;
+				pointInner(pointPosition, focusFaces, i);
+			}
+
+			for (size_t i = 0; i < tris.size(); i++)
+			{
+				if (tris[i].flag != 1)
+					continue;
+				TriMesh::Face& cylinderFace = mesh->faces.at(i);
+				if (pointPosition[cylinderFace[0]] ==0
+					|| pointPosition[cylinderFace[1]] == 0
+					|| pointPosition[cylinderFace[2]] == 0)
+				{
+					cylinderFlag[i] = -1;
+				}		
 			}
 		}
 	}
@@ -611,9 +678,9 @@ namespace mmesh
 	trimesh::TriMesh* OptimizeCylinderCollide::drill()
 	{
 		TriPatch newMeshTriangles;
-		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, nullptr);
+		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, totalMeshFlag,nullptr);
 		TriPatch newCylinderTriangles;
-		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, m_debugger);
+		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, cylinderFlag, m_debugger);
 		trimesh::TriMesh* Mout = generateAppendMesh(m_mesh, totalMeshFlag, newMeshTriangles, CylinderCollideOuter);
 		trimesh::TriMesh* Cyin = generateAppendMesh(m_cylinder, cylinderFlag, newCylinderTriangles, CylinderCollideInner);
 		return postProcess(Mout, Cyin);
