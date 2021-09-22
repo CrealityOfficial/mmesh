@@ -70,7 +70,7 @@ namespace mmesh
 			assert(pindex <= vertexEdges.size());
 			if (pindex == vertexEdges.size())
 				vertexEdges.push_back(eindex);
-			assert(vertexEdges[pindex] == eindex);
+			//assert(vertexEdges[pindex] == eindex);
 		};
 		auto fbe = [&edgeIsFirst](int pindex, bool first) {
 			assert(pindex <= edgeIsFirst.size());
