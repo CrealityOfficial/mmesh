@@ -19,9 +19,9 @@ namespace mmesh
 		void clear();
 		bool check(VerticalC& point, trimesh::vec3& position);
 
-		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag = 7);
+		void autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag = 7, bool cloud = false);
 		void autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
-		void autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
+		void autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, bool cloud = false);
 		void autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 	protected:
 		void build();
@@ -35,6 +35,7 @@ namespace mmesh
 		std::vector<trimesh::vec3> m_vertexes;
 		std::vector<float> m_dotValues;
 		std::vector<trimesh::vec3> m_faceNormals;
+		bool m_dirty;
 	};
 }
 #endif // CREATIVE_KERNEL_DLPQUICKDATA_SIMPLE_1597825964318_H

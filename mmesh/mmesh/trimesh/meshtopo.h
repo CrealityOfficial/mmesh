@@ -45,6 +45,7 @@ namespace mmesh
 
 		void lowestVertex(std::vector<trimesh::vec3>& vertexes, std::vector<int>& indices);
 		void hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& edges);
+		void hangEdgeCloud(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& edges);
 		void chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& faces, float faceCosValue);
 		void flipFace(std::vector<int>& facesChunk);
 

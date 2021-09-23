@@ -10,6 +10,7 @@ namespace mmesh
 {
 	DLPSimpleQuickData::DLPSimpleQuickData()
 		: m_mesh(nullptr)
+		, m_dirty(true)
 	{
 		m_triangleChunk = new TriangleChunk();
 		m_meshTopo = new MeshTopo();
@@ -34,11 +35,12 @@ namespace mmesh
 		m_vertexes.clear();
 		m_dotValues.clear();
 		m_faceNormals.clear();
+		m_dirty = true;
 	}
 
 	void DLPSimpleQuickData::build()
 	{
-		if (!m_mesh)
+		if (!m_mesh || !m_dirty)
 			return;
 
 		int vertexNum = (int)m_mesh->vertices.size();
@@ -87,6 +89,8 @@ namespace mmesh
 			m_triangleChunk->build(m_boxes, globalBox, 2.0f);
 			m_meshTopo->build(m_mesh);
 		}
+
+		m_dirty = false;
 	}
 
 	bool DLPSimpleQuickData::check(VerticalC& point, trimesh::vec3& position)
@@ -139,7 +143,7 @@ namespace mmesh
 		return true;
 	}
 
-	void DLPSimpleQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag)
+	void DLPSimpleQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag, bool cloud)
 	{
 		if (flag & 1)
 		{
@@ -148,7 +152,7 @@ namespace mmesh
 
 		if (flag & 2)
 		{
-			autoDlpEdgeSource(sources, autoParam);
+			autoDlpEdgeSource(sources, autoParam, cloud);
 		}
 
 		if (flag & 4)
@@ -169,11 +173,14 @@ namespace mmesh
 		}
 	}
 
-	void DLPSimpleQuickData::autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam)
+	void DLPSimpleQuickData::autoDlpEdgeSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, bool cloud)
 	{
 		std::vector<ivec2> supportEdges;
 		float faceCosValue = cosf(autoParam->autoAngle * M_PIf / 180.0f);
-		m_meshTopo->hangEdge(m_vertexes, m_faceNormals, m_dotValues, faceCosValue, supportEdges);
+		if(cloud)
+			m_meshTopo->hangEdgeCloud(m_vertexes, m_faceNormals, m_dotValues, faceCosValue, supportEdges);
+		else
+			m_meshTopo->hangEdge(m_vertexes, m_faceNormals, m_dotValues, faceCosValue, supportEdges);
 
 		float minDelta = 3.0f;
 		for (ivec2 vertexesID : supportEdges)

@@ -110,8 +110,8 @@ namespace mmesh
 			}
 		}
 	}
-#if 0
-	void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
+
+	void MeshTopo::hangEdgeCloud(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
 	{
 		int faceNum = (int)m_mesh->faces.size();
 		std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
@@ -173,7 +173,7 @@ namespace mmesh
 			}
 		}
 	}
-#else
+
 	void MeshTopo::hangEdge(std::vector<trimesh::vec3>& vertexes, std::vector<trimesh::vec3>& normals, std::vector<float>& dotValues, float faceCosValue, std::vector<trimesh::ivec2>& supportEdges)
 	{
 		auto middlePt = [vertexes](int vertexID1, int vertexID2, int vertexID3, vec3 &middlept)->bool {
@@ -497,7 +497,6 @@ namespace mmesh
 			}
 		}
 	}
-#endif
 
 	void MeshTopo::chunkFace(std::vector<float>& dotValues, std::vector<std::vector<int>>& supportFaces, float faceCosValue)
 	{
