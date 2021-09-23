@@ -89,8 +89,8 @@ namespace mmesh
 		autoParam.manualAngle = 89.0f;
 		autoParam.supportlength = 2.0f;
 		autoParam.startheight = 3.0f;
-		autoParam.density = 70.0f;
-		autoParam.space = 3.0f;
+		autoParam.density = (float)(m_param.support_points_density_relative);
+		autoParam.space = (float)(m_param.support_points_minimal_distance);
 
 		DLPSupportParam param;
 		param.topContactType = 0;
