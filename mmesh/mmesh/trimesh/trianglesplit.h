@@ -1,6 +1,6 @@
 #ifndef MMESH_TRIANGLESPLIT_1631523909475_H
 #define MMESH_TRIANGLESPLIT_1631523909475_H
-#include "trimesh2/vec.h"
+#include "trimesh2/Vec.h"
 #include <vector>
 
 namespace mmesh
