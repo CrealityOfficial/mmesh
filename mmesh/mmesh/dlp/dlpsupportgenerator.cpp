@@ -110,7 +110,7 @@ namespace mmesh
 		param.modelContactLen = 2.0f;
 
 		std::vector<DLPISource> sources;
-		quickData.autoDlpSources(sources, &autoParam, true);
+		quickData.autoDlpSources(sources, &autoParam, 7, true);
 
 		std::vector<DLPMiddle*> middleComponents;
 		auto createFromSource = [&autoParam, &param, &quickData, &middleComponents](DLPISource& source, std::vector<DLPComponent*>& components) {
