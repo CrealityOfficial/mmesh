@@ -13,6 +13,10 @@ namespace mmesh
 	trimesh::TriMesh* drill(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger)
 	{
+		if (tracer)
+		{
+			tracer->progress(0.1f);
+		}
 		if (!mesh || !cylinderMesh)
 		{
 			if (tracer)
@@ -71,8 +75,11 @@ namespace mmesh
 
 			return nullptr;
 		}
-
-		return cylinderCollider.drill();
+		if (tracer)
+		{
+			tracer->progress(0.2f);
+		}
+		return cylinderCollider.drill(tracer);
 	}
 
 	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
@@ -108,6 +115,6 @@ namespace mmesh
 			return nullptr;
 		}
 
-		return cylinderCollider.drill();
+		return cylinderCollider.drill(tracer);
 	}
 }

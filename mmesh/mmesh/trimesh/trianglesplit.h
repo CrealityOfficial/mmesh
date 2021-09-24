@@ -2,6 +2,7 @@
 #define MMESH_TRIANGLESPLIT_1631523909475_H
 #include "trimesh2/Vec.h"
 #include <vector>
+#include "ccglobal/tracer.h"
 
 namespace mmesh
 {
@@ -15,7 +16,7 @@ namespace mmesh
 	};
 
 	bool splitTriangle(const trimesh::vec3& v0, const trimesh::vec3& v1, const trimesh::vec3& v2,
-		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& tris,std::vector<bool>& isInner);
+		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& tris,std::vector<bool>& isInner,ccglobal::Tracer* tracer);
 
 	struct SplitTriangleCache
 	{

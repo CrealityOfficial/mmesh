@@ -286,7 +286,7 @@ namespace mmesh
 	}
 
 	void generateNewTriangles(std::vector<trimesh::TriMesh::Face>& focusFaces, trimesh::TriMesh* mesh, std::vector<trimesh::vec3>& normals,
-		std::vector<FaceCollide>& tris, std::vector<trimesh::vec3>& newTriangles, bool positive, std::vector<int>& cylinderFlag, DrillDebugger* debugger)
+		std::vector<FaceCollide>& tris, std::vector<trimesh::vec3>& newTriangles, bool positive, std::vector<int>& cylinderFlag, ccglobal::Tracer* tracer, DrillDebugger* debugger)
 	{
 		int meshNum = (int)focusFaces.size();
 		std::vector<std::vector<bool>> vctInner;
@@ -311,12 +311,14 @@ namespace mmesh
 				}
 				std::vector<trimesh::vec3> triangles;
 				if (splitTriangle(mesh->vertices[face[0]], mesh->vertices[face[1]], mesh->vertices[face[2]],
-					trisegments, positive, triangles, vctInner[i]))
+					trisegments, positive, triangles, vctInner[i],tracer))
 				{
 					newTriangles.insert(newTriangles.end(), triangles.begin(), triangles.end());
 				}
 				else
 				{
+					if (tracer)
+						tracer->failed("error cylinder is watertight");
 					assert("error cylinder is watertight");
 				}
 
@@ -410,10 +412,14 @@ namespace mmesh
 	}
 
 	trimesh::TriMesh* generateAppendMesh(trimesh::TriMesh* oldMesh, FlagPatch& flagFaces,
-		TriPatch& newTriangles, int flag)
+		TriPatch& newTriangles, int flag, ccglobal::Tracer* tracer)
 	{
 		if (!oldMesh)
+		{
+			if (tracer)
+				tracer->failed("Mesh is empty");
 			return nullptr;
+		}
 
 		trimesh::TriMesh* newMesh = generatePatchMesh(oldMesh, flagFaces, flag);
 		
@@ -675,14 +681,30 @@ namespace mmesh
 		return focusTriangle > 0;
 	}
 
-	trimesh::TriMesh* OptimizeCylinderCollide::drill()
+	trimesh::TriMesh* OptimizeCylinderCollide::drill(ccglobal::Tracer* tracer)
 	{
 		TriPatch newMeshTriangles;
-		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, totalMeshFlag,nullptr);
+		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, totalMeshFlag, tracer, nullptr);
+		if (tracer)
+		{
+			tracer->progress(0.4f);
+		}
 		TriPatch newCylinderTriangles;
-		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, cylinderFlag, m_debugger);
-		trimesh::TriMesh* Mout = generateAppendMesh(m_mesh, totalMeshFlag, newMeshTriangles, CylinderCollideOuter);
-		trimesh::TriMesh* Cyin = generateAppendMesh(m_cylinder, cylinderFlag, newCylinderTriangles, CylinderCollideInner);
+		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, cylinderFlag, tracer, m_debugger);
+		if (tracer)
+		{
+			tracer->progress(0.6f);
+		}
+		trimesh::TriMesh* Mout = generateAppendMesh(m_mesh, totalMeshFlag, newMeshTriangles, CylinderCollideOuter, tracer);
+		if (tracer)
+		{
+			tracer->progress(0.8f);
+		}
+		trimesh::TriMesh* Cyin = generateAppendMesh(m_cylinder, cylinderFlag, newCylinderTriangles, CylinderCollideInner, tracer);
+		if (tracer)
+		{
+			tracer->progress(0.9f);
+		}
 		return postProcess(Mout, Cyin);
 	}
 
