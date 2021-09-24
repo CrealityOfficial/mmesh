@@ -53,7 +53,7 @@ namespace mmesh
 	}
 
 	bool splitTriangle(const trimesh::vec3& v0, const trimesh::vec3& v1, const trimesh::vec3& v2,
-		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& newTriangles,std::vector<bool>& isInner)
+		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& newTriangles,std::vector<bool>& isInner, ccglobal::Tracer* tracer)
 	{
 		trimesh::vec3 normal = (v1 - v0) TRICROSS (v2 - v0);
 		trimesh::normalize(normal);
@@ -66,14 +66,29 @@ namespace mmesh
 		std::vector<int> vertexEdges;
 		std::vector<bool> edgeIsFirst;
 
-		auto vbe = [&vertexEdges](int pindex, int eindex) {
-			assert(pindex <= vertexEdges.size());
+		auto vbe = [&vertexEdges,&tracer](int pindex, int eindex) {
+			if (pindex > vertexEdges.size())
+			{
+				if (tracer)
+					tracer->failed("pindex <= vertexEdges.size()");
+			}
+			//assert(pindex <= vertexEdges.size());
 			if (pindex == vertexEdges.size())
 				vertexEdges.push_back(eindex);
+			if (vertexEdges[pindex] != eindex)
+			{
+				if (tracer)
+					tracer->message("vertexEdges[pindex] != eindex(v1 == v2)");
+			}
 			//assert(vertexEdges[pindex] == eindex);
 		};
-		auto fbe = [&edgeIsFirst](int pindex, bool first) {
-			assert(pindex <= edgeIsFirst.size());
+		auto fbe = [&edgeIsFirst,&tracer](int pindex, bool first) {
+			if (pindex > edgeIsFirst.size())
+			{
+				if (tracer)
+					tracer->failed("pindex > edgeIsFirst.size()");
+			}
+			//assert(pindex <= edgeIsFirst.size());
 			if (pindex == edgeIsFirst.size())
 				edgeIsFirst.push_back(first);
 			edgeIsFirst[pindex] = first;

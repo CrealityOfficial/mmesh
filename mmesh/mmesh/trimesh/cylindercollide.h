@@ -66,7 +66,7 @@ namespace mmesh
 
 		bool valid();
 
-		trimesh::TriMesh* drill();
+		trimesh::TriMesh* drill(ccglobal::Tracer* tracer);
 	protected:
 		void calculate();
 		void mycalculate();
