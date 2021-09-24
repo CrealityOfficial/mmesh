@@ -25,6 +25,8 @@ namespace mmesh
 		void autoDlpFaceSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam);
 	protected:
 		void build();
+
+		bool testInsert(trimesh::vec2& xy, float radius);
 	protected:
 		mmesh::TriangleChunk* m_triangleChunk;
 		mmesh::MeshTopo* m_meshTopo;
@@ -36,6 +38,10 @@ namespace mmesh
 		std::vector<float> m_dotValues;
 		std::vector<trimesh::vec3> m_faceNormals;
 		bool m_dirty;
+
+		std::vector<trimesh::vec2> supportsSamplePosition;
+		float minDelta;
+		float insertRadius;
 	};
 }
 #endif // CREATIVE_KERNEL_DLPQUICKDATA_SIMPLE_1597825964318_H

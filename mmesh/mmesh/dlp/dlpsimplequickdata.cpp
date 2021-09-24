@@ -145,6 +145,13 @@ namespace mmesh
 
 	void DLPSimpleQuickData::autoDlpSources(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam, int flag, bool cloud)
 	{
+		minDelta = 3.0f;
+		insertRadius = 2.0f;
+		float density = autoParam->density / 100.0f;
+		if (density <= 0.0f) density = 0.1f;
+		minDelta /= density;
+		insertRadius /= density;
+
 		if (flag & 1)
 		{
 			autoDlpVertexSource(sources, autoParam);
@@ -159,6 +166,8 @@ namespace mmesh
 		{
 			autoDlpFaceSource(sources, autoParam);
 		}
+
+		supportsSamplePosition.clear();
 	}
 
 	void DLPSimpleQuickData::autoDlpVertexSource(std::vector<DLPISource>& sources, AutoDLPSupportParam* autoParam)
@@ -168,8 +177,13 @@ namespace mmesh
 		for (int vertexID : supportVertexes)
 		{
 			vec3 vertex = m_vertexes.at(vertexID);
-			DLPISource dlpSource = generateSource(vertex, vec3(0.0f, 0.0f, -1.0f));
-			sources.push_back(dlpSource);
+			if (testInsert(trimesh::vec2(vertex.x, vertex.y), insertRadius))
+			{
+				DLPISource dlpSource = generateSource(vertex, vec3(0.0f, 0.0f, -1.0f));
+				sources.push_back(dlpSource);
+
+				supportsSamplePosition.push_back(trimesh::vec2(vertex.x, vertex.y));
+			}
 		}
 	}
 
@@ -182,7 +196,6 @@ namespace mmesh
 		else
 			m_meshTopo->hangEdge(m_vertexes, m_faceNormals, m_dotValues, faceCosValue, supportEdges);
 
-		float minDelta = 3.0f;
 		for (ivec2 vertexesID : supportEdges)
 		{
 			int vertexID1 = vertexesID.x;
@@ -199,8 +212,12 @@ namespace mmesh
 
 			std::vector<vec3> samplePoints;
 
-			samplePoints.push_back(vertex1);
-			samplePoints.push_back(vertex2);
+			auto inser = [this, &samplePoints](const vec3& p) {
+				if (testInsert(trimesh::vec2(p.x, p.y), insertRadius))
+					samplePoints.push_back(p);
+			};
+			inser(vertex1);
+			inser(vertex2);
 
 			int sampleEdgeNum = floorf(maxLen / minDelta) - 1;
 			if (sampleEdgeNum > 0)
@@ -210,7 +227,7 @@ namespace mmesh
 				{
 					float t = (float)(sampleIndex + 1) * dt;
 					vec3 p = vertex1 * (1.0f - t) + vertex2 * t;
-					samplePoints.push_back(p);
+					inser(p);
 				}
 			}
 
@@ -229,36 +246,10 @@ namespace mmesh
 		std::vector<std::vector<int>> supportFaces;
 		m_meshTopo->chunkFace(m_dotValues, supportFaces, faceCosValue);
 		
-		float minDelta = 3.0f;
-		float insertRadius = 2.0f;
-		float density = autoParam->density / 100.0f;
-		if (density <= 0.0f) density = 0.1f;
-		minDelta /= density;
-		insertRadius /= density;
-		
-
-		auto testInsert = [](std::vector<trimesh::vec2>& samples, trimesh::vec2& xy, float radius)->bool
-		{
-			bool canInsert = true;
-			float radius2 = radius * radius;
-			for (vec2& _xy : samples)
-			{
-				vec2 delta = _xy - xy;
-				if (trimesh::len2(delta) < radius2)
-				{
-					canInsert = false;
-					break;
-				}
-			}
-
-			return canInsert;
-		};
-
 		for (std::vector<int>& faceChunk : supportFaces)
 		{
 			std::vector<vec3> samplePoints;
 			std::vector<vec3> sampleNormals;
-			std::vector<vec2> supportsSamplePosition;
 
 			std::sort(faceChunk.begin(), faceChunk.end(), [this](int r1, int r2)->bool {
 				return m_dotValues.at(r1) < m_dotValues.at(r2);
@@ -273,7 +264,7 @@ namespace mmesh
 				vec3 normal = m_faceNormals.at(faceID);
 
 				vec2 xypoint = vec2(vertex1.x, vertex1.y);
-				if (testInsert(supportsSamplePosition, xypoint, insertRadius))
+				if (testInsert(xypoint, insertRadius))
 				{
 					samplePoints.push_back(vertex1);
 					sampleNormals.push_back(normal);
@@ -303,7 +294,7 @@ namespace mmesh
 								vec3 offset = tx * e12 + ty * e13;
 								vec3 point = offset + vertex1;
 								vec2 xypoint0 = vec2(point.x, point.y);
-								if (testInsert(supportsSamplePosition, xypoint0, insertRadius))
+								if (testInsert(xypoint0, insertRadius))
 								{
 									samplePoints.push_back(point);
 									sampleNormals.push_back(normal);
@@ -322,5 +313,22 @@ namespace mmesh
 				sources.push_back(dlpSource);
 			}
 		}
+	}
+
+	bool DLPSimpleQuickData::testInsert(trimesh::vec2& xy, float radius)
+	{
+		bool canInsert = true;
+		float radius2 = radius * radius;
+		for (vec2& _xy : supportsSamplePosition)
+		{
+			vec2 delta = _xy - xy;
+			if (trimesh::len2(delta) < radius2)
+			{
+				canInsert = false;
+				break;
+			}
+		}
+
+		return canInsert;
 	}
 }
