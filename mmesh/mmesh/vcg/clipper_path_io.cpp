@@ -3,8 +3,7 @@
 #endif
 
 #include"clipper_path_io.h"
-#if __APPLE__
-#else
+
 using namespace std;
 using namespace ClipperLib;
 
@@ -224,4 +223,3 @@ bool SVGBuilder::LoadFromBinaryFile(Paths &ppg, const string& filename, double s
   ifs.close();
   return true;
 }
-#endif
