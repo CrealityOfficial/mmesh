@@ -20,8 +20,6 @@
 * for more details.                                                         *
 *                                                                           *
 ****************************************************************************/
-#if __APPLE__
-#else
 #include <sstream>
 #include <string>
 #include "mmesh/vcg/trimesh_sampling .h"
@@ -40,6 +38,8 @@
 
 #include<clipper/clipper.hpp>
 #include "clipper_path_io.h"
+
+using namespace ClipperLib;
 namespace vcg
 {
     namespace CX_PoissonAlg {
@@ -1582,4 +1582,3 @@ void borderSamperPointOff(MyMesh* MeshSource, EdgeMeshType* em, ClipperLib::Path
 }//vcg End
 
 #endif // USE_VCG
-#endif
