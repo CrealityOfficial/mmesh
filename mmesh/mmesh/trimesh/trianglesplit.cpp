@@ -226,6 +226,119 @@ namespace mmesh
 				{
 					indexedgePolygons.push_back(validIndexPolygons.at(edgePolygon.at(i)));
 				}
+				//add triangle edge
+				for (int i = 0; i < 3; ++i)
+				{
+					std::vector<int> edgePoints = edgesPoints.at(i);
+					int startIndex = unionSize + i;
+					int endIndex = unionSize + (i + 1) % 3;
+
+					std::sort(edgePoints.begin(), edgePoints.end(), [&startIndex, &d3points](int i1, int i2)->bool {
+						trimesh::vec3 v1 = d3points.at(i1);
+						trimesh::vec3 v2 = d3points.at(i2);
+						trimesh::vec3 o = d3points.at(startIndex);
+						return trimesh::len(v1 - o) < trimesh::len(v2 - o);
+						});
+
+					std::vector<IndexSegment> pairs;
+					if (edgePoints.size() == 0)
+					{
+						IndexSegment pp;
+						pp.start = startIndex;
+						pp.end = endIndex;
+						pairs.push_back(pp);
+					}
+					else
+					{
+						if (edgeIsFirst.at(edgePoints.at(0)))
+						{
+							IndexSegment pp;
+							pp.start = startIndex;
+							pp.end = edgePoints.at(0);
+							pairs.push_back(pp);
+						}
+						if (!edgeIsFirst.at(edgePoints.back()))
+						{
+							IndexSegment pp;
+							pp.start = edgePoints.back();
+							pp.end = endIndex;
+							pairs.push_back(pp);
+						}
+
+						for (int ii = 0; ii < (int)edgePoints.size(); ii += 1)
+						{
+							int nextIndex = ii + 1;
+							if (nextIndex < edgePoints.size())
+							{
+								int s = edgePoints.at(ii);
+								int e = edgePoints.at(nextIndex);
+								if (!edgeIsFirst.at(s) && edgeIsFirst.at(e))
+								{
+									IndexSegment pp;
+									pp.start = s;
+									pp.end = e;
+									pairs.push_back(pp);
+								}
+							}
+						}
+					}
+
+
+					for (IndexSegment& pp : pairs)
+					{
+						IndexPolygon ip;
+						ip.start = pp.start;
+						ip.end = pp.end;
+						ip.polygon.push_back(ip.start);
+						ip.polygon.push_back(ip.end);
+						indexedgePolygons.push_back(ip);
+					}
+				}
+
+				mergeIndexPolygon(indexedgePolygons);
+				int validEdgeSize = (int)indexedgePolygons.size();
+				for (int i = 0; i < validEdgeSize; ++i)
+				{
+					std::list<int>& polygon = indexedgePolygons.at(i).polygon;
+					if((polygon.size() <= 2) ||(polygon.front() != polygon.back()))
+						continue;
+					std::vector<int> inpolygon;
+					inpolygon.insert(inpolygon.end(), polygon.begin(), polygon.end());
+					polygons.push_back(inpolygon);
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < innerPolygonSize; ++i)
+			{
+				int index = innerPolygon.at(i);
+				IndexPolygon& ipolygon = validIndexPolygons.at(index);
+				if (ipolygon.closed())
+				{
+					std::vector<int> polygon;
+					polygon.insert(polygon.end(), ipolygon.polygon.rend(), ipolygon.polygon.rbegin());
+					polygons.push_back(polygon);
+				}
+				else
+				{
+					//assert(false);
+				}
+			}
+
+			{
+				std::vector<std::vector<int>> edgesPoints(3);
+				for (int i = 0; i < unionSize; ++i)
+				{
+					if (vertexEdges.at(i) >= 0)
+						edgesPoints.at(vertexEdges.at(i)).push_back(i);
+				}
+
+				std::vector<IndexPolygon> indexedgePolygons;
+				for (int i = 0; i < edgePolygonSize; ++i)
+				{
+					indexedgePolygons.push_back(validIndexPolygons.at(edgePolygon.at(i)));
+				}
 				std::vector<bool> ploygonsTure;
 				ploygonsTure.resize(edgePolygonSize, true);
 
@@ -396,119 +509,6 @@ namespace mmesh
 						ip.polygon.push_back(ip.end);
 						indexedgePolygons.push_back(ip);
 						ploygonsTure.push_back(true);
-					}
-				}
-
-				mergeIndexPolygon(indexedgePolygons);
-				int validEdgeSize = (int)indexedgePolygons.size();
-				for (int i = 0; i < validEdgeSize; ++i)
-				{
-					std::list<int>& polygon = indexedgePolygons.at(i).polygon;
-					if((polygon.size() <= 2) ||(polygon.front() != polygon.back()))
-						continue;
-					std::vector<int> inpolygon;
-					inpolygon.insert(inpolygon.end(), polygon.begin(), polygon.end());
-					polygons.push_back(inpolygon);
-				}
-			}
-		}
-		else
-		{
-			for (int i = 0; i < innerPolygonSize; ++i)
-			{
-				int index = innerPolygon.at(i);
-				IndexPolygon& ipolygon = validIndexPolygons.at(index);
-				if (ipolygon.closed())
-				{
-					std::vector<int> polygon;
-					polygon.insert(polygon.end(), ipolygon.polygon.rend(), ipolygon.polygon.rbegin());
-					polygons.push_back(polygon);
-				}
-				else
-				{
-					//assert(false);
-				}
-			}
-
-			{
-				std::vector<std::vector<int>> edgesPoints(3);
-				for (int i = 0; i < unionSize; ++i)
-				{
-					if (vertexEdges.at(i) >= 0)
-						edgesPoints.at(vertexEdges.at(i)).push_back(i);
-				}
-
-				std::vector<IndexPolygon> indexedgePolygons;
-				for (int i = 0; i < edgePolygonSize; ++i)
-				{
-					indexedgePolygons.push_back(validIndexPolygons.at(edgePolygon.at(i)));
-				}
-
-				//add triangle edge
-				for (int i = 0; i < 3; ++i)
-				{
-					std::vector<int> edgePoints = edgesPoints.at(i);
-					int startIndex = unionSize + i;
-					int endIndex = unionSize + (i + 1) % 3;
-
-					std::sort(edgePoints.begin(), edgePoints.end(), [&startIndex, &d3points](int i1, int i2)->bool {
-						trimesh::vec3 v1 = d3points.at(i1);
-						trimesh::vec3 v2 = d3points.at(i2);
-						trimesh::vec3 o = d3points.at(startIndex);
-						return trimesh::len(v1 - o) < trimesh::len(v2 - o);
-						});
-
-					std::vector<IndexSegment> pairs;
-					if (edgePoints.size() == 0)
-					{
-						IndexSegment pp;
-						pp.start = startIndex;
-						pp.end = endIndex;
-						pairs.push_back(pp);
-					}
-					else
-					{
-						if (!edgeIsFirst.at(edgePoints.at(0)))
-						{
-							IndexSegment pp;
-							pp.start = startIndex;
-							pp.end = edgePoints.at(0);
-							pairs.push_back(pp);
-						}
-						if (edgeIsFirst.at(edgePoints.back()))
-						{
-							IndexSegment pp;
-							pp.start = edgePoints.back();
-							pp.end = endIndex;
-							pairs.push_back(pp);
-						}
-
-						for (int ii = 0; ii < (int)edgePoints.size(); ii += 1)
-						{
-							int nextIndex = ii + 1;
-							if (nextIndex < edgePoints.size())
-							{
-								int s = edgePoints.at(ii);
-								int e = edgePoints.at(nextIndex);
-								if (edgeIsFirst.at(s) && !edgeIsFirst.at(e))
-								{
-									IndexSegment pp;
-									pp.start = s;
-									pp.end = e;
-									pairs.push_back(pp);
-								}
-							}
-						}
-					}
-
-					for (IndexSegment& pp : pairs)
-					{
-						IndexPolygon ip;
-						ip.start = pp.end;
-						ip.end = pp.start;
-						ip.polygon.push_back(ip.start);
-						ip.polygon.push_back(ip.end);
-						indexedgePolygons.push_back(ip);
 					}
 				}
 
