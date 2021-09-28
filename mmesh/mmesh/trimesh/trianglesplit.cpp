@@ -226,6 +226,8 @@ namespace mmesh
 				{
 					indexedgePolygons.push_back(validIndexPolygons.at(edgePolygon.at(i)));
 				}
+				std::vector<bool> ploygonsTure;
+				ploygonsTure.resize(edgePolygonSize, true);
 
 				//add triangle edge
 				for (int i = 0; i < 3; ++i)
@@ -251,21 +253,86 @@ namespace mmesh
 					}
 					else
 					{
-						if (edgeIsFirst.at(edgePoints.at(0)))
+						if (!edgeIsFirst.at(edgePoints.at(0)))
 						{
+							int s = edgePoints.at(0);
+							for (int j = 0; j < edgePoints.size(); j++)
+							{
+								if (!edgeIsFirst.at(edgePoints.at(j)))
+									s = edgePoints.at(j);
+								else
+									break;
+							}
+							if (s != edgePoints.at(0))
+							{
+								for (size_t i = 0; i < indexedgePolygons.size(); i++)
+								{
+									if (indexedgePolygons[i].end == edgePoints.at(0))
+									{
+										ploygonsTure[i] = false;
+									}
+								}
+							}
+							else
+							{
+								for (size_t i = 0; i < indexedgePolygons.size(); i++)
+								{
+									if (indexedgePolygons[i].end == s)
+									{
+										if (!ploygonsTure[i])
+										{
+											s = endIndex;
+										}
+									}
+								}
+							}
+
 							IndexSegment pp;
 							pp.start = startIndex;
-							pp.end = edgePoints.at(0);
+							pp.end = s;
 							pairs.push_back(pp);
 						}
-						if (!edgeIsFirst.at(edgePoints.back()))
+						if (edgeIsFirst.at(edgePoints.back()))
 						{
+							int e = edgePoints.back();
+							for (int j = edgePoints.size() - 1; j >= 0; j--)
+							{
+								if (edgeIsFirst.at(edgePoints.at(j)))
+									e = edgePoints.at(j);
+								else
+									break;
+							}
+							if (e != edgePoints.back())
+							{
+								for (size_t i = 0; i < indexedgePolygons.size(); i++)
+								{
+									if (indexedgePolygons[i].start == edgePoints.back())
+									{
+										ploygonsTure[i] = false;
+									}
+								}
+							}
+							else
+							{
+								for (size_t i = 0; i < indexedgePolygons.size(); i++)
+								{
+									if (indexedgePolygons[i].start == e)
+									{
+										if (!ploygonsTure[i])
+										{
+											e = startIndex;
+										}
+									}
+								}
+							}
+
 							IndexSegment pp;
-							pp.start = edgePoints.back();
+							pp.start = e;
 							pp.end = endIndex;
 							pairs.push_back(pp);
 						}
 
+						int sinit = 0;
 						for (int ii = 0; ii < (int)edgePoints.size(); ii += 1)
 						{
 							int nextIndex = ii + 1;
@@ -273,8 +340,45 @@ namespace mmesh
 							{
 								int s = edgePoints.at(ii);
 								int e = edgePoints.at(nextIndex);
-								if (!edgeIsFirst.at(s) && edgeIsFirst.at(e))
+
+								if (edgeIsFirst.at(s) && !edgeIsFirst.at(e))
 								{
+									for (int j = ii; j >= 0; j--)
+									{
+										if (edgeIsFirst.at(edgePoints.at(j)))
+											s = edgePoints.at(j);
+										else
+											break;
+									}
+									if (s != edgePoints.at(ii))
+									{
+										for (size_t i = 0; i < indexedgePolygons.size(); i++)
+										{
+											if (indexedgePolygons[i].start == s)
+											{
+												ploygonsTure[i] = false;
+											}
+										}
+									}
+
+
+									for (int k = nextIndex; k < (int)edgePoints.size(); k++)
+									{
+										if (!edgeIsFirst.at(edgePoints.at(k)))
+											e = edgePoints.at(k);
+										else
+											break;
+									}
+									if (e != edgePoints.at(nextIndex))
+									{
+										for (size_t i = 0; i < indexedgePolygons.size(); i++)
+										{
+											if (indexedgePolygons[i].end == e)
+											{
+												ploygonsTure[i] = false;
+											}
+										}
+									}
 									IndexSegment pp;
 									pp.start = s;
 									pp.end = e;
@@ -283,16 +387,15 @@ namespace mmesh
 							}
 						}
 					}
-
-
 					for (IndexSegment& pp : pairs)
 					{
 						IndexPolygon ip;
-						ip.start = pp.start;
-						ip.end = pp.end;
+						ip.start = pp.end;
+						ip.end = pp.start;
 						ip.polygon.push_back(ip.start);
 						ip.polygon.push_back(ip.end);
 						indexedgePolygons.push_back(ip);
+						ploygonsTure.push_back(true);
 					}
 				}
 
