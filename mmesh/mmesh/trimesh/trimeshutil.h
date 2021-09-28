@@ -69,7 +69,7 @@ namespace mmesh
 	void saveVectorT(std::fstream& out, std::vector<T>& vecs)
 	{
 		int num = (int)vecs.size();
-		loadT(in, num);
+		saveT(out, num);
 		if (num > 0)
 			out.write((const char*)&vecs.at(0), num * sizeof(T));
 	}
