@@ -352,7 +352,7 @@ namespace mmesh
 		box += extendMin;
 		box += extendMax;
 
-		box.min.z = -3.0f;
+		box.min.z = -0.5f;
 		box.max.z = 0.0f;
 		trimesh::TriMesh* mesh = createBox(box);
 		return mesh;
