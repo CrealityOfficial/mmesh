@@ -4,13 +4,18 @@
 #include "trimesh2/Vec3Utils.h"
 #include "mmesh/common/print.h"
 #include "mmesh/trimesh/uniformpoints.h"
+#include "mmesh/trimesh/quaternion.h"
+#include "mmesh/util/mnode.h"
+#include "mmesh/create/createcylinder.h"
+#include <mmesh/trimesh/algrithm3d.h>
 
 #include <map>
 #include <list>
 #include <assert.h>
 #include <cmath>
-#include "mmesh/trimesh/quaternion.h"
-#include "mmesh/util/mnode.h"
+#include <algorithm>
+#include <functional>
+
 
 namespace mmesh
 {
@@ -454,7 +459,7 @@ namespace mmesh
 	}
 	
 	OptimizeCylinderCollide::OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
-		trimesh::point pointStart, trimesh::point pointEnd,
+		double radius, double depth, trimesh::point pointStart, trimesh::point dir,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger)
 		:m_mesh(mesh)
 		, m_cylinder(cylinder)
@@ -462,8 +467,10 @@ namespace mmesh
 		, m_tracer(tracer)
 		, m_debugger(debugger)
 		, cylinderTriangles(0)
-		, m_pointStart(pointStart)
-		, m_pointEnd(pointEnd)
+		, m_cylinderRadius(radius)
+		, m_cylinderDepth(depth)
+		, m_cylinderPointStart(pointStart)
+		, m_cylinderDir(dir)
 	{
 		if (m_mesh && m_cylinder && m_mesh->faces.size() > 0)
 			mycalculate();
@@ -568,28 +575,35 @@ namespace mmesh
 		}
 	}
 
-
 	void OptimizeCylinderCollide::mycalculate()
 	{
 		int faces = (int)m_mesh->faces.size();
 		totalMeshFlag.resize(faces, 0);
-		m_cylinder->need_bbox();
-		box3 cylinderBox_old = m_cylinder->bbox;
+		//m_cylinder->need_bbox();
+		//box3 cylinderBox_old = m_cylinder->bbox;
 
 		mmesh::point ZAXIS(0.0f,0.0f,1.0f);
-		trimesh::vec3 ax = trimesh::normalized(m_pointEnd- m_pointStart);
+		trimesh::vec3 ax = m_cylinderDir;
 		trimesh::quaternion quat= trimesh::quaternion::fromDirection(ax, ZAXIS);
 
 		trimesh::fxform xf = mmesh::fromQuaterian(quat);
 
+		m_mesh->need_bbox();
+		m_cylinderPointStart = m_cylinderPointStart + 2 * (-m_cylinderDir);
+		double cylinderInitDepth = 2 * m_mesh->bbox.radius() + 2;
 
-		box3 cylinderBox_new;
-		int cylinderVertexNum = (int)m_cylinder->vertices.size();
-		for (int i = 0; i < cylinderVertexNum; ++i)
-		{
-			trimesh::vec3 v = xf * m_cylinder->vertices.at(i);
-			cylinderBox_new += v;
-		}
+		//box3 cylinderBox_new;
+		//int cylinderVertexNum = (int)m_cylinder->vertices.size();
+		//for (int i = 0; i < cylinderVertexNum; ++i)
+		//{
+		//	trimesh::vec3 v = xf * m_cylinder->vertices.at(i);
+		//	cylinderBox_new += v;
+		//}
+		
+		trimesh::vec3 newStartPos = xf * m_cylinderPointStart;
+		trimesh::vec3 boxMin = trimesh::vec3(newStartPos.x - m_cylinderRadius, newStartPos.y - m_cylinderRadius, newStartPos.z);
+		trimesh::vec3 boxMax = trimesh::vec3(newStartPos.x + m_cylinderRadius, newStartPos.y + m_cylinderRadius, newStartPos.z + cylinderInitDepth);
+		box3 cylinderBox_new(boxMin, boxMax);
 
 		for (int i = 0; i < faces; ++i)
 		{
@@ -609,6 +623,20 @@ namespace mmesh
 			{
 				totalMeshFlag.at(i) = 1;
 			}
+		}
+
+		// 确定打孔实际深度，生成圆柱体网格
+		m_cylinderDepth = getDrillDepth();
+		if (m_cylinderDepth <= 0)
+			return;
+
+		m_cylinderDepth += 2.0;
+
+		m_cylinder = createCylinderMesh(newStartPos, newStartPos + m_cylinderDepth * ZAXIS, m_cylinderRadius, 30, 0.0);
+		trimesh::fxform invXF = trimesh::inv(xf);
+		for (int i = 0; i < m_cylinder->vertices.size(); ++i)
+		{
+			m_cylinder->vertices[i] = invXF * m_cylinder->vertices[i];
 		}
 
 		focusTriangle = (int)meshFocusFaces.size();
@@ -645,6 +673,7 @@ namespace mmesh
 		if (m_debugger)
 			m_debugger->onCylinderBoxFocus(meshFocusFaces);
 
+
 		meshTris.resize(focusTriangle);
 		cylinderTris.resize(cylinderTriangles);
 
@@ -674,6 +703,228 @@ namespace mmesh
 			m_debugger->onMeshCollide(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideCollide));
 			m_debugger->onMeshInner(generatePatchMesh(m_cylinder, cylinderFlag, CylinderCollideInner));
 		}
+	}
+
+	double OptimizeCylinderCollide::getDrillDepth()
+	{
+		// focus 集合按照离打孔起点距离由近及远排序
+		std::map<int, double> faceDisMap;
+		for (int i = 0; i < meshFocusFacesMapper.size(); i++)
+		{
+			trimesh::TriMesh::Face& face = m_mesh->faces[meshFocusFacesMapper[i]];
+			double dis20 = trimesh::dist2(m_cylinderPointStart, m_mesh->vertices[face[0]]);
+			double dis21 = trimesh::dist2(m_cylinderPointStart, m_mesh->vertices[face[1]]);
+			double dis22 = trimesh::dist2(m_cylinderPointStart, m_mesh->vertices[face[2]]);
+			faceDisMap[meshFocusFacesMapper[i]] = std::min(dis20, std::min(dis21, dis22));
+		}
+
+		trimesh::TriMesh* modelMesh = m_mesh;
+		trimesh::vec3 cylinderStartPos = m_cylinderPointStart;
+		std::function<bool(int, int)> compareFunc = [&modelMesh, &cylinderStartPos, &faceDisMap](int A, int B)->bool
+		{
+			double dis2A = faceDisMap[A];
+			double dis2B = faceDisMap[B];
+
+			return dis2A < dis2B;
+		};
+		std::sort(meshFocusFacesMapper.begin(), meshFocusFacesMapper.end(), compareFunc);
+
+		int i;
+		int layerFlag = 0;
+		int layerCount = 0;
+		float t, u, v;
+		double drillDepth = 0.0;
+		double presetDepth2 = m_cylinderDepth * m_cylinderDepth;
+		trimesh::dvec3 intersectedPos(NAN, NAN, NAN);
+		for (i = 0; i < meshFocusFacesMapper.size(); i++)
+		{
+			trimesh::TriMesh::Face& face = m_mesh->faces[meshFocusFacesMapper[i]];
+			bool isIntersected = rayIntersectTriangle(m_cylinderPointStart, m_cylinderDir, m_mesh->vertices[face[0]], m_mesh->vertices[face[1]], m_mesh->vertices[face[2]],
+				&t, &u, &v);
+			if (isIntersected)
+			{
+				trimesh::vec3 faceNormal = trimesh::normalized((m_mesh->vertices[face[1]] - m_mesh->vertices[face[0]]) TRICROSS(m_mesh->vertices[face[2]] - m_mesh->vertices[face[0]]));
+				if (faceNormal.dot(m_cylinderDir) < 0)
+					layerFlag = 1;
+				else if (layerFlag > 0)
+					layerFlag = -1;
+
+				intersectedPos = m_cylinderPointStart + t * m_cylinderDir;
+
+				double depth2 = trimesh::dist2(intersectedPos, trimesh::dvec3(m_cylinderPointStart));
+
+				if (m_cylinderDepth > 0)
+				{
+					if (depth2 < presetDepth2 && layerFlag == -1)
+					{
+						drillDepth = depth2;
+						layerFlag = 0;
+					}
+					else if (depth2 >= presetDepth2)
+						break;
+				}
+				else if(layerFlag == -1)
+				{
+					drillDepth = depth2;
+					break;
+				}
+			}
+		}
+
+		 // 剔除距离比打孔深度长的三角面（暂不启用）
+		if (drillDepth > 0)
+		{
+			drillDepth = sqrt(drillDepth);
+
+			//double offset = 100;
+			//double farthestFaceDis = drillDepth;
+			//do
+			//{
+			//	i++;
+			//} while (i < meshFocusFacesMapper.size() && fabs(faceDisMap[meshFocusFacesMapper[i]] - farthestFaceDis) < offset);
+
+			if (i < meshFocusFacesMapper.size())
+			{
+				for (int j = i; j < meshFocusFacesMapper.size(); j++)
+				{
+					totalMeshFlag[meshFocusFacesMapper[j]] = 1;
+				}
+
+				meshFocusFacesMapper.erase(meshFocusFacesMapper.begin() + i, meshFocusFacesMapper.end());
+			}
+
+			meshFocusFaces.clear();
+			for (i = 0; i < meshFocusFacesMapper.size(); i++)
+			{
+				meshFocusFaces.push_back(m_mesh->faces[meshFocusFacesMapper[i]]);
+			}
+		}
+
+		return drillDepth;
+	}
+
+	bool OptimizeCylinderCollide::lineCollideTriangle(trimesh::dvec3 linePos, trimesh::dvec3 lineDir, trimesh::dvec3 A, trimesh::dvec3 B, trimesh::dvec3 C, trimesh::dvec3& intersectedPos)
+	{
+		trimesh::dvec3 faceNormal = trimesh::normalized((B - A) TRICROSS(C - A));
+
+		double temp = lineDir.x * faceNormal.x + lineDir.y * faceNormal.y + lineDir.z * faceNormal.z;
+		if (temp == 0)
+			return false;
+
+		double t = ((A.x - linePos.x) * faceNormal.x + (A.y - linePos.y) * faceNormal.y + (A.z - linePos.z) * faceNormal.z) / temp;
+
+		trimesh::dvec3 intersecedPosTemp(lineDir.x * t + linePos.x, lineDir.y * t + linePos.y, lineDir.z * t + linePos.z);
+
+		trimesh::dvec3 v0 = C - A;
+		trimesh::dvec3 v1 = B - A;
+		trimesh::dvec3 v2 = intersecedPosTemp - A;
+		double dot00 = v0 DOT v0;
+		double dot01 = v0 DOT v1;
+		double dot02 = v0 DOT v2;
+		double dot11 = v1 DOT v1;
+		double dot12 = v1 DOT v2;
+
+		double bottom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+		double u = (dot11 * dot02 - dot01 * dot12) * bottom;
+		double v = (dot00 * dot12 - dot01 * dot02) * bottom;
+		if (u >= 0 && v >= 0 && u + v <= 1)
+		{
+			intersectedPos = intersecedPosTemp;
+			return true;
+		}
+
+		return false;
+	}
+
+	trimesh::TriMesh* OptimizeCylinderCollide::createCylinderMesh(trimesh::vec3 top, trimesh::vec3 bottom, float radius, int num, float theta)
+	{
+		trimesh::TriMesh* mesh = new trimesh::TriMesh();
+
+		int hPart = num;
+
+		trimesh::vec3 start = bottom;
+		trimesh::vec3 end = top;
+
+		trimesh::vec3 dir = trimesh::normalized(end - start);
+		trimesh::quaternion q = trimesh::quaternion::fromDirection(dir, trimesh::vec3(0.0f, 0.0f, 1.0f));
+
+		theta *= M_PIf / 180.0f;
+		float deltaTheta = M_PIf * 2.0f / (float)(hPart);
+		std::vector<float> cosValue;
+		std::vector<float> sinValue;
+		for (int i = 0; i < hPart; ++i)
+		{
+			cosValue.push_back(cos(deltaTheta * (float)i + theta));
+			sinValue.push_back(sin(deltaTheta * (float)i + theta));
+		}
+
+		std::vector<trimesh::vec3> baseNormals;
+		for (int i = 0; i < hPart; ++i)
+		{
+			baseNormals.push_back(trimesh::vec3(cosValue[i], sinValue[i], 0.0f));
+		}
+
+		int vertexNum = 2 * hPart;
+		std::vector<trimesh::vec3> points(vertexNum);
+		int faceNum = 4 * hPart - 4;
+		mesh->faces.resize(faceNum);
+
+		int vertexIndex = 0;
+		for (int i = 0; i < hPart; ++i)
+		{
+			trimesh::vec3 n = q * baseNormals[i];
+			trimesh::vec3 s = start + n * radius;
+			points.at(vertexIndex) = trimesh::vec3(s.x, s.y, s.z);
+			++vertexIndex;
+			trimesh::vec3 e = end + n * radius;
+			points.at(vertexIndex) = trimesh::vec3(e.x, e.y, e.z);
+			++vertexIndex;
+		}
+		mesh->vertices.swap(points);
+
+		auto fvindex = [&hPart](int layer, int index)->int {
+			return layer + 2 * index;
+		};
+
+		int faceIndex = 0;
+		for (int i = 0; i < hPart; ++i)
+		{
+			int v1 = fvindex(0, i);
+			int v2 = fvindex(1, i);
+			int v3 = fvindex(0, (i + 1) % hPart);
+			int v4 = fvindex(1, (i + 1) % hPart);
+
+			trimesh::TriMesh::Face& f1 = mesh->faces.at(faceIndex);
+			f1[0] = v1;
+			f1[1] = v3;
+			f1[2] = v2;
+			++faceIndex;
+			trimesh::TriMesh::Face& f2 = mesh->faces.at(faceIndex);
+			f2[0] = v2;
+			f2[1] = v3;
+			f2[2] = v4;
+			++faceIndex;
+		}
+
+		for (int i = 1; i < hPart - 1; ++i)
+		{
+			trimesh::TriMesh::Face& f1 = mesh->faces.at(faceIndex);
+			f1[0] = 0;
+			f1[1] = fvindex(0, i + 1);
+			f1[2] = fvindex(0, i);
+			++faceIndex;
+		}
+
+		for (int i = 1; i < hPart - 1; ++i)
+		{
+			trimesh::TriMesh::Face& f1 = mesh->faces.at(faceIndex);
+			f1[0] = 1;
+			f1[1] = fvindex(1, i);
+			f1[2] = fvindex(1, i + 1);
+			++faceIndex;
+		}
+
+		return mesh;
 	}
 
 	bool OptimizeCylinderCollide::valid()

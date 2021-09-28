@@ -14,8 +14,9 @@ namespace mmesh
 	trimesh::TriMesh* drill(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger);
 
+	// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
 	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
-		const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
+		double& radius, double& depth, const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger);
 }
 
