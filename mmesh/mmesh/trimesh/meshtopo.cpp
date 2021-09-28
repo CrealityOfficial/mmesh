@@ -459,7 +459,7 @@ namespace mmesh
 								else if ((G.z - E.z >= 0.0) && (H.z - E.z >= 0.0))
 								{
 									//两个面法向量同时向下,且有一个是水平面
-									if(1)
+									if(0)
 									{
 										float faceCosValue = acosf(dotValues.at(faceID)) * 180.0 / M_PIf;
 										float oppofaceCosValue = acosf(dotValues.at(oppoFaceID)) * 180.0 / M_PIf;
