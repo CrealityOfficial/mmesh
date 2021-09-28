@@ -83,7 +83,7 @@ namespace mmesh
 	}
 
 	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
-		const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
+		double& radius, double& depth, const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger)
 	{
 		if (!mesh || !cylinderMesh)
@@ -105,7 +105,7 @@ namespace mmesh
 			return nullptr;
 		}
 
-		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, startPosition, endPosition, tracer, debugger);
+		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, radius, depth, startPosition, endPosition, tracer, debugger);
 
 		if (!cylinderCollider.valid())
 		{

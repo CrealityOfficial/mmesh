@@ -59,8 +59,9 @@ namespace mmesh
 		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
 			
+		// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
 		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
-			trimesh::point pointStart, trimesh::point pointEnd,
+			double radius, double depth, trimesh::point pointStart, trimesh::point dir,
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
 		~OptimizeCylinderCollide();
 
@@ -70,6 +71,10 @@ namespace mmesh
 	protected:
 		void calculate();
 		void mycalculate();
+
+		double getDrillDepth();
+		bool lineCollideTriangle(trimesh::dvec3 linePos, trimesh::dvec3 lineDir, trimesh::dvec3 A, trimesh::dvec3 B, trimesh::dvec3 C, trimesh::dvec3& intersectedPos);
+		trimesh::TriMesh* createCylinderMesh(trimesh::vec3 top, trimesh::vec3 bottom, float radius, int num = 20, float theta = 0.0);
 
 		trimesh::TriMesh* postProcess(trimesh::TriMesh* Mout, trimesh::TriMesh* Cin);
 	protected:
@@ -92,8 +97,10 @@ namespace mmesh
 		ccglobal::Tracer* m_tracer;
 		DrillDebugger* m_debugger;
 
-		trimesh::point m_pointStart; 
-		trimesh::point m_pointEnd; 
+		double m_cylinderRadius;
+		double m_cylinderDepth;
+		trimesh::point m_cylinderPointStart; 
+		trimesh::point m_cylinderDir; 
 	};
 }
 
