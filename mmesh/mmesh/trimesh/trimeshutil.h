@@ -57,7 +57,8 @@ namespace mmesh
 	template<class T>
 	void loadVectorT(std::fstream& in, std::vector<T>& vecs)
 	{
-		int num = (int)vecs.size();
+		int num = 0;
+		loadT(in, num);
 		if (num > 0)
 		{
 			vecs.resize(num);
