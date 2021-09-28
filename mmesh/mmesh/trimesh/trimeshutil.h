@@ -1,6 +1,8 @@
 #ifndef MMESH_TRIMESHUTIL_1602590289222_H
 #define MMESH_TRIMESHUTIL_1602590289222_H
 #include <vector>
+#include <fstream>
+
 #include "trimesh2/XForm.h"
 #include "trimesh2/Box.h"
 
@@ -36,6 +38,41 @@ namespace mmesh
 	void convertUV2Equ(trimesh::TriMesh* mesh);
 
 	void flipZ(trimesh::TriMesh* mesh);
+
+	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh);
+	void saveTrimesh(std::fstream& out, trimesh::TriMesh& mesh);
+
+	template<class T>
+	void loadT(std::fstream& in, T& t)
+	{
+		in.read((char*)&t, sizeof(T));
+	}
+
+	template<class T>
+	void saveT(std::fstream& out, T& t)
+	{
+		out.write((const char*)&t, sizeof(T));
+	}
+
+	template<class T>
+	void loadVectorT(std::fstream& in, std::vector<T>& vecs)
+	{
+		int num = (int)vecs.size();
+		if (num > 0)
+		{
+			vecs.resize(num);
+			in.read((char*)&vecs.at(0), num * sizeof(T));
+		}
+	}
+
+	template<class T>
+	void saveVectorT(std::fstream& out, std::vector<T>& vecs)
+	{
+		int num = (int)vecs.size();
+		loadT(in, num);
+		if (num > 0)
+			out.write((const char*)&vecs.at(0), num * sizeof(T));
+	}
 }
 
 #endif // MMESH_TRIMESHUTIL_1602590289222_H

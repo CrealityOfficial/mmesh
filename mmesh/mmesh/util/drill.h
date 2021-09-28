@@ -18,6 +18,17 @@ namespace mmesh
 	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
 		double& radius, double& depth, const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger);
+
+	struct DrillInputCache
+	{
+		trimesh::TriMesh* mesh;
+		double radius;
+		trimesh::vec3 start;
+		trimesh::vec3 dir;
+	};
+
+	bool saveDrill(const std::string& fileName, const DrillInputCache& cache);
+	bool loadDrill(const std::string& fileName, DrillInputCache& cache);
 }
 
 #endif // MMESH_DRILL_1631339010743_H
