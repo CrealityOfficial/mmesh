@@ -7,6 +7,7 @@
 #include "mmesh/trimesh/trimeshutil.h"
 
 #include <assert.h>
+#include <fstream>
 
 namespace mmesh
 {
@@ -35,37 +36,6 @@ namespace mmesh
 				tracer->failed("mesh or cylinder (vertex, face) is empty.");
 			return nullptr;
 		}
-
-
-		//trimesh::point pointStart;
-		//trimesh::point pointEnd;
-		//float radius;
-		//std::string filenemae ="F:/GitSource/Gerrit_DockerViz/DockerViz/data/drill/cyPosition.txt";
-		//FILE* F2 = fopen(filenemae.c_str(), "rb");
-		//if (F2)
-		//{
-
-		//	float X;
-		//	float Y;
-		//	float Z;
-
-		//	fread(&X, sizeof(float), 1, F2);
-		//	fread(&Y, sizeof(float), 1, F2);
-		//	fread(&Z, sizeof(float), 1, F2);
-		//	pointStart.at(0) = X;
-		//	pointStart.at(1) = Y;
-		//	pointStart.at(2) = Z;
-
-		//	fread(&X, sizeof(float), 1, F2);
-		//	fread(&Y, sizeof(float), 1, F2);
-		//	fread(&Z, sizeof(float), 1, F2);
-		//	pointEnd.at(0) = X;
-		//	pointEnd.at(1) = Y;
-		//	pointEnd.at(2) = Z;
-		//	fread(&radius, sizeof(float), 1, F2);
-		//	fclose(F2);
-		//}
-		//OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, pointStart, pointEnd, radius,tracer, debugger);
 
 		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, tracer, debugger);
 		if (!cylinderCollider.valid())
@@ -116,5 +86,39 @@ namespace mmesh
 		}
 
 		return cylinderCollider.drill(tracer);
+	}
+
+	bool saveDrill(const std::string& fileName, const DrillInputCache& cache)
+	{
+		if (!cache.mesh)
+			return false;
+
+		std::fstream out(fileName, std::ios::out | std::ios::binary);
+		if (out.is_open())
+		{
+			saveTrimesh(out, *cache.mesh);
+			saveT(out, cache.radius);
+			saveT(out, cache.start);
+			saveT(out, cache.dir);
+		}
+
+		out.close();
+		return true;
+	}
+
+	bool loadDrill(const std::string& fileName, DrillInputCache& cache)
+	{
+		std::fstream in(fileName, std::ios::in | std::ios::binary);
+		if (in.is_open())
+		{
+			cache.mesh = new trimesh::TriMesh();
+			loadTrimesh(in, *cache.mesh);
+			loadT(in, cache.radius);
+			loadT(in, cache.start);
+			loadT(in, cache.dir);
+		}
+
+		in.close();
+		return true;
 	}
 }

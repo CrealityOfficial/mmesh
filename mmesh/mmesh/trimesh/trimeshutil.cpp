@@ -471,4 +471,16 @@ namespace mmesh
 			* trimesh::xform::trans(-b.center());
 		trimesh::apply_xform(mesh, xf);
 	}
+
+	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh)
+	{
+		loadVectorT(in, mesh.vertices);
+		loadVectorT(in, mesh.faces);
+	}
+
+	void saveTrimesh(std::fstream& out, trimesh::TriMesh& mesh)
+	{
+		saveVectorT(out, mesh.vertices);
+		saveVectorT(out, mesh.faces);
+	}
 }
