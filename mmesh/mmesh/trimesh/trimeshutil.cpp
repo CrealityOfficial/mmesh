@@ -7,6 +7,7 @@
 
 #include "mmesh/create/ballcreator.h"
 #include "ccglobal/tracer.h"
+#include "ccglobal/spycc.h"
 
 namespace mmesh
 {
@@ -298,8 +299,12 @@ namespace mmesh
 				vertexMapper.at(i) = index;
 			}
 
-			if(i % 100000 == 1)
+			if (i % 100000 == 1)
+			{
 				formartPrint(tracer, "dumplicateMesh %i", (int)i);
+
+				SESSION_TICK("dumplicateMesh")
+			}
 		}
 
 		formartPrint(tracer, "dumplicateMesh over %d", (int)points.size());
@@ -326,7 +331,9 @@ namespace mmesh
 		mesh->faces.swap(omesh->faces);
 		mesh->need_bbox();
 
+		SESSION_TICK("dumplicateMesh")
 		delete omesh;
+		SESSION_TICK("dumplicateMesh")
 	}
 
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan)
