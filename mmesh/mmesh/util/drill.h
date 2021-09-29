@@ -30,9 +30,7 @@ namespace mmesh
 	struct DrillInputCache
 	{
 		trimesh::TriMesh* mesh;
-		double radius;
-		trimesh::vec3 start;
-		trimesh::vec3 dir;
+		DrillParam param;
 	};
 
 	bool saveDrill(const std::string& fileName, const DrillInputCache& cache);

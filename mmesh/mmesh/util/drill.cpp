@@ -94,9 +94,7 @@ namespace mmesh
 		if (out.is_open())
 		{
 			saveTrimesh(out, *cache.mesh);
-			saveT(out, cache.radius);
-			saveT(out, cache.start);
-			saveT(out, cache.dir);
+			saveT(out, cache.param);
 		}
 
 		out.close();
@@ -110,9 +108,7 @@ namespace mmesh
 		{
 			cache.mesh = new trimesh::TriMesh();
 			loadTrimesh(in, *cache.mesh);
-			loadT(in, cache.radius);
-			loadT(in, cache.start);
-			loadT(in, cache.dir);
+			loadT(in, cache.param);
 		}
 
 		in.close();
