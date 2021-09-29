@@ -330,14 +330,22 @@ namespace mmesh
 		{
 			int searchIndex = 0;
 			bool in = false;
+			int mindiff = faceID - collides.at(0).faceid;
 			for (int i = 0; i < resultSize; ++i)
 			{
-				if (collides.at(i).faceid == faceID)
+				if (abs(faceID - collides.at(i).faceid) < mindiff)
 				{
 					searchIndex = i;
 					in = true;
-					break;
+					mindiff = abs(faceID - collides.at(i).faceid);
 				}
+
+				//if (collides.at(i).faceid == faceID)
+				//{
+				//	searchIndex = i;
+				//	in = true;
+				//	break;
+				//}
 			}
 
 			if (in)

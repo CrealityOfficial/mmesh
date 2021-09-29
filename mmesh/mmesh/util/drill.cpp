@@ -7,6 +7,7 @@
 #include "mmesh/trimesh/trimeshutil.h"
 
 #include <assert.h>
+#include <fstream>
 
 namespace mmesh
 {
@@ -36,37 +37,6 @@ namespace mmesh
 			return nullptr;
 		}
 
-
-		//trimesh::point pointStart;
-		//trimesh::point pointEnd;
-		//float radius;
-		//std::string filenemae ="F:/GitSource/Gerrit_DockerViz/DockerViz/data/drill/cyPosition.txt";
-		//FILE* F2 = fopen(filenemae.c_str(), "rb");
-		//if (F2)
-		//{
-
-		//	float X;
-		//	float Y;
-		//	float Z;
-
-		//	fread(&X, sizeof(float), 1, F2);
-		//	fread(&Y, sizeof(float), 1, F2);
-		//	fread(&Z, sizeof(float), 1, F2);
-		//	pointStart.at(0) = X;
-		//	pointStart.at(1) = Y;
-		//	pointStart.at(2) = Z;
-
-		//	fread(&X, sizeof(float), 1, F2);
-		//	fread(&Y, sizeof(float), 1, F2);
-		//	fread(&Z, sizeof(float), 1, F2);
-		//	pointEnd.at(0) = X;
-		//	pointEnd.at(1) = Y;
-		//	pointEnd.at(2) = Z;
-		//	fread(&radius, sizeof(float), 1, F2);
-		//	fclose(F2);
-		//}
-		//OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, pointStart, pointEnd, radius,tracer, debugger);
-
 		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, tracer, debugger);
 		if (!cylinderCollider.valid())
 		{
@@ -82,14 +52,12 @@ namespace mmesh
 		return cylinderCollider.drill(tracer);
 	}
 
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
-		const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
-		ccglobal::Tracer* tracer, DrillDebugger* debugger)
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger)
 	{
-		if (!mesh || !cylinderMesh)
+		if (!mesh)
 		{
 			if (tracer)
-				tracer->failed("mesh or cylinder mesh is empty.");
+				tracer->failed("model mesh is empty.");
 
 			return nullptr;
 		}
@@ -97,15 +65,14 @@ namespace mmesh
 		int faceNum = mesh->faces.size();
 
 		tracerFormartPrint(tracer, "drill start.  vertexNum [%d] , faceNum [%d].", vertexNum, faceNum);
-		if (vertexNum == 0 || faceNum == 0 || cylinderMesh->vertices.size() == 0
-			|| cylinderMesh->faces.size() == 0)
+		if (vertexNum == 0 || faceNum == 0)
 		{
 			if (tracer)
-				tracer->failed("mesh or cylinder (vertex, face) is empty.");
+				tracer->failed("model mesh (vertex, face) is empty.");
 			return nullptr;
 		}
 
-		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, startPosition, endPosition, tracer, debugger);
+		OptimizeCylinderCollide cylinderCollider(mesh, param.cylinder_resolution, param.cylinder_radius, param.cylinder_depth, param.cylinder_startPos, param.cylinder_Dir, tracer, debugger);
 
 		if (!cylinderCollider.valid())
 		{
@@ -116,5 +83,35 @@ namespace mmesh
 		}
 
 		return cylinderCollider.drill(tracer);
+	}
+
+	bool saveDrill(const std::string& fileName, const DrillInputCache& cache)
+	{
+		if (!cache.mesh)
+			return false;
+
+		std::fstream out(fileName, std::ios::out | std::ios::binary);
+		if (out.is_open())
+		{
+			saveTrimesh(out, *cache.mesh);
+			saveT(out, cache.param);
+		}
+
+		out.close();
+		return true;
+	}
+
+	bool loadDrill(const std::string& fileName, DrillInputCache& cache)
+	{
+		std::fstream in(fileName, std::ios::in | std::ios::binary);
+		if (in.is_open())
+		{
+			cache.mesh = new trimesh::TriMesh();
+			loadTrimesh(in, *cache.mesh);
+			loadT(in, cache.param);
+		}
+
+		in.close();
+		return true;
 	}
 }

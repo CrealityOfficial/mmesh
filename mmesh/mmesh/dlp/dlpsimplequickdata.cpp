@@ -315,7 +315,7 @@ namespace mmesh
 		}
 	}
 
-	bool DLPSimpleQuickData::testInsert(trimesh::vec2& xy, float radius)
+	bool DLPSimpleQuickData::testInsert(trimesh::vec2 xy, float radius)
 	{
 		bool canInsert = true;
 		float radius2 = radius * radius;

@@ -26,7 +26,7 @@ namespace mmesh
 	protected:
 		void build();
 
-		bool testInsert(trimesh::vec2& xy, float radius);
+		bool testInsert(trimesh::vec2 xy, float radius);
 	protected:
 		mmesh::TriangleChunk* m_triangleChunk;
 		mmesh::MeshTopo* m_meshTopo;

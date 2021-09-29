@@ -15,8 +15,6 @@
 #include <string>
 #include<clipper/clipper.hpp>
 
-#if __APPLE__
-#else
 using namespace std;
 using namespace ClipperLib;
 
@@ -77,6 +75,5 @@ public:
   bool LoadFromBinaryFile(Paths& ppg, const string& filename, double scale);
 }; //SVGBuilder
 
-#endif
 
 

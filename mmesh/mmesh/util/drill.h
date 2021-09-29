@@ -11,12 +11,30 @@ namespace ccglobal
 namespace mmesh
 {
 	class DrillDebugger;
+
+	struct DrillParam
+	{
+		int cylinder_resolution;
+		double cylinder_radius;
+		double cylinder_depth;                         	// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
+		trimesh::vec3 cylinder_startPos;
+		trimesh::vec3 cylinder_Dir;
+	};
+
 	trimesh::TriMesh* drill(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger);
 
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
-		const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
-		ccglobal::Tracer* tracer, DrillDebugger* debugger);
+	// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger);
+
+	struct DrillInputCache
+	{
+		trimesh::TriMesh* mesh;
+		DrillParam param;
+	};
+
+	bool saveDrill(const std::string& fileName, const DrillInputCache& cache);
+	bool loadDrill(const std::string& fileName, DrillInputCache& cache);
 }
 
 #endif // MMESH_DRILL_1631339010743_H
