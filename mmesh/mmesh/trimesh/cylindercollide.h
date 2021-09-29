@@ -60,8 +60,8 @@ namespace mmesh
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
 			
 		// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
-		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
-			double radius, double depth, trimesh::point pointStart, trimesh::point dir,
+		OptimizeCylinderCollide(trimesh::TriMesh* mesh,
+			int resolution, double radius, double depth, trimesh::point pointStart, trimesh::point dir,
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
 		~OptimizeCylinderCollide();
 
@@ -97,6 +97,7 @@ namespace mmesh
 		ccglobal::Tracer* m_tracer;
 		DrillDebugger* m_debugger;
 
+		int m_cylinderResolution;
 		double m_cylinderRadius;
 		double m_cylinderDepth;
 		trimesh::point m_cylinderPointStart; 
