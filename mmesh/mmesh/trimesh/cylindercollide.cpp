@@ -458,21 +458,22 @@ namespace mmesh
 			calculate();
 	}
 	
-	OptimizeCylinderCollide::OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
-		double radius, double depth, trimesh::point pointStart, trimesh::point dir,
+	OptimizeCylinderCollide::OptimizeCylinderCollide(trimesh::TriMesh* mesh,
+		int resolution, double radius, double depth, trimesh::point pointStart, trimesh::point dir,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger)
 		:m_mesh(mesh)
-		, m_cylinder(cylinder)
+		, m_cylinder(nullptr)
 		, focusTriangle(0)
 		, m_tracer(tracer)
 		, m_debugger(debugger)
 		, cylinderTriangles(0)
+		, m_cylinderResolution(resolution)
 		, m_cylinderRadius(radius)
 		, m_cylinderDepth(depth)
 		, m_cylinderPointStart(pointStart)
 		, m_cylinderDir(dir)
 	{
-		if (m_mesh && m_cylinder && m_mesh->faces.size() > 0)
+		if (m_mesh && m_mesh->faces.size() > 0)
 			mycalculate();
 	}
 
@@ -632,7 +633,7 @@ namespace mmesh
 
 		m_cylinderDepth += 2.0;
 
-		m_cylinder = createCylinderMesh(newStartPos, newStartPos + m_cylinderDepth * ZAXIS, m_cylinderRadius, 30, 0.0);
+		m_cylinder = createCylinderMesh(newStartPos + m_cylinderDepth * ZAXIS, newStartPos, m_cylinderRadius, m_cylinderResolution, 0.0);
 		trimesh::fxform invXF = trimesh::inv(xf);
 		for (int i = 0; i < m_cylinder->vertices.size(); ++i)
 		{
@@ -783,15 +784,15 @@ namespace mmesh
 			//	i++;
 			//} while (i < meshFocusFacesMapper.size() && fabs(faceDisMap[meshFocusFacesMapper[i]] - farthestFaceDis) < offset);
 
-			if (i < meshFocusFacesMapper.size())
-			{
-				for (int j = i; j < meshFocusFacesMapper.size(); j++)
-				{
-					totalMeshFlag[meshFocusFacesMapper[j]] = 1;
-				}
+			//if (i < meshFocusFacesMapper.size())
+			//{
+			//	for (int j = i; j < meshFocusFacesMapper.size(); j++)
+			//	{
+			//		totalMeshFlag[meshFocusFacesMapper[j]] = 1;
+			//	}
 
-				meshFocusFacesMapper.erase(meshFocusFacesMapper.begin() + i, meshFocusFacesMapper.end());
-			}
+			//	meshFocusFacesMapper.erase(meshFocusFacesMapper.begin() + i, meshFocusFacesMapper.end());
+			//}
 
 			meshFocusFaces.clear();
 			for (i = 0; i < meshFocusFacesMapper.size(); i++)

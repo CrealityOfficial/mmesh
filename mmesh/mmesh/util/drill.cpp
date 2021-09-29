@@ -52,14 +52,12 @@ namespace mmesh
 		return cylinderCollider.drill(tracer);
 	}
 
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinderMesh,
-		double& radius, double& depth, const trimesh::vec3& startPosition, const trimesh::vec3& endPosition,
-		ccglobal::Tracer* tracer, DrillDebugger* debugger)
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger)
 	{
-		if (!mesh || !cylinderMesh)
+		if (!mesh)
 		{
 			if (tracer)
-				tracer->failed("mesh or cylinder mesh is empty.");
+				tracer->failed("model mesh is empty.");
 
 			return nullptr;
 		}
@@ -67,15 +65,14 @@ namespace mmesh
 		int faceNum = mesh->faces.size();
 
 		tracerFormartPrint(tracer, "drill start.  vertexNum [%d] , faceNum [%d].", vertexNum, faceNum);
-		if (vertexNum == 0 || faceNum == 0 || cylinderMesh->vertices.size() == 0
-			|| cylinderMesh->faces.size() == 0)
+		if (vertexNum == 0 || faceNum == 0)
 		{
 			if (tracer)
-				tracer->failed("mesh or cylinder (vertex, face) is empty.");
+				tracer->failed("model mesh (vertex, face) is empty.");
 			return nullptr;
 		}
 
-		OptimizeCylinderCollide cylinderCollider(mesh, cylinderMesh, radius, depth, startPosition, endPosition, tracer, debugger);
+		OptimizeCylinderCollide cylinderCollider(mesh, param.cylinder_resolution, param.cylinder_radius, param.cylinder_depth, param.cylinder_startPos, param.cylinder_Dir, tracer, debugger);
 
 		if (!cylinderCollider.valid())
 		{
