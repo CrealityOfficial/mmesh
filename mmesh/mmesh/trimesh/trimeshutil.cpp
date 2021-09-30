@@ -302,8 +302,9 @@ namespace mmesh
 			if (i % 100000 == 1)
 			{
 				formartPrint(tracer, "dumplicateMesh %i", (int)i);
-
+#if USE_SPYCC
 				SESSION_TICK("dumplicateMesh")
+#endif
 			}
 		}
 
@@ -331,9 +332,7 @@ namespace mmesh
 		mesh->faces.swap(omesh->faces);
 		mesh->need_bbox();
 
-		SESSION_TICK("dumplicateMesh")
 		delete omesh;
-		SESSION_TICK("dumplicateMesh")
 	}
 
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan)
