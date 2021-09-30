@@ -71,6 +71,9 @@ namespace mmesh
 	};
 
 	void mergeIndexPolygon(std::vector<IndexPolygon>& polygons);
+	int findIndex(int n, const std::vector<int>& orderEdgesPoint);
+	int PointInPolygon(trimesh::dvec2 pt, const std::vector<int>& polygon, std::vector<trimesh::dvec2>& d2points);
+	void dealIntersectLine(const std::vector<IndexPolygon>&validIndexPolygons,const std::vector<int>& orderEdgesPoints, std::vector<int>& vertexEdges,std::vector<bool>& isIntersect);
 }
 
 #endif // MMESH_UNIFORMPOINTS_1631469381297_H

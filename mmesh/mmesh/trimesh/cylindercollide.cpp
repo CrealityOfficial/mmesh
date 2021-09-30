@@ -323,8 +323,8 @@ namespace mmesh
 				else
 				{
 					if (tracer)
-						tracer->failed("error cylinder is watertight");
-					assert("error cylinder is watertight");
+						tracer->failed("error split Triangle");
+					assert("error split Triangle");
 				}
 
 				if (debugger)

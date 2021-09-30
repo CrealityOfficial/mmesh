@@ -77,7 +77,7 @@ namespace mmesh
 		if (!cylinderCollider.valid())
 		{
 			if (tracer)
-				tracer->failed("OptimizeCylinderCollide is not valid.");
+				tracer->failed("Depth Error or OptimizeCylinderCollide is not valid.");
 
 			return nullptr;
 		}
