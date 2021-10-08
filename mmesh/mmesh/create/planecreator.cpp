@@ -171,4 +171,32 @@ namespace mmesh
 		}
 		return mesh;
 	}
+
+	void createGrid(std::vector<trimesh::vec3>& lines, const trimesh::box2& box, float pixel, float z)
+	{
+		if (pixel <= 0.0f)
+			pixel = 10.0f;
+
+		lines.clear();
+		trimesh::vec2 bmin = box.min;
+		trimesh::vec2 bmax = box.max;
+
+		int xmin = (int)(bmin.x / pixel);
+		int xmax = (int)(bmax.x / pixel);
+		for (int i = xmin; i <= xmax; ++i)
+		{
+			float x = (float)i * pixel;
+			lines.push_back(trimesh::vec3(x, bmin.y, z));
+			lines.push_back(trimesh::vec3(x, bmax.y, z));
+		}
+
+		int ymin = (int)(bmin.y / pixel);
+		int ymax = (int)(bmax.y / pixel);
+		for (int j = ymin; j <= ymax; ++j)
+		{
+			float y = (float)j * pixel;
+			lines.push_back(trimesh::vec3(bmin.x, y, z));
+			lines.push_back(trimesh::vec3(bmax.x, y, z));
+		}
+	}
 }
