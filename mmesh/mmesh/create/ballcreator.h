@@ -26,6 +26,8 @@ namespace mmesh
 		// sphere map projection, Azimuthal to Equirectangular
 		static trimesh::vec azi2equ(trimesh::vec& point);
 
+		// create longitude and latitude ball , r = 1.0f
+		static trimesh::TriMesh* createLL(unsigned longitude, unsigned latitude);
 	};
 }
 

@@ -4,6 +4,8 @@
 #include "trimesh2/Vec.h"
 #include "trimesh2/XForm.h"
 
+#include <functional>
+
 namespace enchase
 {
 	ImageData::ImageData()
@@ -214,6 +216,55 @@ namespace enchase
 			if (!strcmp(ext.c_str(), "bmp"))
 			{
 				loadBMP(data, fileName);
+			}
+		}
+	}
+
+	void fillImageData(ImageData& raw, ImageData* alpha, int width, int height, unsigned char* data, int type)
+	{
+		raw.allocate(width, height);
+		if(alpha)
+			alpha->allocate(width, height);
+
+		int pixel = (type == 3 || type == 4) ? 2 : 4;
+		typedef std::function<void(unsigned char*, unsigned char&, unsigned char&)> pixelFunc;
+		pixelFunc fpixel3 = [](unsigned char* data, unsigned char& gray, unsigned char& alpha) {
+			unsigned short* sdata = (unsigned short*)data;
+			unsigned char R = (*sdata) & 0x1f;
+			unsigned char G = (*sdata >> 5) & 0x3f;
+			unsigned char B = (*sdata >> 11) & 0x1f;
+			gray = (unsigned char)(((float)R + (float)G + (float)B) / 3.0f);
+			alpha = 255;
+		};
+		pixelFunc fpixel4 = [](unsigned char* data, unsigned char& gray, unsigned char& alpha) {
+			unsigned short* sdata = (unsigned short*)data;
+			unsigned char A = (*sdata) & 0xf;
+			unsigned char R = (*sdata >> 4) & 0xf;
+			unsigned char G = (*sdata >> 8) & 0xf;
+			unsigned char B = (*sdata >> 12) & 0xf;
+			gray = (unsigned char)(((float)R + (float)G + (float)B) / 3.0f);
+			alpha = A;
+		};
+		pixelFunc fpixel5 = [](unsigned char* pdata, unsigned char& gray, unsigned char& alpha) {
+			float v = 0.0f;
+			for (int k = 0; k < 3; ++k)
+				v += (float) * (pdata + k);
+			gray = (unsigned char)(v / 3.0f);
+
+			alpha = *(pdata + 3);
+		};
+		pixelFunc fpixel = (type == 3) ? fpixel3 : ((type == 4) ? fpixel4 : fpixel5);
+		for (int i = 0; i < width; ++i)
+		{
+			for (int j = 0; j < height; ++j)
+			{
+				int index = j * width + i;
+				unsigned char* pdata = data + index * pixel;
+				unsigned char a = 0;
+				fpixel(pdata, raw.data[index], a);
+
+				if (alpha)
+					alpha->data[index] = a;
 			}
 		}
 	}

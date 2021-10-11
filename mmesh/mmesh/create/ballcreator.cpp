@@ -169,4 +169,90 @@ namespace mmesh
 
 		return trimesh::vec(x_, y_, 0.0f);
 	}
+
+	trimesh::TriMesh* BallCreator::createLL(unsigned longitude, unsigned latitude)
+	{
+		size_t longi = longitude >= 3 ? (size_t)longitude : 3;
+		size_t lati = latitude >= 2 ? (size_t)latitude : 2;
+
+		size_t vertexNum = (longi + 1) * (lati + 1);
+		size_t triNum = 2 * longi * lati;
+
+		trimesh::TriMesh* mesh = new trimesh::TriMesh();
+		mesh->vertices.resize(vertexNum);
+		mesh->cornerareas.resize(vertexNum);
+		mesh->faces.resize(triNum);
+
+		double longiTheta = 2.0 * M_PI / (double)longi;
+		double latiTheta = M_PI / (double)lati;
+		double deltaX = 1.0 / (double)longi;
+		double deltaY = 1.0 / (double)lati;
+
+		std::vector<double> longiSins(longi + 1);
+		std::vector<double> longiCoss(longi + 1);
+		std::vector<double> latiSins(lati + 1);
+		std::vector<double> latiCoss(lati + 1);
+
+		for (size_t i = 0; i <= lati; ++i)
+		{
+			double iTheta = (double)i * latiTheta;
+			latiSins[i] = sin(iTheta);
+			latiCoss[i] = cos(iTheta);
+		}
+
+		for (size_t i = 0; i <= longi; ++i)
+		{
+			double iTheta = (double)i * longiTheta;
+			longiSins[i] = sin(iTheta);
+			longiCoss[i] = cos(iTheta);
+		}
+
+		int triIndex = 0;
+		for (size_t j = 0; j <= lati; ++j)
+		{
+			double coordDeltaY = (double)j * deltaY;
+			double r = latiSins[j];
+			double z = -latiCoss[j];
+			size_t jindex = j * (longi + 1);
+
+			for (size_t i = 0; i <= longi; ++i)
+			{
+				size_t iindex = jindex + i;
+				trimesh::vec3& v = mesh->vertices.at(iindex);
+				trimesh::vec3& uv = mesh->cornerareas.at(iindex);
+
+				v.x = r * longiCoss[i];
+				v.y = r * longiSins[i];
+				v.z = (float)z;
+
+				uv.z = 0.0f;
+				uv.x = (float)i * deltaX;
+				uv.y = (float)coordDeltaY;
+			}
+
+			if (j < lati)
+			{
+				for (size_t i = 0; i < longi; ++i)
+				{
+					int bl = jindex + i;
+					int br = jindex + i + 1;
+					int tl = bl + longi + 1;
+					int tr = br + longi + 1;
+
+					trimesh::TriMesh::Face& f1 = mesh->faces.at(triIndex);
+					f1.x = bl;
+					f1.y = br;
+					f1.z = tr;
+					++triIndex;
+					trimesh::TriMesh::Face& f2 = mesh->faces.at(triIndex);
+					f2.x = bl;
+					f2.y = tr;
+					f2.z = tl;
+					++triIndex;
+				}
+			}
+		}
+
+		return mesh;
+	}
 }
