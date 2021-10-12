@@ -479,7 +479,12 @@ namespace mmesh
 
 	OptimizeCylinderCollide::~OptimizeCylinderCollide()
 	{
-
+		//delete
+		if (m_cylinder)
+		{
+			delete m_cylinder;
+			m_cylinder = nullptr;
+		}
 	}
 
 	void OptimizeCylinderCollide::calculate()
