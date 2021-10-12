@@ -741,6 +741,30 @@ namespace mmesh
 		updateNearFar(m_box);
     }
 
+	void ScreenCamera::viewFromMeta(const ScreenCameraMeta& meta)
+	{
+		m_projectionType = meta.type;
+		m_viewCenter	 = meta.viewCenter;
+		m_upVector		 = meta.upVector;
+		m_position		 = meta.position;
+						 
+		m_near			 = meta.fNear;
+		m_far			 = meta.fFar;
+		m_fovy			 = meta.fovy;
+		m_aspectRatio	 = meta.aspectRatio;
+						 
+		m_top			 = meta.top;
+		m_bottom		 = meta.bottom;
+		m_left			 = meta.left;
+		m_right          = meta.right;
+
+		m_viewMatrixDirty = true;
+		m_projectMatrixDirty = true;
+
+		updateViewMatrix();
+		updateProjectMatrix();
+	}
+
 	void ScreenCamera::updateNearFar(const trimesh::box3& box)
 	{
 		trimesh::vec3 cameraPosition = m_position;

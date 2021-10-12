@@ -125,6 +125,7 @@ namespace mmesh
 		void viewFromFront();
 		void viewFromBack();
 		void view(const trimesh::vec3 & dir, const trimesh::vec3 & right);
+		void viewFromMeta(const ScreenCameraMeta& meta);
 	protected:
 		void notifyViewMatrix(const trimesh::fxform& xform);
 		void notifyProjectionMatrix(const trimesh::fxform& xform);
