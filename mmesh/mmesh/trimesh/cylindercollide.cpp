@@ -450,6 +450,7 @@ namespace mmesh
 		:m_mesh(mesh)
 		, m_cylinder(cylinder)
 		, focusTriangle(0)
+		, m_cylinderResolution(0)
 		, m_tracer(tracer)
 		, m_debugger(debugger)
 		, cylinderTriangles(0)
@@ -480,7 +481,7 @@ namespace mmesh
 	OptimizeCylinderCollide::~OptimizeCylinderCollide()
 	{
 		//delete
-		if (m_cylinder)
+		if (m_cylinder && m_cylinderResolution > 0)
 		{
 			delete m_cylinder;
 			m_cylinder = nullptr;
