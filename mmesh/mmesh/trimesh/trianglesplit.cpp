@@ -8,10 +8,10 @@
 #include <assert.h>
 namespace mmesh
 {
-	bool splitTriangle(const trimesh::vec3& v0, const trimesh::vec3& v1, const trimesh::vec3& v2,
+	bool splitTriangle(const trimesh::dvec3& v0, const trimesh::dvec3& v1, const trimesh::dvec3& v2,
 		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& newTriangles,std::vector<bool>& isInner, ccglobal::Tracer* tracer)
 	{
-		trimesh::vec3 normal = (v1 - v0) TRICROSS (v2 - v0);
+		trimesh::dvec3 normal = (v1 - v0) TRICROSS (v2 - v0);
 		trimesh::normalize(normal);
 
 		UniformPoints uniformPoints;
@@ -84,7 +84,7 @@ namespace mmesh
 		assert(unionSize == vertexEdges.size());
 
 		std::vector<std::vector<int>> polygons;
-		std::vector<trimesh::vec3> d3points;
+		std::vector<trimesh::dvec3> d3points;
 		std::vector<trimesh::dvec2> d2points;
 		std::vector<trimesh::dvec2> d2pointsVertices;
 		uniformPoints.toVector(d3points);
@@ -93,7 +93,7 @@ namespace mmesh
 		d3points.push_back(v2);
 		transform3to2(d3points, normal, d2points);
 
-		std::vector<trimesh::vec3> vpoints;
+		std::vector<trimesh::dvec3> vpoints;
 		vpoints.push_back(v0);
 		vpoints.push_back(v1);
 		vpoints.push_back(v2);
@@ -111,9 +111,9 @@ namespace mmesh
 			}
 
 			std::sort(edgePoints.begin(), edgePoints.end(), [&unionSize, &e, &d3points](int i1, int i2)->bool {
-				trimesh::vec3 v1 = d3points.at(i1);
-				trimesh::vec3 v2 = d3points.at(i2);
-				trimesh::vec3 o = d3points.at(unionSize + e);
+				trimesh::dvec3 v1 = d3points.at(i1);
+				trimesh::dvec3 v2 = d3points.at(i2);
+				trimesh::dvec3 o = d3points.at(unionSize + e);
 				return trimesh::len(v1 - o) < trimesh::len(v2 - o);
 				});
 
@@ -209,9 +209,9 @@ namespace mmesh
 					int endIndex = unionSize + (i + 1) % 3;
 
 					std::sort(edgePoints.begin(), edgePoints.end(), [&startIndex, &d3points](int i1, int i2)->bool {
-						trimesh::vec3 v1 = d3points.at(i1);
-						trimesh::vec3 v2 = d3points.at(i2);
-						trimesh::vec3 o = d3points.at(startIndex);
+						trimesh::dvec3 v1 = d3points.at(i1);
+						trimesh::dvec3 v2 = d3points.at(i2);
+						trimesh::dvec3 o = d3points.at(startIndex);
 						return trimesh::len(v1 - o) < trimesh::len(v2 - o);
 						});
 
@@ -325,9 +325,9 @@ namespace mmesh
 					int endIndex = unionSize + (i + 1) % 3;
 
 					std::sort(edgePoints.begin(), edgePoints.end(), [&startIndex, &d3points](int i1, int i2)->bool {
-						trimesh::vec3 v1 = d3points.at(i1);
-						trimesh::vec3 v2 = d3points.at(i2);
-						trimesh::vec3 o = d3points.at(startIndex);
+						trimesh::dvec3 v1 = d3points.at(i1);
+						trimesh::dvec3 v2 = d3points.at(i2);
+						trimesh::dvec3 o = d3points.at(startIndex);
 						return trimesh::len(v1 - o) < trimesh::len(v2 - o);
 						});
 

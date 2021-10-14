@@ -489,4 +489,9 @@ namespace mmesh
 		saveVectorT(out, mesh.vertices);
 		saveVectorT(out, mesh.faces);
 	}
+
+	trimesh::dvec3 vec32dvec3(const trimesh::vec3& v)
+	{
+		return trimesh::dvec3(v.x, v.y, v.z);
+	}
 }

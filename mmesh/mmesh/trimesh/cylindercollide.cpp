@@ -67,13 +67,13 @@ namespace mmesh
 			int index;
 			int e1;
 			int e2;
-			vec3 c1;
-			vec3 c2;
+			dvec3 c1;
+			dvec3 c2;
 		};
 
-		auto fcollid = [](const vec3& tv, const vec3& v1, const vec3& v2, float dv, float d1, float d2, int index, CTemp& temp) {
-			vec3 c1 = (dv / (dv - d1)) * v1 - (d1 / (dv - d1)) * tv;
-			vec3 c2 = (dv / (dv - d2)) * v2 - (d2 / (dv - d2)) * tv;
+		auto fcollid = [](const dvec3& tv, const dvec3& v1, const dvec3& v2, double dv, double d1, double d2, int index, CTemp& temp) {
+			dvec3 c1 = (dv / (dv - d1)) * v1 - (d1 / (dv - d1)) * tv;
+			dvec3 c2 = (dv / (dv - d2)) * v2 - (d2 / (dv - d2)) * tv;
 
 			temp.index = index;
 
@@ -88,33 +88,38 @@ namespace mmesh
 			FaceCollide& fc = meshTris.at(i);
 			if (fc.flag != -1)
 			{
+#if _DEBUG
+				if (i == 96)
+					std::cout << "debug point";
+#endif
+
 				std::vector<TriTri>& meshTri = fc.tris;
 				TriMesh::Face& focusFace = meshFocusFaces.at(i);
 
-				const vec3& focusV1 = mesh->vertices.at(focusFace[0]);
-				const vec3& focusV2 = mesh->vertices.at(focusFace[1]);
-				const vec3& focusV3 = mesh->vertices.at(focusFace[2]);
+				dvec3 focusV1 = mmesh::vec32dvec3(mesh->vertices.at(focusFace[0]));
+				dvec3 focusV2 = mmesh::vec32dvec3(mesh->vertices.at(focusFace[1]));
+				dvec3 focusV3 = mmesh::vec32dvec3(mesh->vertices.at(focusFace[2]));
 
-				vec3& meshNormal = meshNormals.at(i);
+				dvec3 meshNormal = mmesh::vec32dvec3(meshNormals.at(i));
 				for (int j = 0; j < cylinderNum; ++j)
 				{
-					vec3& cylinderNormal = cylinderNormals.at(j);
+					dvec3 cylinderNormal = mmesh::vec32dvec3(cylinderNormals.at(j));
 
 					if (cylinderNormal == meshNormal)
 						continue;
 
 					TriMesh::Face& cylinderFace = cylinderFocusFaces[j];
 
-					const vec3& cylinderV1 = cylinderMesh->vertices.at(cylinderFace[0]);
-					const vec3& cylinderV2 = cylinderMesh->vertices.at(cylinderFace[1]);
-					const vec3& cylinderV3 = cylinderMesh->vertices.at(cylinderFace[2]);
+					dvec3 cylinderV1 = mmesh::vec32dvec3(cylinderMesh->vertices.at(cylinderFace[0]));
+					dvec3 cylinderV2 = mmesh::vec32dvec3(cylinderMesh->vertices.at(cylinderFace[1]));
+					dvec3 cylinderV3 = mmesh::vec32dvec3(cylinderMesh->vertices.at(cylinderFace[2]));
 
-					float mesh2Cylinder1 = cylinderNormal.dot(focusV1 - cylinderV1);
-					float mesh2Cylinder2 = cylinderNormal.dot(focusV2 - cylinderV1);
-					float mesh2Cylinder3 = cylinderNormal.dot(focusV3 - cylinderV1);
-					float Cylinder2mesh1 = meshNormal.dot(cylinderV1 - focusV1);
-					float Cylinder2mesh2 = meshNormal.dot(cylinderV2 - focusV1);
-					float Cylinder2mesh3 = meshNormal.dot(cylinderV3 - focusV1);
+					double mesh2Cylinder1 = cylinderNormal.dot(focusV1 - cylinderV1);
+					double mesh2Cylinder2 = cylinderNormal.dot(focusV2 - cylinderV1);
+					double mesh2Cylinder3 = cylinderNormal.dot(focusV3 - cylinderV1);
+					double Cylinder2mesh1 = meshNormal.dot(cylinderV1 - focusV1);
+					double Cylinder2mesh2 = meshNormal.dot(cylinderV2 - focusV1);
+					double Cylinder2mesh3 = meshNormal.dot(cylinderV3 - focusV1);
 
 					std::vector<CTemp> temps;
 					float l0 = mesh2Cylinder1 * mesh2Cylinder2;
@@ -170,15 +175,15 @@ namespace mmesh
 
 					if (temps.size() == 2)
 					{
-						std::vector<vec3> points;
+						std::vector<dvec3> points;
 						points.push_back(temps.at(0).c1);
 						points.push_back(temps.at(0).c2);
 						points.push_back(temps.at(1).c1);
 						points.push_back(temps.at(1).c2);
-						vec3 axis = points.at(1) - points.at(0);
+						dvec3 axis = points.at(1) - points.at(0);
 						normalize(axis);
 
-						std::vector<float> diss(4);
+						std::vector<double> diss(4);
 						for (int k = 0; k < 4; ++k)
 						{
 							diss.at(k) = dot(points.at(k) - points.at(0), axis);
@@ -192,21 +197,21 @@ namespace mmesh
 							swapped = true;
 						}
 
-						float d[3] = {};
+						double d[3] = {};
 						d[0] = mesh2Cylinder1;
 						d[1] = mesh2Cylinder2;
 						d[2] = mesh2Cylinder3;
-						float dd[3] = {};
+						double dd[3] = {};
 						dd[0] = Cylinder2mesh1;
 						dd[1] = Cylinder2mesh2;
 						dd[2] = Cylinder2mesh3;
 						TriTri mt;
-						mt.topPositive = d[temps[0].index] >= 0.0f;
+						mt.topPositive = d[temps[0].index] >= 0.0;
 						mt.cylinderTopIndex = temps[1].index;
-						mt.cylinderTopPositive = d[temps[1].index] >= 0.0f;
+						mt.cylinderTopPositive = d[temps[1].index] >= 0.0;
 
-						vec3 v1;
-						vec3 v2;
+						dvec3 v1;
+						dvec3 v2;
 
 						if (diss[1] >= diss[2] && diss[3] >= diss[0])
 						{
@@ -296,6 +301,9 @@ namespace mmesh
 		int meshNum = (int)focusFaces.size();
 		std::vector<std::vector<bool>> vctInner;
 		vctInner.resize(meshNum, std::vector<bool>(3,true));
+#if _DEBUG
+		int debug_index = 0;
+#endif
 		for (int i = 0; i < meshNum; ++i)
 		{
 			trimesh::TriMesh::Face& face = focusFaces.at(i);
@@ -315,7 +323,8 @@ namespace mmesh
 					seg.v2 = tri.v2;
 				}
 				std::vector<trimesh::vec3> triangles;
-				if (splitTriangle(mesh->vertices[face[0]], mesh->vertices[face[1]], mesh->vertices[face[2]],
+				if (splitTriangle(mmesh::vec32dvec3(mesh->vertices[face[0]]),
+					mmesh::vec32dvec3(mesh->vertices[face[1]]), mmesh::vec32dvec3(mesh->vertices[face[2]]),
 					trisegments, positive, triangles, vctInner[i],tracer))
 				{
 					newTriangles.insert(newTriangles.end(), triangles.begin(), triangles.end());
@@ -329,6 +338,11 @@ namespace mmesh
 
 				if (debugger)
 				{
+#if _DEBUG
+					if (debug_index == 92)
+						std::cout << "debug point";
+					++debug_index;
+#endif
 					SplitTriangleCache cache;
 					cache.v0 = mesh->vertices[face[0]];
 					cache.v1 = mesh->vertices[face[1]];
@@ -454,6 +468,8 @@ namespace mmesh
 		, m_tracer(tracer)
 		, m_debugger(debugger)
 		, cylinderTriangles(0)
+		, m_cylinderRadius(0.0f)
+		, m_cylinderDepth(0.0f)
 	{
 		if (m_mesh && m_cylinder && m_mesh->faces.size() > 0)
 			calculate();
@@ -942,13 +958,13 @@ namespace mmesh
 	trimesh::TriMesh* OptimizeCylinderCollide::drill(ccglobal::Tracer* tracer)
 	{
 		TriPatch newMeshTriangles;
-		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, totalMeshFlag, tracer, nullptr);
+		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, totalMeshFlag, tracer, m_debugger);
 		if (tracer)
 		{
 			tracer->progress(0.4f);
 		}
 		TriPatch newCylinderTriangles;
-		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, cylinderFlag, tracer, m_debugger);
+		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, cylinderFlag, tracer, nullptr);
 		if (tracer)
 		{
 			tracer->progress(0.6f);
