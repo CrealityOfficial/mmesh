@@ -12,7 +12,7 @@ namespace mmesh
 
 	}
 
-	int UniformPoints::add(const trimesh::vec3& point)
+	int UniformPoints::add(const trimesh::dvec3& point)
 	{
 		int index = -1;
 		point_iterator it = upoints.find(point);
@@ -34,7 +34,7 @@ namespace mmesh
 		return (int)upoints.size();
 	}
 
-	void UniformPoints::toVector(std::vector<trimesh::vec3>& points)
+	void UniformPoints::toVector(std::vector<trimesh::dvec3>& points)
 	{
 		int size = uniformSize();
 		if (size == 0)

@@ -74,6 +74,8 @@ namespace mmesh
 		if (num > 0)
 			out.write((const char*)&vecs.at(0), num * sizeof(T));
 	}
+
+	trimesh::dvec3 vec32dvec3(const trimesh::vec3& v);
 }
 
 #endif // MMESH_TRIMESHUTIL_1602590289222_H

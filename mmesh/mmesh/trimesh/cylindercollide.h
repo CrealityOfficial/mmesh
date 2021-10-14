@@ -12,8 +12,8 @@ namespace mmesh
 {
 	struct TriTri
 	{
-		trimesh::vec3 v1;
-		trimesh::vec3 v2;
+		trimesh::dvec3 v1;
+		trimesh::dvec3 v2;
 		bool topPositive;
 
 		trimesh::ivec2 index; // -1 not edge, 1 edge

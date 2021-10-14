@@ -8,14 +8,14 @@ namespace mmesh
 {
 	struct TriSegment
 	{
-		trimesh::vec3 v1;
-		trimesh::vec3 v2;
+		trimesh::dvec3 v1;
+		trimesh::dvec3 v2;
 		bool topPositive;
 
 		trimesh::ivec2 index; // -1 not edge, 1 edge
 	};
 
-	bool splitTriangle(const trimesh::vec3& v0, const trimesh::vec3& v1, const trimesh::vec3& v2,
+	bool splitTriangle(const trimesh::dvec3& v0, const trimesh::dvec3& v1, const trimesh::dvec3& v2,
 		const std::vector<TriSegment>& tri, bool positive, std::vector<trimesh::vec3>& tris,std::vector<bool>& isInner,ccglobal::Tracer* tracer);
 
 	struct SplitTriangleCache

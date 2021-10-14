@@ -16,7 +16,7 @@ namespace mmesh
 		public:
 			point_cmp(float e = FLT_MIN) :eps(e) {}
 
-			bool operator()(const trimesh::vec3& v0, const trimesh::vec3& v1) const
+			bool operator()(const trimesh::dvec3& v0, const trimesh::dvec3& v1) const
 			{
 				if (fabs(v0.x - v1.x) <= eps)
 				{
@@ -32,16 +32,16 @@ namespace mmesh
 			float eps;
 		};
 
-		typedef std::map<trimesh::vec3, int, point_cmp> unique_point;
+		typedef std::map<trimesh::dvec3, int, point_cmp> unique_point;
 		typedef unique_point::iterator point_iterator;
 
 	public:
 		UniformPoints();
 		~UniformPoints();
 
-		int add(const trimesh::vec3& point);
+		int add(const trimesh::dvec3& point);
 		int uniformSize();
-		void toVector(std::vector<trimesh::vec3>& points);
+		void toVector(std::vector<trimesh::dvec3>& points);
 		void clear();
 	protected:
 		unique_point upoints;
