@@ -7,9 +7,11 @@ namespace enchase
 	{
 		float D;
 		int blur;
+		bool texcoordFlipY;
 		EnchaseParam()
-			:D(0.02f)
-			,blur(0)
+			: D(0.02f)
+			, blur(0)
+			, texcoordFlipY(true)
 		{
 
 		}

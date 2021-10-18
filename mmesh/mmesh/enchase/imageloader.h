@@ -12,6 +12,7 @@ namespace enchase
 		int height;
 
 		ImageData();
+		ImageData(const ImageData& data);
 		~ImageData();
 		
 		void release();

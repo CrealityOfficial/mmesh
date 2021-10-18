@@ -21,6 +21,18 @@ namespace enchase
 		release();
 	}
 
+	ImageData::ImageData(const ImageData& imageData)
+		:data(nullptr)
+		, width(0)
+		, height(0)
+	{
+		if (imageData.data && imageData.width && imageData.height)
+		{
+			allocate(imageData.width, imageData.height);
+			memcpy(data, imageData.data, imageData.width * imageData.height);
+		}
+	}
+
 	void ImageData::release()
 	{
 		if (data)

@@ -92,7 +92,8 @@ namespace enchase
 			trimesh::vec2* xy = (trimesh::vec2*)(UV + uvStride * i);
 
 			unsigned char t = 0;
-			if (tex.texcoordGet(xy->x, 1.0f - xy->y, t))
+			float dy = param.texcoordFlipY ? (1.0f - xy->y) : xy->y;
+			if (tex.texcoordGet(xy->x, dy, t))
 			{
 				trimesh::vec3 n = trimesh::normalized(*p);
 				*p += n * ((float)(255 - t) / 255.0f) * param.D;
