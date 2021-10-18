@@ -462,7 +462,6 @@ namespace mmesh
 	OptimizeCylinderCollide::OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
 		ccglobal::Tracer* tracer, DrillDebugger* debugger)
 		:m_mesh(mesh)
-		, m_cylinder(cylinder)
 		, focusTriangle(0)
 		, m_cylinderResolution(0)
 		, m_tracer(tracer)
@@ -471,6 +470,8 @@ namespace mmesh
 		, m_cylinderRadius(0.0f)
 		, m_cylinderDepth(0.0f)
 	{
+		m_cylinder = new trimesh::TriMesh();
+		*m_cylinder = *cylinder;
 		if (m_mesh && m_cylinder && m_mesh->faces.size() > 0)
 			calculate();
 	}
