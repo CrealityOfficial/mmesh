@@ -239,6 +239,9 @@ namespace enchase
 			alpha->allocate(width, height);
 
 		int pixel = (type == 3 || type == 4) ? 2 : 4;
+		if(type == 0)
+			pixel = 1;
+
 		typedef std::function<void(unsigned char*, unsigned char&, unsigned char&)> pixelFunc;
 		pixelFunc fpixel3 = [](unsigned char* data, unsigned char& gray, unsigned char& alpha) {
 			unsigned short* sdata = (unsigned short*)data;
@@ -265,7 +268,13 @@ namespace enchase
 
 			alpha = *(pdata + 3);
 		};
-		pixelFunc fpixel = (type == 3) ? fpixel3 : ((type == 4) ? fpixel4 : fpixel5);
+
+		pixelFunc fpixel0 = [](unsigned char* pdata, unsigned char& gray, unsigned char& alpha) {
+			gray = *pdata;
+			alpha = 255;
+		};
+
+		pixelFunc fpixel = (type == 3) ? fpixel3 : ((type == 4) ? fpixel4 : ((type == 0) ? fpixel0 : fpixel5));
 		for (int i = 0; i < width; ++i)
 		{
 			for (int j = 0; j < height; ++j)
