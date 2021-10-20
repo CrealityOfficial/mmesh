@@ -35,6 +35,16 @@ namespace mmesh
 		m_finished = true;
 	}
 
+	void CancelableThread::waitThread()
+	{
+		if (!m_thread)
+			return;
+
+		m_thread->join();
+		m_thread.reset();
+		m_finished = true;
+	}
+
 	void CancelableThread::setInterrupt()
 	{
 		m_interrupt = true;

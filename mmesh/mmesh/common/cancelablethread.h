@@ -3,6 +3,7 @@
 #include <thread>
 #include <mutex>
 #include <list>
+#include <memory>
 
 namespace mmesh
 {
@@ -14,6 +15,7 @@ namespace mmesh
 
 		void startThread();
 		void cancelThread();
+		void waitThread();
 
 		bool isRunning();
 	protected:
@@ -29,5 +31,7 @@ namespace mmesh
 		bool m_finished;
 	};
 }
+
+typedef std::shared_ptr<mmesh::CancelableThread> CancelableJobPtr;
 
 #endif // CRSA_CANCELABLETHREAD_1629092754823_H
