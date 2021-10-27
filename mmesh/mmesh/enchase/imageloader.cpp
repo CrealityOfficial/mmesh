@@ -232,7 +232,7 @@ namespace enchase
 		}
 	}
 
-	void fillImageData(ImageData& raw, ImageData* alpha, int width, int height, unsigned char* data, int type)
+	void fillImageData(ImageData& raw, ImageData* alpha, int width, int height, unsigned char* data, int type, bool flipY)
 	{
 		raw.allocate(width, height);
 		if(alpha)
@@ -280,7 +280,8 @@ namespace enchase
 			for (int j = 0; j < height; ++j)
 			{
 				int index = j * width + i;
-				unsigned char* pdata = data + index * pixel;
+				int rindex = (height - 1 - j) * width + i;
+				unsigned char* pdata = data + rindex * pixel;
 				unsigned char a = 0;
 				fpixel(pdata, raw.data[index], a);
 
