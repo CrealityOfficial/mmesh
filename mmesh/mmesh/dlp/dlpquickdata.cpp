@@ -12,7 +12,6 @@
 #include "mmesh/cgal/clusterPoint.h"
 #endif
 #include "mmesh/vcg/trimesh_sampling .h"
-#include "Concurrency.hpp"
 
 using namespace trimesh;
 namespace mmesh
