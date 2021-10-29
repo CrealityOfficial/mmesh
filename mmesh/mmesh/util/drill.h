@@ -17,7 +17,7 @@ namespace mmesh
 		int cylinder_resolution;
 		double cylinder_radius;
 		double cylinder_depth;                         	// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
-		trimesh::vec3 cylinder_startPos;
+		trimesh::vec3 cylinder_startPos;          //  打洞起点的世界坐标
 		trimesh::vec3 cylinder_Dir;
 	};
 
