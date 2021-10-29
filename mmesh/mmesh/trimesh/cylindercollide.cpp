@@ -731,91 +731,107 @@ namespace mmesh
 
 	double OptimizeCylinderCollide::getDrillDepth()
 	{
-		// focus 集合按照离打孔起点距离由近及远排序
+		// focus 集合与打洞方向向量求交，并确定三角面到打洞起点的距离，以及法线与打洞方向是否同向
+		float t, u, v;
+		trimesh::dvec3 intersectedPos(NAN, NAN, NAN);
 		std::map<int, double> faceDisMap;
+		std::map<int, bool> directionFlagMap;
+		std::vector<int> focusFacesIntersected;
+		std::vector<int> focusFacesNoIntersected;
 		for (int i = 0; i < meshFocusFacesMapper.size(); i++)
 		{
-			trimesh::TriMesh::Face& face = m_mesh->faces[meshFocusFacesMapper[i]];
-			double dis20 = trimesh::dist2(m_cylinderPointStart, m_mesh->vertices[face[0]]);
-			double dis21 = trimesh::dist2(m_cylinderPointStart, m_mesh->vertices[face[1]]);
-			double dis22 = trimesh::dist2(m_cylinderPointStart, m_mesh->vertices[face[2]]);
-			faceDisMap[meshFocusFacesMapper[i]] = std::min(dis20, std::min(dis21, dis22));
+			int faceIndex = meshFocusFacesMapper[i];
+			trimesh::TriMesh::Face& face = m_mesh->faces[faceIndex];
+			bool isIntersected = rayIntersectTriangle(m_cylinderPointStart, m_cylinderDir, m_mesh->vertices[face[0]], m_mesh->vertices[face[1]], m_mesh->vertices[face[2]],
+				&t, &u, &v);
+			if (isIntersected)
+			{
+				trimesh::vec3 faceNormal = trimesh::normalized((m_mesh->vertices[face[1]] - m_mesh->vertices[face[0]]) TRICROSS(m_mesh->vertices[face[2]] - m_mesh->vertices[face[0]]));
+				directionFlagMap[faceIndex] = faceNormal.dot(m_cylinderDir) < 0;
+
+				trimesh::vec3 vertices1 = m_mesh->vertices[face[0]];
+				trimesh::vec3 vertices2 = m_mesh->vertices[face[1]];
+				trimesh::vec3 vertices3 = m_mesh->vertices[face[2]];
+
+				intersectedPos = m_cylinderPointStart + t * m_cylinderDir;
+
+				double depth2 = trimesh::dist2(intersectedPos, trimesh::dvec3(m_cylinderPointStart));
+				faceDisMap[faceIndex] = depth2;
+
+				focusFacesIntersected.push_back(faceIndex);
+			}
+			else
+			{
+				focusFacesNoIntersected.push_back(faceIndex);
+			}
 		}
 
-		trimesh::TriMesh* modelMesh = m_mesh;
-		trimesh::vec3 cylinderStartPos = m_cylinderPointStart;
-		std::function<bool(int, int)> compareFunc = [&modelMesh, &cylinderStartPos, &faceDisMap](int A, int B)->bool
+		// 按照打洞起点到三角面距离排序
+		std::function<bool(int, int)> compareFunc = [&faceDisMap](int A, int B)->bool
 		{
 			double dis2A = faceDisMap[A];
 			double dis2B = faceDisMap[B];
 
 			return dis2A < dis2B;
 		};
-		std::sort(meshFocusFacesMapper.begin(), meshFocusFacesMapper.end(), compareFunc);
+		std::sort(focusFacesIntersected.begin(), focusFacesIntersected.end(), compareFunc);
 
+		// 确定打洞深度
 		int i;
 		int layerFlag = 0;
-		int layerCount = 0;
-		float t, u, v;
 		double drillDepth = 0.0;
 		double presetDepth2 = m_cylinderDepth * m_cylinderDepth;
-		trimesh::dvec3 intersectedPos(NAN, NAN, NAN);
-		for (i = 0; i < meshFocusFacesMapper.size(); i++)
+		for (i = 0; i < focusFacesIntersected.size(); i++)
 		{
-			trimesh::TriMesh::Face& face = m_mesh->faces[meshFocusFacesMapper[i]];
-			bool isIntersected = rayIntersectTriangle(m_cylinderPointStart, m_cylinderDir, m_mesh->vertices[face[0]], m_mesh->vertices[face[1]], m_mesh->vertices[face[2]],
-				&t, &u, &v);
-			if (isIntersected)
+			int faceIndex = focusFacesIntersected[i];
+			bool dirFlag = directionFlagMap[faceIndex];
+			if (dirFlag)
+				layerFlag = 1;
+			else if (layerFlag > 0)
+				layerFlag = -1;
+
+			double depth2 = faceDisMap[faceIndex];
+
+			if (m_cylinderDepth > 0)
 			{
-				trimesh::vec3 faceNormal = trimesh::normalized((m_mesh->vertices[face[1]] - m_mesh->vertices[face[0]]) TRICROSS(m_mesh->vertices[face[2]] - m_mesh->vertices[face[0]]));
-				if (faceNormal.dot(m_cylinderDir) < 0)
-					layerFlag = 1;
-				else if (layerFlag > 0)
-					layerFlag = -1;
-
-				intersectedPos = m_cylinderPointStart + t * m_cylinderDir;
-
-				double depth2 = trimesh::dist2(intersectedPos, trimesh::dvec3(m_cylinderPointStart));
-
-				if (m_cylinderDepth > 0)
-				{
-					if (depth2 < presetDepth2 && layerFlag == -1)
-					{
-						drillDepth = depth2;
-						layerFlag = 0;
-					}
-					else if (depth2 >= presetDepth2)
-						break;
-				}
-				else if(layerFlag == -1)
+				if (depth2 < presetDepth2 && layerFlag == -1)
 				{
 					drillDepth = depth2;
-					break;
+					layerFlag = 0;
 				}
+				else if (depth2 >= presetDepth2)
+					break;
+			}
+			else if (layerFlag == -1)
+			{
+				drillDepth = depth2;
+				break;
 			}
 		}
 
-		 // 剔除距离比打孔深度长的三角面（暂不启用）
 		if (drillDepth > 0)
 		{
 			drillDepth = sqrt(drillDepth);
 
-			//double offset = 100;
-			//double farthestFaceDis = drillDepth;
-			//do
-			//{
-			//	i++;
-			//} while (i < meshFocusFacesMapper.size() && fabs(faceDisMap[meshFocusFacesMapper[i]] - farthestFaceDis) < offset);
+			// 剔除距离比打孔深度长的三角面（暂不启用）
+			{
+				//double offset = 100;
+				//double farthestFaceDis = drillDepth;
+				//do
+				//{
+				//	i++;
+				//} while (i < meshFocusFacesMapper.size() && fabs(faceDisMap[meshFocusFacesMapper[i]] - farthestFaceDis) < offset);
 
-			//if (i < meshFocusFacesMapper.size())
-			//{
-			//	for (int j = i; j < meshFocusFacesMapper.size(); j++)
-			//	{
-			//		totalMeshFlag[meshFocusFacesMapper[j]] = 1;
-			//	}
+				//if (i < meshFocusFacesMapper.size())
+				//{
+				//	for (int j = i; j < meshFocusFacesMapper.size(); j++)
+				//	{
+				//		totalMeshFlag[meshFocusFacesMapper[j]] = 1;
+				//	}
 
-			//	meshFocusFacesMapper.erase(meshFocusFacesMapper.begin() + i, meshFocusFacesMapper.end());
-			//}
+				//	meshFocusFacesMapper.erase(meshFocusFacesMapper.begin() + i, meshFocusFacesMapper.end());
+				//}
+			}
 
 			meshFocusFaces.clear();
 			for (i = 0; i < meshFocusFacesMapper.size(); i++)
