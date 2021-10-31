@@ -39,6 +39,7 @@ namespace mmesh
 
 	void flipZ(trimesh::TriMesh* mesh);
 
+	void fillTriangleSoupFaceIndex(trimesh::TriMesh* mesh);
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh);
 	void saveTrimesh(std::fstream& out, trimesh::TriMesh& mesh);
 

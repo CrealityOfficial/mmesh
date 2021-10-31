@@ -490,6 +490,26 @@ namespace mmesh
 		trimesh::apply_xform(mesh, xf);
 	}
 
+	void fillTriangleSoupFaceIndex(trimesh::TriMesh* mesh)
+	{
+		if (!mesh || mesh->faces.size() != 0)
+			return;
+
+		size_t size = mesh->vertices.size();
+		if (size % 3 || size < 3)
+			return;
+
+		size /= 3;
+		mesh->faces.resize(size);
+		for (size_t i = 0; i < size; ++i)
+		{
+			trimesh::TriMesh::Face& face = mesh->faces.at(i);
+			face[0] = (int)(3 * i);
+			face[1] = (int)(3 * i + 1);
+			face[2] = (int)(3 * i + 2);
+		}
+	}
+
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh)
 	{
 		loadVectorT(in, mesh.vertices);
