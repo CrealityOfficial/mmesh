@@ -334,17 +334,17 @@ namespace mmesh
 		trimesh::vec3 size = m_centerBox.size();
 		trimesh::vec3 center = m_centerBox.center();
 
-		if(type == 1)
-		{
-			float t = size.y;
-			size.y = size.z;
-			size.z = t;
-		}else if(type == 2)
-		{
-			float t = size.y;
-			size.y = size.x;
-			size.x = t;
-		}
+//		if(type == 1)
+//		{
+//			float t = size.y;
+//			size.y = size.z;
+//			size.z = t;
+//		}else if(type == 2)
+//		{
+//			float t = size.y;
+//			size.y = size.x;
+//			size.x = t;
+//		}
 
 		m_fovy = 30.0f;
 		float fovy = m_fovy * M_PIf / 180.0f;
@@ -356,7 +356,8 @@ namespace mmesh
 
 		float len1 = f(size.z, size.y, fovy);
 		float len2 = f(size.x, size.y, 2.0f * atanf(m_aspectRatio * tanf(fovy / 2.0f)));
-		float len = len1 > len2 ? len1 :len2;
+        
+		float len = type == 0 ? len1 : len2;
 
 		trimesh::vec3 eye = center + trimesh::vec3(0.0f, -1.0f, 0.0f) * len;
 		trimesh::vec3 up = trimesh::vec3(0.0f, 0.0f, 1.0f);
