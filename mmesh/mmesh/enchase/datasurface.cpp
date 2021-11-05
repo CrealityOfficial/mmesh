@@ -72,7 +72,7 @@ namespace enchase
         //ÓÍ»­
 //        stepData(matrix, 10, false);
 //        enchase::blur(matrix, 2);
-#if 0
+#if 1
         MatrixU* src = new MatrixU(*matrix);
         int width = src->width();
         int height = src->height();
@@ -88,11 +88,10 @@ namespace enchase
             return *src->ptr(safeV, safeU);
         };
         
-        
+        int radius = 7;
         for (int h = 0; h < matrix->height(); h++) {
             for (int w = 0; w < matrix->width(); w++) {
                 
-                int radius = 5;
                 float n = float((radius + 1) * (radius + 1));
                 int i; int j;
                 

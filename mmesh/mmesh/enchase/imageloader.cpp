@@ -118,8 +118,9 @@ namespace enchase
 			unsigned char* d = data + j * width;
 			float r = (float)j / (float)(height);
 			unsigned char v = (unsigned char)((1.0f - r) * (float)start + r * (float)end);
-			for(int i = 0; i < width; ++i)
-				*(d + i) = v;
+//			for(int i = 0; i < width; ++i)
+//				*(d + i) = v;
+            memset(d, v, width);
 		}
 	}
 
