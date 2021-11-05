@@ -11,19 +11,6 @@
 
 namespace mmesh
 {
-	void formartPrint(ccglobal::Tracer* tracer, const char* format, ...)
-	{
-		if (!tracer)
-			return;
-
-		char buf[1024] = { 0 };
-		va_list args;
-		va_start(args, format);
-		vsprintf(buf, format, args);
-		tracer->message(buf);
-		va_end(args);
-	}
-
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
 	{
 		assert(outMesh);
@@ -288,11 +275,17 @@ namespace mmesh
 			return;
 
 		trimesh::TriMesh* optimizeMesh = new trimesh::TriMesh();
+		bool interuptted = false;
 
 		std::vector<int> vertexMapper;
 		vertexMapper.resize(vertexNum, -1);
 
-		formartPrint(tracer, "dumplicateMesh %d", (int)vertexNum);
+		if(tracer)
+			tracer->formatMessage("dumplicateMesh %d", (int)vertexNum);
+		
+		size_t pVertex = vertexNum / 20;
+		if (pVertex == 0)
+			pVertex = vertexNum;
 
 		for (size_t i = 0; i < vertexNum; ++i)
 		{
@@ -311,17 +304,32 @@ namespace mmesh
 				vertexMapper.at(i) = index;
 			}
 
-			if (i % 100000 == 1)
+			if (i % pVertex == 1)
 			{
-				formartPrint(tracer, "dumplicateMesh %i", (int)i);
+				if (tracer)
+				{
+					tracer->formatMessage("dumplicateMesh %i", (int)i);
+					tracer->progress((float)i / (float)vertexNum);
+					if (tracer->interrupt())
+					{
+						interuptted = true;
+						break;
+					}
+				}
 #if USE_SPYCC
 				SESSION_TICK("dumplicateMesh")
 #endif
 			}
 		}
 
-		formartPrint(tracer, "dumplicateMesh over %d", (int)points.size());
+		if (tracer)
+			tracer->formatMessage("dumplicateMesh over %d", (int)points.size());
 
+		if (interuptted)
+		{
+			delete optimizeMesh;
+			return;
+		}
 		trimesh::TriMesh* omesh = optimizeMesh;
 		omesh->vertices.resize(points.size());
 		for (point_iterator it = points.begin(); it != points.end(); ++it)
