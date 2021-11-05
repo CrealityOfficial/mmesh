@@ -73,6 +73,8 @@ namespace mmesh
 		, m_left(-1.0f)
 		, m_right(1.0f)
 		, m_maniFlag(7)
+        , m_minFovy(2.0f)
+        , m_maxFovy(50.0f)
 	{
 #ifdef WIN32
 		m_aspectRatio = 1920.0f / 1080.0f;
@@ -219,6 +221,16 @@ namespace mmesh
 		return m_fovy;
 	}
 
+    float ScreenCamera::maxFovy()
+    {
+        return m_maxFovy;
+    }
+
+    float ScreenCamera::minFovy()
+    {
+        return m_minFovy;
+    }
+
 	float ScreenCamera::aspectRatio()
 	{
 		return m_aspectRatio;
@@ -241,6 +253,18 @@ namespace mmesh
 		m_fovy = fov;
 		m_projectMatrixDirty = true;
 	}
+
+    void ScreenCamera::setMaxFovy(float maxfov)
+    {
+        m_maxFovy = maxfov;
+        m_projectMatrixDirty = true;
+    }
+
+    void ScreenCamera::setMinFovy(float minfov)
+    {
+        m_minFovy = minfov;
+        m_projectMatrixDirty = true;
+    }
 
 	void ScreenCamera::setAspectRatio(float ratio)
 	{
@@ -419,8 +443,8 @@ namespace mmesh
 
 		float factor = scale;
 
-		float maxFovy = 50.0f;
-		float minFovy = 2.0f;
+		float maxFovy = m_maxFovy;
+		float minFovy = m_minFovy;
 		float fovy = m_fovy;
 		fovy /= factor;
 		if (fovy >= minFovy && fovy <= maxFovy)

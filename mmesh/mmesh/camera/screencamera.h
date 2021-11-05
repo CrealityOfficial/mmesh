@@ -71,11 +71,15 @@ namespace mmesh
 		float nearPlane();
 		float farPlane();
 		float fovy();
+        float maxFovy();
+        float minFovy();
 		float aspectRatio();
 
 		void setNearPlane(float nearPlane);
 		void setFarPlane(float farPlane);
 		void setFovy(float fov);
+        void setMaxFovy(float maxfov);
+        void setMinFovy(float minfov);
 		void setAspectRatio(float ratio);
 		void updateProjectMatrix();
 
@@ -139,6 +143,8 @@ namespace mmesh
 		float m_near;
 		float m_far;
 		float m_fovy;
+        float m_maxFovy;
+        float m_minFovy;
 		float m_aspectRatio;
 
 		float m_top;
