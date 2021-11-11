@@ -42,17 +42,10 @@ if(WIN32)
 	list(APPEND DEFS _USE_MATH_DEFINES)
 endif()
 
-if(NOT VCG_INCLUDE_DIRS)
-	message(FATAL_ERROR "Please Specified VCG_INCLUDE_DIRS")
-endif()
 if(NOT EIGEN_INCLUDE_DIRS)
 	message(FATAL_ERROR "Please Specified EIGEN_INCLUDE_DIRS")
 endif()
 
-add_definitions(-DUSE_VCG_POISSON_SAMPLE)
-add_definitions(-DUSE_VCG)
-
-include_directories(${VCG_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
 __enable_openmp()
 
@@ -60,12 +53,7 @@ if(WIN32)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif()
 
-if (SLIC3R)
-set(Libs trimesh2 clipper tbb)
-else()
 set(Libs trimesh2 clipper)
-
-endif()
 
 if(HAVE_BOOST_ERIALIZATION)
 	__files_group(${CMAKE_CURRENT_SOURCE_DIR}/mmeshtest/ SRCS_TEST)
