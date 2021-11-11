@@ -14,7 +14,7 @@ namespace enchase
         void original(MatrixU* matrix);
         void oilPainting(MatrixU* matrix);
         void sketch(MatrixU* matrix);
-        
+        void sketch2(MatrixU* matrix, MatrixU* sketchArray0, MatrixU* sketchArray1);
 	protected:
 		MatrixF* produce() override;
         void stepData(MatrixU* matrix, int steps, bool smooth);

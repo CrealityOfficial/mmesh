@@ -2,6 +2,7 @@
 #include "blur.h"
 #include <math.h>
 
+#include "trimesh2/Vec.h"
 #if _WIN32
 #include <algorithm>
 #endif
@@ -30,6 +31,8 @@ namespace enchase
 		m_width = width;
 		m_height = height;
 
+        if (m_data)
+            delete [] m_data;
 		if (m_width > 0 && m_height > 0)
 		{
 			m_data = new unsigned char[m_width * m_height];
@@ -177,6 +180,8 @@ namespace enchase
                 
             }
         }
+        delete src;
+        
 #else
         
         MatrixU* src = new MatrixU(*matrix);
@@ -233,6 +238,8 @@ namespace enchase
                 
             }
         }
+        
+        delete src;
 #endif
         
     }
@@ -262,6 +269,89 @@ namespace enchase
                 *matrix->ptr(i, j) = c;
             }
         }
+        delete src;
+    }
+
+    void DataSurface::sketch2(MatrixU* matrix, MatrixU* sketchArray0, MatrixU* sketchArray1)
+    {
+        if (!matrix || !sketchArray0 || !sketchArray1) {
+            return;
+        }
+        
+        MatrixU* src = new MatrixU(*matrix);
+
+        auto texture = [](MatrixU* from, trimesh::vec2 uv, int depth) ->unsigned char{
+
+            float v = uv.y, u = uv.x;
+
+            int width = from->width();
+            int height = from->height();
+
+            //repeat sample
+            float safeV = trimesh::fract(v);
+            float safeU = trimesh::fract(u);
+
+            int h = safeV * height;
+            int w = safeU * width;
+
+            int pos = (h * width + w) * from->depth() + depth;
+
+            return from->m_data[pos];
+        };
+        
+        for (int h = 0; h < src->height(); h++) {
+            for (int w = 0; w < src->width(); w++) {
+
+                float luminance = (float)*src->ptr(h, w) / 255.0;
+
+                trimesh::vec2 uv = trimesh::vec2((float)w / (float)matrix->width(),
+                                                 1.0 - (float)h / (float)matrix->height());
+                uv *= 4.5;
+                uv = trimesh::vec2(uv.x * cos(0.785) + uv.y * (sin(-0.785)),
+                                  uv.x * sin(0.785) + uv.y * cos(0.785));
+
+
+                float hatchFactor = luminance * 7.0;
+
+                trimesh::vec3 hatchWeights0 = trimesh::vec3(0.0);
+                trimesh::vec3 hatchWeights1 = trimesh::vec3(0.0);
+
+                if (hatchFactor > 6.0) {
+                    // Pure white, do nothing
+                } else if (hatchFactor > 5.0) {
+                    hatchWeights0.x = hatchFactor - 5.0;
+                } else if (hatchFactor > 4.0) {
+                    hatchWeights0.x = hatchFactor - 4.0;
+                    hatchWeights0.y = 1.0 - hatchWeights0.x;
+                } else if (hatchFactor > 3.0) {
+                    hatchWeights0.y = hatchFactor - 3.0;
+                    hatchWeights0.z = 1.0 - hatchWeights0.y;
+                } else if (hatchFactor > 2.0) {
+                    hatchWeights0.z = hatchFactor - 2.0;
+                    hatchWeights1.x = 1.0 - hatchWeights0.z;
+                } else if (hatchFactor > 1.0) {
+                    hatchWeights1.x = hatchFactor - 1.0;
+                    hatchWeights1.y = 1.0 - hatchWeights1.x;
+                } else {
+                    hatchWeights1.y = hatchFactor;
+                    hatchWeights1.z = 1.0 - hatchWeights1.y;
+                }
+
+                unsigned char hatchTex0 = texture(sketchArray0, uv, 0) * hatchWeights0.x;
+                unsigned char hatchTex1 = texture(sketchArray0, uv, 1) * hatchWeights0.y;
+                unsigned char hatchTex2 = texture(sketchArray0, uv, 2) * hatchWeights0.z;
+                unsigned char hatchTex3 = texture(sketchArray1, uv, 0) * hatchWeights1.x;
+                unsigned char hatchTex4 = texture(sketchArray1, uv, 1) * hatchWeights1.y;
+                unsigned char hatchTex5 = texture(sketchArray1, uv, 2) * hatchWeights1.z;
+                unsigned char whiteColor = (255) * (1.0 - hatchWeights0.x - hatchWeights0.y - hatchWeights0.z -
+                            hatchWeights1.x - hatchWeights1.y - hatchWeights1.z);
+
+                unsigned char hatchColor = hatchTex0 + hatchTex1 + hatchTex2 + hatchTex3 + hatchTex4 + hatchTex5 + whiteColor;
+
+                *matrix->ptr(h, w) = hatchColor;
+            }
+        }
+        
         delete src;
     }
 
