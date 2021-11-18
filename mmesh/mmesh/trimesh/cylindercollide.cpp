@@ -266,32 +266,56 @@ namespace mmesh
 		}
 	}
 
-	void pointInner(std::vector<int>& pointPosition, std::vector<trimesh::TriMesh::Face>& focusFaces,int n)
+	void traverse(const int& a,int& b,int& c)
 	{
-		TriMesh::Face& cylinderFace = focusFaces.at(n);
-		if (n >= pointPosition.size())
+		if (a != -1)
 		{
-			return;
-		}
+			if (b == -1)
+				b = a;
 
-		if (pointPosition[cylinderFace[0]] != -1
-			&& pointPosition[cylinderFace[1]] != -1
-			&& pointPosition[cylinderFace[2]] != -1)
-		{
-			return;
+			if (c == -1)
+				c = a;
 		}
+	}
 
-		if (pointPosition[cylinderFace[0]] != -1
-			|| pointPosition[cylinderFace[1]] != -1
-			|| pointPosition[cylinderFace[2]] != -1)
+	void pointInner(std::vector<int>& pointPosition, std::vector<trimesh::TriMesh::Face>& focusFaces)
+	{
+		bool isHaveTrue= false;
+		for (auto n: pointPosition)
 		{
-			int index = std::max(pointPosition[cylinderFace[0]], pointPosition[cylinderFace[1]]);
-			index = std::max(index, pointPosition[cylinderFace[2]]);
-			pointPosition[cylinderFace[0]] = index;
-			pointPosition[cylinderFace[1]] = index;
-			pointPosition[cylinderFace[2]] = index;
+			if (n != -1)
+			{
+				isHaveTrue = true;
+				break;
+			}
 		}
-		pointInner(pointPosition,focusFaces,++n);
+		if (!isHaveTrue)
+			return;
+
+		int n = 0;
+		while (1)
+		{
+			if (n>= focusFaces.size())
+			{
+				n = 0;
+			}
+			TriMesh::Face& cylinderFace = focusFaces.at(n++);
+			traverse(pointPosition[cylinderFace[0]], pointPosition[cylinderFace[1]], pointPosition[cylinderFace[2]]);
+			traverse(pointPosition[cylinderFace[1]], pointPosition[cylinderFace[0]], pointPosition[cylinderFace[2]]);
+			traverse(pointPosition[cylinderFace[2]], pointPosition[cylinderFace[0]], pointPosition[cylinderFace[1]]);
+
+			bool bFfinished = true;
+			for (auto n : pointPosition)
+			{
+				if (n == -1)
+				{
+					bFfinished = false;
+					break;
+				}
+			}
+			if (bFfinished)
+				break;
+		}
 		return;
 	}
 
@@ -368,16 +392,16 @@ namespace mmesh
 				pointPosition[cylinderFace[2]] = vctInner[i][2];
 			}
 			//recursion
-			for (size_t i = 0; i < tris.size(); i++)
-			{
-				if (tris[i].flag != 0)
-					continue;
-				pointInner(pointPosition, focusFaces, i);
-			}
+			//for (size_t i = 0; i < tris.size(); i++)
+			//{
+			//	if (tris[i].flag != 0)
+			//		continue;
+				pointInner(pointPosition, focusFaces);
+			//}
 
 			for (size_t i = 0; i < tris.size(); i++)
 			{
-				if (tris[i].flag != 1)
+				if (tris[i].flag == 0)
 					continue;
 				TriMesh::Face& cylinderFace = mesh->faces.at(i);
 				if (pointPosition[cylinderFace[0]] ==0
