@@ -282,6 +282,8 @@ namespace enchase
 			{
 				int index = j * width + i;
 				int rindex = (height - 1 - j) * width + i;
+				if(!flipY)
+					rindex = index;
 				unsigned char* pdata = data + rindex * pixel;
 				unsigned char a = 0;
 				fpixel(pdata, raw.data[index], a);
