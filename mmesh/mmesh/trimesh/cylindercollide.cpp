@@ -587,7 +587,7 @@ namespace mmesh
 			focusNormals.at(j) = normalized(n);
 		}
 
-		tracerFormartPrint(m_tracer, "OptimizeCylinderCollide meshFocus [%d], cylinder [%d]",
+		SAFE_TRACER(m_tracer, "OptimizeCylinderCollide meshFocus [%d], cylinder [%d]",
 			focusTriangle, cylinderTriangles);
 		if (m_debugger)
 			m_debugger->onCylinderBoxFocus(meshFocusFaces);
@@ -716,7 +716,7 @@ namespace mmesh
 			focusNormals.at(j) = normalized(n);
 		}
 
-		tracerFormartPrint(m_tracer, "OptimizeCylinderCollide meshFocus [%d], cylinder [%d]",
+		SAFE_TRACER(m_tracer, "OptimizeCylinderCollide meshFocus [%d], cylinder [%d]",
 			focusTriangle, cylinderTriangles);
 		if (m_debugger)
 			m_debugger->onCylinderBoxFocus(meshFocusFaces);
@@ -1027,11 +1027,11 @@ namespace mmesh
 	{
 		if (Cin)
 		{
-			tracerFormartPrint(m_tracer, "drill reverseTrimesh.");
+			SAFE_TRACER(m_tracer, "drill reverseTrimesh.");
 			mmesh::reverseTriMesh(Cin);
 		}
 
-		tracerFormartPrint(m_tracer, "drill mergeTriMesh.");
+		SAFE_TRACER(m_tracer, "drill mergeTriMesh.");
 		std::vector<trimesh::TriMesh*> meshes;
 		if(Mout)
 			meshes.push_back(Mout);
@@ -1044,7 +1044,7 @@ namespace mmesh
 			delete mesh;
 		meshes.clear();
 
-		tracerFormartPrint(m_tracer, "drill dumplicateMesh.");
+		SAFE_TRACER(m_tracer, "drill dumplicateMesh.");
 		dumplicateMesh(drillMesh, m_tracer);
 
 		if (m_tracer)

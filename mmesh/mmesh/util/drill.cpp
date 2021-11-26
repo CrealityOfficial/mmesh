@@ -28,7 +28,7 @@ namespace mmesh
 		int vertexNum = mesh->vertices.size();
 		int faceNum = mesh->faces.size();
 
-		tracerFormartPrint(tracer, "drill start.  vertexNum [%d] , faceNum [%d].", vertexNum, faceNum);
+		SAFE_TRACER(tracer, "drill start.  vertexNum [%d] , faceNum [%d].", vertexNum, faceNum);
 		if (vertexNum == 0 || faceNum == 0 || cylinderMesh->vertices.size() == 0
 			|| cylinderMesh->faces.size() == 0)
 		{
@@ -64,7 +64,7 @@ namespace mmesh
 		int vertexNum = mesh->vertices.size();
 		int faceNum = mesh->faces.size();
 
-		tracerFormartPrint(tracer, "drill start.  vertexNum [%d] , faceNum [%d].", vertexNum, faceNum);
+		SAFE_TRACER(tracer, "drill start.  vertexNum [%d] , faceNum [%d].", vertexNum, faceNum);
 		if (vertexNum == 0 || faceNum == 0)
 		{
 			if (tracer)
