@@ -2,7 +2,6 @@
 #include "mmesh/trimesh/polygonstack.h"
 #include "mmesh/trimesh/trimeshutil.h"
 #include "trimesh2/Vec3Utils.h"
-#include "mmesh/common/print.h"
 #include "mmesh/trimesh/uniformpoints.h"
 
 #include <assert.h>

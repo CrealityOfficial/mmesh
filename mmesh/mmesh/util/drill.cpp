@@ -2,7 +2,6 @@
 #include "trimesh2/TriMesh.h"
 #include "ccglobal/tracer.h"
 
-#include "mmesh/common/print.h"
 #include "mmesh/trimesh/cylindercollide.h"
 #include "mmesh/trimesh/trimeshutil.h"
 
