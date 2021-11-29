@@ -532,9 +532,8 @@ namespace mmesh
 			trimesh::normalize(h);
 		}
 		if (trimesh::len(h) == 0.0f)
-		{
-			std::cout << " screen horizontal error";
-		}
+			return trimesh::vec3(1.0f, 0.0f, 0.0f);
+
 		return h;
 	}
 

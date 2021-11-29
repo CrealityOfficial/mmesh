@@ -198,19 +198,12 @@ namespace mmesh
 			}
 			else
 			{
-				//std::cout << "t====" << t << std::endl;
-
 				if (rayIntersectPlane(B, (C - B), E, baN, t) && ((t > 0) && (t <= 1)))
 				{
 					middlept = B * (1 - t) + C * t;
 				}
 				else
 				{
-					std::cout << "middlept error**********" << std::endl;
-					std::cout << "t====" << t << std::endl;
-					std::cout << "A====" << A << std::endl;
-					std::cout << "B====" << B << std::endl;
-					std::cout << "C====" << C << std::endl;
 					ret = false;
 				}
 			}
@@ -242,7 +235,6 @@ namespace mmesh
 		float edgeCosValue = faceCosValue;//cosf(M_PIf * 45.0f / 180.0f);
 		float thresAngle = acosf(faceCosValue) * 180.0 / M_PIf;
 		float faceThresCosValue = 180.0 - thresAngle;
-		std::cout << "thresAngle==" << thresAngle << std::endl;
 		for (int faceID = 0; faceID < faceNum; ++faceID)
 		{
 			ivec3& oppoHalfs = m_oppositeHalfEdges.at(faceID);
@@ -266,9 +258,6 @@ namespace mmesh
 					//vec3 nedge12 = vec3(0, 0, 1.0f);
 					//vec3 nedgeXY12= normalized(vec3(nedge.x, nedge.y, 0.0f));
 					//float testangle = trimesh::dot(nedge12, nedgeXY12);
-					//std::cout << "testangle==" << acos(testangle) * 180.0 / M_PIf << std::endl;
-					//std::cout << "testangle==" << acos(testangle) * 180.0 / M_PIf << std::endl;
-
 					if (abs(trimesh::dot(nedge, nedgeXY)) > edgeCosValue)//悬吊线与XY平面夹角小于某一角度
 					{
 						int oppoHalf = -1;
@@ -302,7 +291,6 @@ namespace mmesh
 						}
 						if (connectfaceVetexn > 1)
 						{
-							std::cout << "connectfaceVetexn==" << connectfaceVetexn << std::endl;
 						}
 						if (oppoHalf >= 0)
 						{
@@ -438,8 +426,6 @@ namespace mmesh
 													vertexInfor& lowestoppovertexinfor = oppovertexPos.at(2);
 													if ((lowestvertexinfor.vertexID != vertexID1) && (lowestvertexinfor.vertexID != vertexID2) && (lowestoppovertexinfor.vertexID != vertexID2) && (lowestoppovertexinfor.vertexID != vertexID1))
 													{
-														//std::cout << acos(tempdot) * 180.0 / M_PIf << std::endl;
-
 														shouldAdd = true;
 													}
 													if (tempdotAngle < 0.1)//排除已是支撑双面

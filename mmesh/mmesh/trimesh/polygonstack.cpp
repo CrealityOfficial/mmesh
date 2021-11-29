@@ -176,8 +176,6 @@ namespace mmesh
 						while (indices.size() > m_mregeCount)
 						{
 #if _DEBUG
-							//if (indices.size() == m_mregeCount + 1)
-							//	std::cout << "break";
 #endif
 							int polygonIndex = indices.back();
 							indices.pop_back();

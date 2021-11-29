@@ -427,7 +427,6 @@ bool ModelAdjacentOctree::lineCollide(trimesh::dvec3 linePos, trimesh::dvec3 lin
 
 			std::sort(intersectedFaceIDNPosArray.begin(), intersectedFaceIDNPosArray.end(), compareFunc);
 
-			std::cout << "intersectedFaceIDNPosArray size = " << intersectedFaceIDNPosArray.size() << std::endl;
 		}
 	}
 

@@ -38,7 +38,6 @@ namespace mmesh
 
 		ANALYSIS_TICK("setup node")
 		m_circleSize = size;
-		//std::cout << "polygon vertex size " << m_circleSize << std::endl;
 		m_debugNodes.resize(m_circleSize);
 		m_root = &m_debugNodes.at(0);
 
@@ -184,7 +183,6 @@ namespace mmesh
 
 					if (m_ears.size() == 0 && m_circleSize >= 3)
 					{// recal  // self intersection
-						std::cout << "need recal ears at ----------> " << m_circleSize << std::endl;
 						m_ears.clear();
 						VNode* cur = m_root;
 						do

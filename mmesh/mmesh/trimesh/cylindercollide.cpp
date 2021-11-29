@@ -2,7 +2,6 @@
 #include "mmesh/trimesh/polygonstack.h"
 #include "mmesh/trimesh/trimeshutil.h"
 #include "trimesh2/Vec3Utils.h"
-#include "mmesh/common/print.h"
 #include "mmesh/trimesh/uniformpoints.h"
 #include "mmesh/trimesh/quaternion.h"
 #include "mmesh/util/mnode.h"
@@ -89,8 +88,6 @@ namespace mmesh
 			if (fc.flag != -1)
 			{
 #if _DEBUG
-				if (i == 96)
-					std::cout << "debug point";
 #endif
 
 				std::vector<TriTri>& meshTri = fc.tris;
@@ -363,8 +360,6 @@ namespace mmesh
 				if (debugger)
 				{
 #if _DEBUG
-					if (debug_index == 92)
-						std::cout << "debug point";
 					++debug_index;
 #endif
 					SplitTriangleCache cache;

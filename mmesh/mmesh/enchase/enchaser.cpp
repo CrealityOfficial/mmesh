@@ -40,7 +40,6 @@ namespace enchase
 	{
 		if (!m_source)
 		{
-			std::cout << "source is empty." << std::endl;
 			return;
 		}
 

@@ -119,14 +119,11 @@ namespace mmesh
 
 		trimesh::vec3 newPosition = viewCenter - dir * distance;
 		trimesh::vec3 up = right TRICROSS dir;
-		m_camera->setUpVector(up);
-		m_camera->setPosition(newPosition);
 
 		if (up.x == 0.0f && up.y == 0.0f && up.z == 0.0f)
-		{
-			std::cout << "eular mouse manipulator error." << std::endl;
-		}
+			return;
 
-		//m_screenCamera->updateNearFar();
+		m_camera->setUpVector(up);
+		m_camera->setPosition(newPosition);
 	}
 }
