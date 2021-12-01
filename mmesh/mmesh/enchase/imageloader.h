@@ -20,6 +20,7 @@ namespace enchase
 		void resize(int w, int h);
 		void gradient(unsigned char start, unsigned char end);
 		bool valid();
+		void fromFlipY(const ImageData& src);
 
 		inline void blend(int x, int y, unsigned char value, unsigned char alpha)
 		{

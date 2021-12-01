@@ -129,6 +129,17 @@ namespace enchase
 		return width > 0 && height > 0 && data;
 	}
 
+	void ImageData::fromFlipY(const ImageData& src)
+	{
+		allocate(src.width, src.height);
+		for (int i = 0; i < src.height; ++i)
+		{
+			unsigned char* cs = src.data + i * src.width;
+			unsigned char* cd = data + (src.height - 1 - i) * src.width;
+			memcpy(cd, cs, src.width);
+		}
+	}
+
 	typedef struct BitmapFileHeader
 	{
 		unsigned short bfType;
