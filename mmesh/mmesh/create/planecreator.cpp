@@ -153,7 +153,8 @@ namespace mmesh
 
 		if (createUV)
 		{
-			mesh->cornerareas.resize(vertexNum, trimesh::vec3(-100.0f, -100.0f, 0.0f));
+            mesh->faceUVs = mesh->faces;
+			mesh->UVs.resize(vertexNum, trimesh::vec2(-100.0f, -100.0f));
 
 			float dx = 1.0f / (float)width;
 			float dy = 1.0f / (float)height;
@@ -165,7 +166,7 @@ namespace mmesh
 				{
 					int index = lineIndex + j;
 					float x = (float)j * dx;
-					mesh->cornerareas.at(index) = trimesh::vec3(x, y, 0.0f);
+					mesh->UVs.at(index) = trimesh::vec2(x, y);
 				}
 			}
 		}
