@@ -2,7 +2,7 @@
 #define MMESH_MNODE_1622032440408_H
 #include "trimesh2/XForm.h"
 #include "trimesh2/Vec.h"
-#include "mmesh/trimesh/quaternion.h"
+#include "trimesh2/quaternion.h"
 #include "mmesh/util/tcontainer.h"
 #include <list>
 

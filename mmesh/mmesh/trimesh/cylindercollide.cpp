@@ -3,7 +3,6 @@
 #include "mmesh/trimesh/trimeshutil.h"
 #include "trimesh2/Vec3Utils.h"
 #include "mmesh/trimesh/uniformpoints.h"
-#include "mmesh/trimesh/quaternion.h"
 #include "mmesh/util/mnode.h"
 #include "mmesh/create/createcylinder.h"
 #include <mmesh/trimesh/algrithm3d.h>

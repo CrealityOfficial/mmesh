@@ -4,7 +4,7 @@
 #include "trimesh2/XForm.h"
 #include "trimesh2/Box.h"
 #include "mmesh/util/tcontainer.h"
-#include "mmesh/trimesh/quaternion.h"
+#include "trimesh2/quaternion.h"
 #include "mmesh/camera/ray.h"
 #include <vector>
 
