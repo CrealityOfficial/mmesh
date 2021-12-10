@@ -145,7 +145,7 @@ namespace mmesh
 		{
 			m_localMatrix = trimesh::fxform::identity();
 			trimesh::fxform t1 = trimesh::fxform::trans(m_localPosition + m_localCenter);
-			trimesh::fxform r = fromQuaterian(m_localRotate);
+			trimesh::fxform r = mmesh::fromQuaterian(m_localRotate);
 			trimesh::fxform s = trimesh::fxform::scale(m_localScale.x, m_localScale.y, m_localScale.z);
 			trimesh::fxform t2 = trimesh::fxform::trans(-m_localCenter);
 
