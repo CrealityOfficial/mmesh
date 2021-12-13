@@ -1,6 +1,6 @@
 #include "shapefiller.h"
 #include <vector>
-#include "mmesh/trimesh/quaternion.h"
+#include "trimesh2/quaternion.h"
 #include <math.h>
 
 namespace mmesh
