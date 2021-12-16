@@ -27,6 +27,8 @@ namespace mmesh
 #define CODE_SLICE_LOAD_FILE  				1001      //切片场景模型文件加载完成  (ext1=1 成功，ext1=-1 失败,  ext2 返回模型 id)
 #define CODE_PHOTO_LOAD_FILE 				1002      //3D照片背景图加载完成  (ext1=1 成功，ext1=-1 失败)
 #define CODE_PHOTO_SAVE_STL     			1003      //3D照片模型保存完成 (ext1=1 成功，ext1=-1 失败)
+#define CODE_SNAPSHOT_RENDER_FINISH     	1004      //截图逻辑渲染操作完成 (ext1=1 成功，ext1=-1 失败)
+
 
 //错误码
 #define ERROR_FILE_OPEN         			10000     //打开文件错误
