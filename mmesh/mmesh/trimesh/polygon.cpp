@@ -36,7 +36,7 @@ namespace mmesh
 
 		releaseNode();
 
-		ANALYSIS_TICK("setup node")
+		ANALYSIS_TICK("setup node");
 		m_circleSize = size;
 		m_debugNodes.resize(m_circleSize);
 		m_root = &m_debugNodes.at(0);
@@ -50,13 +50,12 @@ namespace mmesh
 		}
 
 		m_ears.clear();
-		ANALYSIS_TICK("setup ears")
+		ANALYSIS_TICK("setup ears");
 		for (int i = 0; i < size; ++i)
 		{
 			if (i % 100 == 1)
-			{
-				ANALYSIS_TICK("ears")
-			}
+				ANALYSIS_TICK("ears");
+			
 			VNode& cur = m_debugNodes.at(i);
 			trimesh::dvec2& o = m_points->at(cur.index);
 			trimesh::dvec2& next = m_points->at(cur.next->index);
