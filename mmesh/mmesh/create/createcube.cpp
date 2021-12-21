@@ -2,17 +2,17 @@
 
 namespace mmesh
 {
-	trimesh::TriMesh* createCube(const trimesh::box3& box, float ratio)
+	trimesh::TriMesh* createCube(const trimesh::box3& box, float gap)
 	{
 		trimesh::TriMesh* boxMesh = new trimesh::TriMesh();
-		trimesh::point point0(box.min.x * ratio, box.min.y * ratio, box.min.z * ratio);
-		trimesh::point point1(box.max.x * ratio, box.min.y * ratio, box.min.z * ratio);
-		trimesh::point point2(box.max.x * ratio, box.min.y * ratio, box.max.z * ratio);
-		trimesh::point point3(box.min.x * ratio, box.min.y * ratio, box.max.z * ratio);
-		trimesh::point point4(box.min.x * ratio, box.max.y * ratio, box.min.z * ratio);
-		trimesh::point point5(box.max.x * ratio, box.max.y * ratio, box.min.z * ratio);
-		trimesh::point point6(box.max.x * ratio, box.max.y * ratio, box.max.z * ratio);
-		trimesh::point point7(box.min.x * ratio, box.max.y * ratio, box.max.z * ratio);
+		trimesh::point point0(box.min.x -gap, box.min.y -gap, box.min.z);
+		trimesh::point point1(box.max.x + gap, box.min.y - gap, box.min.z);
+		trimesh::point point2(box.max.x + gap, box.min.y - gap, box.max.z + gap);
+		trimesh::point point3(box.min.x - gap, box.min.y - gap, box.max.z + gap);
+		trimesh::point point4(box.min.x - gap, box.max.y + gap, box.min.z);
+		trimesh::point point5(box.max.x + gap, box.max.y + gap, box.min.z);
+		trimesh::point point6(box.max.x + gap, box.max.y + gap, box.max.z + gap);
+		trimesh::point point7(box.min.x - gap, box.max.y + gap, box.max.z + gap);
 		boxMesh->vertices.push_back(point0);
 		boxMesh->vertices.push_back(point1);
 		boxMesh->vertices.push_back(point2);
