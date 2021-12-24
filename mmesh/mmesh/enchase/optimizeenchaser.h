@@ -25,6 +25,10 @@ namespace enchase
 
 		bool texcoordGet(float s, float t, unsigned char& v) const;
 		bool texcoordGet(int s, int t, unsigned char& v) const;
+
+		int width() { return m_width; }
+		int height() { return m_height; }
+
 	protected:
 		int m_width;
 		int m_height;
