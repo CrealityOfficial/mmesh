@@ -29,6 +29,8 @@ namespace mmesh
 
 	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
 
+	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
+
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan);
 
 	trimesh::vec3 moveTrimesh2Center(trimesh::TriMesh* mesh, bool zZero = true);

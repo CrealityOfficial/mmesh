@@ -355,6 +355,38 @@ namespace mmesh
 		delete omesh;
 	}
 
+	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr)
+	{
+		int nf = mesh->faces.size();
+		std::vector<char> del_facet(nf, 0);
+
+		if (tracer)
+			tracer->formatMessage("before faces %d", (int)nf);
+
+#if defined(_OPENMP)
+#pragma omp parallel for
+#endif
+		for (int i = 0; i < nf; i++) {
+			trimesh::TriMesh::Face& facet = mesh->faces[i];
+			if (mesh->vertices[facet[0]] == mesh->vertices[facet[1]] || mesh->vertices[facet[1]] == mesh->vertices[facet[2]] || mesh->vertices[facet[0]] == mesh->vertices[facet[2]])
+			{
+				del_facet[i] = 1;
+			}
+		}
+
+		std::vector<trimesh::TriMesh::Face> validFaces;
+		for (int i = 0; i < mesh->faces.size(); ++i)
+		{
+			if (del_facet[i] == 0)
+				validFaces.push_back(mesh->faces.at(i));
+		}
+		mesh->faces.swap(validFaces);
+
+		if (tracer)
+			tracer->formatMessage("after faces %d", (int)mesh->faces.size());
+	}
+
+
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan)
 	{
 		assert(outMesh);
