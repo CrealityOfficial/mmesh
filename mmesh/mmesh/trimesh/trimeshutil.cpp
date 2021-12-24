@@ -355,7 +355,7 @@ namespace mmesh
 		delete omesh;
 	}
 
-	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr)
+	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
 		int nf = mesh->faces.size();
 		std::vector<char> del_facet(nf, 0);
