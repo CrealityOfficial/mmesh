@@ -6,7 +6,10 @@ endif()
 
 __enable_openmp()
 
-set(LIBS trimesh2)
+if(WIN32)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+endif()
+set(LIBS trimesh2 clipper nlopt libnest2d nestplacer)
 set(INCS )
 
 if(TARGET freeImage)

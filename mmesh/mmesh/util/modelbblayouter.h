@@ -27,6 +27,9 @@ namespace mmesh
 		*/ 
 		static void layout_all(trimesh::box3 workspaceBox, std::vector<int> modelIndices, 
 			std::function<trimesh::box3(int)> getModelBoxFunc, std::function<void(int, trimesh::vec3)> modelPositionUpdateFunc/*, qtuser_core::Progressor* progressor*/);
+		static void layout_all_nest(trimesh::box3 workspaceBox, std::vector<int> modelIndices,
+			std::vector < std::vector<trimesh::vec3>> models, std::function<void(int, trimesh::vec3)> modelPositionUpdateFunc/*, qtuser_core::Progressor* progressor*/);
+
 
 	private:
 		/* first, search for an appropriate position inside the workspace, if cannot find such a position, search outside the workspace then.*/
