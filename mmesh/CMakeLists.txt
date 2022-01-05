@@ -24,6 +24,7 @@ __add_real_target(mmesh lib SOURCE ${SRCS}
 							DEF ${DEFS}
 							INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 							)
+__add_openmp_lib(mmesh)
 
 if(INSTALL_MMESH)
 	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
