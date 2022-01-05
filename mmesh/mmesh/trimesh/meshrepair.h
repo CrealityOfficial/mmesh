@@ -10,12 +10,10 @@ public:
 		std::vector<int> f2;
 	};
 
-	TriMeshRepair(std::shared_ptr<trimesh::TriMesh>& mesh) {
-		m_mesh = mesh;
-	};
-
+	TriMeshRepair() {};
+	virtual ~TriMeshRepair();
 	//
-	bool repair();
+	trimesh::TriMesh* repair(trimesh::TriMesh* mesh);
 
 public:
 	void need_normalsFaces(bool simple_area_weighted = false);

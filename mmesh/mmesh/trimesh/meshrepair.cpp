@@ -4,10 +4,16 @@
 #include <omp.h>
 #endif
 
-bool TriMeshRepair::repair()
+TriMeshRepair::~TriMeshRepair()
 {
-	if (m_mesh == nullptr)
+	
+}
+
+trimesh::TriMesh* TriMeshRepair::repair(trimesh::TriMesh* mesh)
+{
+	if (mesh == nullptr)
 		return false;
+	m_mesh.reset(mesh);
 
 	removeNorFaces();
 
@@ -22,11 +28,16 @@ bool TriMeshRepair::repair()
 	fix_normal_directions();
 	fix_volume();
 
+	trimesh::TriMesh* result = (trimesh::TriMesh*)new trimesh::TriMesh();
+	result->faces = m_mesh->faces;
+	result->vertices = m_mesh->vertices;
+
+	return result;
 }
 
 void TriMeshRepair::clears()
 {
-	
+
 }
 
 void TriMeshRepair::removeNorFaces()
@@ -46,9 +57,9 @@ void TriMeshRepair::removeNorFaces()
 	}
 
 	std::vector<trimesh::TriMesh::Face> validFaces;
-//#if defined(_OPENMP)
-//#pragma omp parallel for
-//#endif
+	//#if defined(_OPENMP)
+	//#pragma omp parallel for
+	//#endif
 	for (int i = 0; i < m_mesh->faces.size(); ++i)
 	{
 		if (del_facet[i] == 0)
@@ -226,7 +237,7 @@ void TriMeshRepair::need_across_edge2()
 	}
 
 	//dprintf("Done.\n");
-	}
+}
 
 void TriMeshRepair::fix_normal_directions()
 {
@@ -249,8 +260,8 @@ void TriMeshRepair::fix_normal_directions()
 	for (;;) {
 		for (int j = 0; j < 3; ++j) {
 
-			std::vector<int>& face_face = (j == 0 ? face_faces[facet_num].f0 : j == 1? face_faces[facet_num].f1 : face_faces[facet_num].f2);
-			switch(norm_sw[facet_num]){
+			std::vector<int>& face_face = (j == 0 ? face_faces[facet_num].f0 : j == 1 ? face_faces[facet_num].f1 : face_faces[facet_num].f2);
+			switch (norm_sw[facet_num]) {
 			case 1:
 				for (int k = 0; k < face_face.size(); k++)
 				{
@@ -317,7 +328,7 @@ void TriMeshRepair::fix_normal_directions()
 					break;
 				}
 			}
-			
+
 			//reverse_facet(facet_num);
 		}
 		if (checked >= m_mesh->faces.size())
@@ -331,7 +342,7 @@ void TriMeshRepair::fix_normal_directions()
 	{
 		if (norm_sw[i] == -1)
 		{
-			reverse_facet(i,false);
+			reverse_facet(i, false);
 		}
 	}
 
@@ -354,7 +365,7 @@ void TriMeshRepair::remove_unconnected_facets()
 			{
 				int k = (j + 1) % 3;
 				std::vector<int>& face_face = (k == 0 ? face_faces[i].f0 : k == 1 ? face_faces[i].f1 : face_faces[i].f2);
-				if (face_face.size() >1)
+				if (face_face.size() > 1)
 				{
 					del_facet[i] = 1;
 				}
@@ -377,7 +388,7 @@ void TriMeshRepair::fix_volume()
 	float volume = get_volume();
 	if (volume < 0.0) {
 		for (uint32_t i = 0; i < m_mesh->faces.size(); ++i) {
-			reverse_facet(i,false);
+			reverse_facet(i, false);
 		}
 	}
 	m_mesh->need_normals();
