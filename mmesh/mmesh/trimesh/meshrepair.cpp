@@ -12,7 +12,7 @@ TriMeshRepair::~TriMeshRepair()
 trimesh::TriMesh* TriMeshRepair::repair(trimesh::TriMesh* mesh)
 {
 	if (mesh == nullptr)
-		return false;
+		return nullptr;
 	m_mesh.reset(mesh);
 
 	removeNorFaces();
