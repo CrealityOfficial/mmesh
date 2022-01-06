@@ -23,7 +23,9 @@ __add_real_target(mmesh lib SOURCE ${SRCS}
 							LIB ${LIBS}
 							DEF ${DEFS}
 							INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
-if(APPLE)							)
+							)
+							
+if(APPLE)							
 	__add_openmp_lib(mmesh)
 endif()
 
