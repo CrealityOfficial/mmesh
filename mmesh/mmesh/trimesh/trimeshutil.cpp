@@ -362,9 +362,10 @@ namespace mmesh
 
 		if (tracer)
 			tracer->formatMessage("before faces %d", (int)nf);
-
+#if _WIN32
 #if defined(_OPENMP)
-#pragma omp parallel for
+		#pragma omp parallel for
+#endif
 #endif
 		for (int i = 0; i < nf; i++) {
 			trimesh::TriMesh::Face& facet = mesh->faces[i];
