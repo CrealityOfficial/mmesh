@@ -1,4 +1,5 @@
 ﻿#include "meshrepair.h"
+#include "ccglobal/tracer.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -9,32 +10,57 @@ namespace mmesh
 
 	TriMeshRepair::~TriMeshRepair()
 	{
-
+		if (m_mesh)
+		{
+			delete m_mesh;
+			m_mesh = nullptr;
+		}
 	}
 
-	trimesh::TriMesh* TriMeshRepair::repair(trimesh::TriMesh* mesh)
+	trimesh::TriMesh* TriMeshRepair::repair(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
 		if (mesh == nullptr)
+		{
+			if (tracer)
+				tracer->failed("model mesh is empty.");
 			return nullptr;
-		m_mesh.reset(mesh);
+		}
+		m_mesh = mesh;
 
 		removeNorFaces();
-
+		if (tracer)
+		{
+			tracer->progress(0.2f);
+		}
 		need_face_faces();
 		m_mesh->need_neighbors();
 		remove_unconnected_facets();
-
+		if (tracer)
+		{
+			tracer->progress(0.4f);
+		}
 		need_face_faces();
 		need_across_edge2();
 		need_normalsFaces();
 
 		fix_normal_directions();
+		if (tracer)
+		{
+			tracer->progress(0.6f);
+		}
 		fix_volume();
-
+		if (tracer)
+		{
+			tracer->progress(0.8f);
+		}
 		trimesh::TriMesh* result = (trimesh::TriMesh*)new trimesh::TriMesh();
 		result->faces = m_mesh->faces;
 		result->vertices = m_mesh->vertices;
 
+		if (tracer)
+		{
+			tracer->progress(0.9f);
+		}
 		return result;
 	}
 
@@ -420,4 +446,46 @@ namespace mmesh
 			normalsFaces[i] = m_mesh->trinorm(i);
 		}
 	}
+
+	void getErrorEdges(trimesh::TriMesh* mesh, int& errorEdges, int& errorNormals)
+	{
+		if (mesh == nullptr)
+			return;
+
+		errorEdges = 0;
+		errorNormals = 0;
+
+		mesh->need_across_edge();
+		mesh->need_adjacentfaces();
+		int nf = mesh->faces.size();
+
+//#if defined(_OPENMP)
+//#pragma omp parallel for
+//#endif
+		for (int i = 0; i < nf; i++) {
+			for (int j = 0; j < 3; j++) {
+				int v1 = mesh->faces[i][j];
+				int v2 = mesh->faces[i][NEXT_MOD3(j)];
+				const std::vector<int>& a1 = mesh->adjacentfaces[v1];
+				const std::vector<int>& a2 = mesh->adjacentfaces[v2];
+
+				std::vector<int>vTarget;
+				for (const int& n1 : a1)
+					for (const int& n2 : a2)
+						if (n1 == n2)
+							vTarget.push_back(n1);
+
+				if (vTarget.size() == 1)
+				{
+					errorEdges++;
+				}
+				else if (mesh->across_edge[i][j] == -1)
+				{
+					errorNormals++;
+				}
+			}
+		}
+		errorNormals > 0 ? (errorNormals + 6) / 6 : 0;
+	}
+
 }
