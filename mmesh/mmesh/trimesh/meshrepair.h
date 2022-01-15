@@ -2,6 +2,11 @@
 #define _MESHREPAIR_1638265408178_H
 #include "trimesh2/TriMesh.h"
 
+namespace ccglobal
+{
+	class Tracer;
+}
+
 namespace mmesh
 {
 	class TriMeshRepair {
@@ -15,7 +20,7 @@ namespace mmesh
 		TriMeshRepair() {};
 		virtual ~TriMeshRepair();
 		//
-		trimesh::TriMesh* repair(trimesh::TriMesh* mesh);
+		trimesh::TriMesh* repair(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer);
 
 	public:
 		void need_normalsFaces(bool simple_area_weighted = false);
@@ -33,8 +38,13 @@ namespace mmesh
 		std::vector<face_Faces> face_faces; //face to faces
 		//std::vector<trimesh::TriMesh::Face> face_faces_nums; //face to faces
 		std::vector<trimesh::vec> normalsFaces;
-		std::shared_ptr<trimesh::TriMesh> m_mesh;
+		trimesh::TriMesh* m_mesh;
 	};
+
+	void getErrorEdges(trimesh::TriMesh* mesh, int& errorEdges, int& errorNormals);
+
+	//int getErrorNormals(trimesh::TriMesh* mesh);
+
 }
 
 #endif // _MESHREPAIR_1638265408178_H
