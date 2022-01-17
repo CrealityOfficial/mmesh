@@ -1,12 +1,18 @@
 ﻿#include "meshrepair.h"
 #include "ccglobal/tracer.h"
 
+#include "cmesh/mesh/meshwrapper.h"
+
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
 
 namespace mmesh
 {
+	TriMeshRepair::TriMeshRepair()
+	{
+		m_meshWrapper = std::make_shared<cmesh::MeshWrapper>();
+	}
 
 	TriMeshRepair::~TriMeshRepair()
 	{
@@ -17,15 +23,26 @@ namespace mmesh
 		}
 	}
 
-	trimesh::TriMesh* TriMeshRepair::repair(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
+	void TriMeshRepair::initMesh(trimesh::TriMesh* mesh)
 	{
-		if (mesh == nullptr)
+		if (!mesh)
+			return;
+		if (mesh)
+		{
+			m_mesh = mesh;
+		}
+		m_meshWrapper->initMesh(mesh);
+	}
+
+	trimesh::TriMesh* TriMeshRepair::repair(ccglobal::Tracer* tracer)
+	{
+		if (m_mesh == nullptr)
 		{
 			if (tracer)
 				tracer->failed("model mesh is empty.");
 			return nullptr;
 		}
-		m_mesh = mesh;
+		//m_mesh = mesh;
 
 		removeNorFaces();
 		if (tracer)
@@ -48,6 +65,13 @@ namespace mmesh
 		{
 			tracer->progress(0.6f);
 		}
+
+		fix_holes(tracer);
+
+		normalsFaces.clear();
+		m_mesh->need_normals();
+		need_normalsFaces();
+
 		fix_volume();
 		if (tracer)
 		{
@@ -488,4 +512,11 @@ namespace mmesh
 		errorNormals > 0 ? (errorNormals + 6) / 6 : 0;
 	}
 
+	void TriMeshRepair::fix_holes(ccglobal::Tracer* tracer)
+	{
+		trimesh::TriMesh* result = m_meshWrapper->fillHolesWrapper(tracer);
+
+		m_mesh->need_normals();
+		need_normalsFaces();
+	}
 }

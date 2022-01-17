@@ -7,6 +7,11 @@ namespace ccglobal
 	class Tracer;
 }
 
+namespace cmesh
+{
+	class MeshWrapper;
+}
+
 namespace mmesh
 {
 	class TriMeshRepair {
@@ -17,10 +22,13 @@ namespace mmesh
 			std::vector<int> f2;
 		};
 
-		TriMeshRepair() {};
+		TriMeshRepair() ;
 		virtual ~TriMeshRepair();
 		//
-		trimesh::TriMesh* repair(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer);
+		trimesh::TriMesh* repair(ccglobal::Tracer* tracer);
+		void initMesh(trimesh::TriMesh* mesh);
+
+		void fix_holes(ccglobal::Tracer* tracer);
 
 	public:
 		void need_normalsFaces(bool simple_area_weighted = false);
@@ -39,6 +47,7 @@ namespace mmesh
 		//std::vector<trimesh::TriMesh::Face> face_faces_nums; //face to faces
 		std::vector<trimesh::vec> normalsFaces;
 		trimesh::TriMesh* m_mesh;
+		std::shared_ptr<cmesh::MeshWrapper> m_meshWrapper;
 	};
 
 	void getErrorEdges(trimesh::TriMesh* mesh, int& errorEdges, int& errorNormals);
