@@ -11,7 +11,7 @@
 
 namespace mmesh
 {
-	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
+	void mergeTriMesh(trimesh::TriMesh* outMesh, const std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
 	{
 		assert(outMesh);
 		size_t totalVertexSize = outMesh->vertices.size();

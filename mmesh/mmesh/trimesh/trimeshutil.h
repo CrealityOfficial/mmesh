@@ -18,7 +18,7 @@ namespace ccglobal
 
 namespace mmesh
 {
-	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan = false);
+	void mergeTriMesh(trimesh::TriMesh* outMesh, const std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan = false);
 	void mergeTriMesh_omp(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes);
 
 	void reverseTriMesh(trimesh::TriMesh* Mesh);
