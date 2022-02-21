@@ -684,24 +684,6 @@ namespace mmesh
 		return ray;
 	}
 
-	//float ScreenCamera::screenSpaceRatio(const trimesh::vec3& position)
-	//{
-	//	float ratio = 1.0f;
-	//
-	//	//float nearPlane = m_camera->nearPlane();
-	//	//float positionPlane = nearPlane;
-	//	//
-	//	//float h = 2.0f * nearPlane * tanf(m_camera->fieldOfView() * M_PI / 2.0f / 180.0f);
-	//	//QVector3D cameraCenter = m_camera->position();
-	//	//QVector3D cameraView = m_camera->viewCenter() - cameraCenter;
-	//	//cameraView.normalize();
-	//	//positionPlane = QVector3D::dotProduct(position - cameraCenter, cameraView);
-	//	//
-	//	//ratio = positionPlane * h / nearPlane / (float)m_size.height();
-	//
-	//	return ratio;
-	//}
-
     void ScreenCamera::setProjectionType(ScreenCameraProjectionType projection)
     {
         m_projectionType = projection;
