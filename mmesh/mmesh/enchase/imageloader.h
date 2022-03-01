@@ -4,6 +4,13 @@
 
 namespace enchase
 {
+	enum ImageDataFormat
+	{
+		FORMAT_RGB_565 = 3,
+		FORMAT_RGBA_4444,
+		FORMAT_RGBA_8888
+	};
+
 	class ImageData
 	{
 	public:
