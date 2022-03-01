@@ -547,7 +547,7 @@ namespace mmesh
 		xf2(2, 1) = -1.0f;
 		xf2(1, 2) = 1.0f;
 
-		trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 999.9f);
+		trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 200.0f);
 
 		trimesh::fxform xf = xf3 * xf2 * xf1 * xf0;
 		//trimesh::fxform xf = xf3 * xf0;
