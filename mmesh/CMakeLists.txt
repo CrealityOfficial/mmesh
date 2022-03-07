@@ -4,12 +4,10 @@ if(WIN32)
 	list(APPEND DEFS _USE_MATH_DEFINES)
 endif()
 
-__enable_openmp()
-
 if(WIN32)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif()
-set(LIBS trimesh2)
+set(LIBS trimesh2 OpenMP::OpenMP_CXX)
 set(INCS )
 
 if(TARGET freeImage)
@@ -25,10 +23,6 @@ __add_real_target(mmesh lib SOURCE ${SRCS}
 							INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 							)
 							
-if(APPLE)							
-	__add_openmp_lib(mmesh)
-endif()
-
 if(INSTALL_MMESH)
 	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
 endif()
