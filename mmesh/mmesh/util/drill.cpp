@@ -83,6 +83,23 @@ namespace mmesh
 
 		return cylinderCollider.drill(tracer);
 	}
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, std::vector<DrillParam>& params, ccglobal::Tracer* tracer, DrillDebugger* debugger)
+	{
+		if (!mesh)
+		{
+			if (tracer)
+				tracer->failed("model mesh is empty.");
+			return nullptr;
+		}
+		if (params.size() == 0) return nullptr;
+		std::unique_ptr<trimesh::TriMesh> drillMesh(mesh);
+		for (auto& param : params)
+		{
+			drillMesh.reset(drillCylinder(drillMesh.get(), param, tracer, debugger));
+			if (!drillMesh) return nullptr;
+		}
+		return drillMesh.release();
+	}
 
 	bool saveDrill(const std::string& fileName, const DrillInputCache& cache)
 	{
