@@ -95,8 +95,11 @@ namespace mmesh
 		std::unique_ptr<trimesh::TriMesh> drillMesh(mesh);
 		for (auto& param : params)
 		{
-			drillMesh.reset(drillCylinder(drillMesh.get(), param, tracer, debugger));
-			if (!drillMesh) return nullptr;
+			trimesh::TriMesh* tmpMesh = drillCylinder(drillMesh.get(), param, tracer, debugger);
+			if (tmpMesh)
+			{
+				drillMesh.reset(tmpMesh);
+			}
 		}
 		return drillMesh.release();
 	}
