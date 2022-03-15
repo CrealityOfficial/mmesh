@@ -4,7 +4,7 @@
 
 #include "mmesh/trimesh/cylindercollide.h"
 #include "mmesh/trimesh/trimeshutil.h"
-
+#include "mmesh/create/createcylinder.h"
 #include <assert.h>
 #include <fstream>
 
@@ -91,17 +91,36 @@ namespace mmesh
 				tracer->failed("model mesh is empty.");
 			return nullptr;
 		}
-		if (params.size() == 0) return nullptr;
-		std::unique_ptr<trimesh::TriMesh> drillMesh(mesh);
-		for (auto& param : params)
+		if (params.size() == 0)
+			return nullptr;
+
+		auto f = [](trimesh::TriMesh* mesh, const DrillParam& param)->trimesh::TriMesh * {
+			if (!mesh)
+				return nullptr;
+
+			std::unique_ptr<trimesh::TriMesh> cMesh(mmesh::createSoupCylinder(param.cylinder_resolution,
+				param.cylinder_radius, param.cylinder_depth, param.cylinder_startPos, param.cylinder_Dir));
+			mmesh::dumplicateMesh(cMesh.get());
+			trimesh::TriMesh* out = mmesh::drill(mesh, cMesh.get(), nullptr, nullptr);
+			mmesh::dumplicateMesh(out);
+			return out;
+		};
+
+		trimesh::TriMesh* input = mesh;
+		std::unique_ptr<trimesh::TriMesh> out;
+		std::vector<DrillParam> _params = params;
+		while (_params.size() > 0)
 		{
-			trimesh::TriMesh* tmpMesh = drillCylinder(drillMesh.get(), param, tracer, debugger);
-			if (tmpMesh)
-			{
-				drillMesh.reset(tmpMesh);
-			}
+			DrillParam param = _params.back();
+			out.reset(f(input, param));
+			if (!out)
+				break;
+
+			input = out.get();
+			_params.pop_back();
 		}
-		return drillMesh.release();
+
+		return out.release();
 	}
 
 	bool saveDrill(const std::string& fileName, const DrillInputCache& cache)
