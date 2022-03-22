@@ -9,6 +9,8 @@
 #include "ccglobal/tracer.h"
 #include "ccglobal/spycc.h"
 
+#include <ctime>
+
 namespace mmesh
 {
 	void mergeTriMesh(trimesh::TriMesh* outMesh, const std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
@@ -240,6 +242,7 @@ namespace mmesh
 
 	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
+		std::clock_t start = clock();
 		if (!mesh)
 			return;
 
@@ -353,6 +356,10 @@ namespace mmesh
 		mesh->need_bbox();
 
 		delete omesh;
+
+		clock_t end = clock();
+		double endtime = (double)(end - start);
+		std::printf("total time1: %f\n", endtime);
 	}
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
