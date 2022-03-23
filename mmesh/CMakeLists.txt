@@ -20,10 +20,6 @@ if(TARGET freeImage)
 	list(APPEND LIBS freeImage)
 endif()
 
-if(APPLE)
-    __add_openmp_lib(vmesh)
-endif()
-
 __add_real_target(mmesh lib SOURCE ${SRCS} 
 							INC ${INCS}
 							LIB ${LIBS}
