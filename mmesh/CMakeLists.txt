@@ -10,10 +10,6 @@ endif()
 set(LIBS trimesh2)
 set(INCS )
 
-if(TARGET OpenMP::OpenMP_CXX)
-	message(STATUS "build mesh use openmp")
-	list(APPEND LIBS OpenMP::OpenMP_CXX)
-endif()
 if(TARGET freeImage)
 	message(STATUS "build mmesh use freeImage ...........................")
 	add_definitions(-DHAVE_FREEIMAGE)
@@ -25,6 +21,7 @@ __add_real_target(mmesh lib SOURCE ${SRCS}
 							LIB ${LIBS}
 							DEF ${DEFS}
 							INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+							OPENMP
 							)
 							
 if(INSTALL_MMESH)
