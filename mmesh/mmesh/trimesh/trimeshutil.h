@@ -27,7 +27,7 @@ namespace mmesh
 
 	trimesh::TriMesh* partMesh(const std::vector<int>& indices, trimesh::TriMesh* inMesh);
 
-	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
+	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr, float ratio = 0.3f);
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
 

@@ -240,7 +240,7 @@ namespace mmesh
 		return outMesh;
 	}
 
-	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
+	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)
 	{
 		std::clock_t start = clock();
 		if (!mesh)
@@ -268,7 +268,7 @@ namespace mmesh
 			}
 		};
 		typedef std::unordered_map<trimesh::vec3, int, hash_vec3, equal_vec3> unique_point;
-		unique_point points(vertexNum * 3 / 10 + 1);
+		unique_point points((int)(vertexNum * ratio) + 1);
 
 		typedef unique_point::iterator point_iterator;
 

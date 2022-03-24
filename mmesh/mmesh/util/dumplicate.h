@@ -9,7 +9,8 @@ namespace ccglobal
 
 namespace mmesh
 {
-	void qDumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
+
+	void weldingMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
 }
 
 #endif // MMESH_MNODE_1622032440408_H
