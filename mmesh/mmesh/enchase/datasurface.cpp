@@ -6,7 +6,10 @@
 #if _WIN32
 #include <algorithm>
 #endif
-
+#if __WEB__
+    #define FLT_MAX 3.402823466e+38F
+    #define FLT_MIN 1.175494351e-38F
+#endif
 namespace enchase
 {
 	DataSurface::DataSurface()
@@ -72,7 +75,7 @@ namespace enchase
 
     void DataSurface::oilPainting(MatrixU* matrix)
     {
-        //ÓÍ»­
+        //ï¿½Í»ï¿½
 //        stepData(matrix, 10, false);
 //        enchase::blur(matrix, 2);
 #if 1
@@ -136,6 +139,8 @@ namespace enchase
                 }
 
 #if _WIN32
+                float min_sigma2 = FLT_MAX;
+#elif __WEB__
                 float min_sigma2 = FLT_MAX;
 #else
                 float min_sigma2 = MAXFLOAT;
@@ -247,15 +252,15 @@ namespace enchase
     void DataSurface::sketch(MatrixU* matrix)
     {
         //https://blog.csdn.net/u010468553/article/details/79392171
-        //ËØÃè
+        //ï¿½ï¿½ï¿½ï¿½
         MatrixU* src = new MatrixU(*matrix);
         
-        //·´Ïà
+        //ï¿½ï¿½ï¿½ï¿½
         *src = 0xFF - (*src);
         
         enchase::blur(src, 3);
         
-        //ÑÕÉ«¼õµ­
+        //ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
         for (int i = 0; i < matrix->height(); i++) {
             
             for (int j = 0; j < matrix->width(); j++) {
