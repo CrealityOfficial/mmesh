@@ -85,8 +85,8 @@ namespace mmesh
 
 	void weldingMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
-		//calc time
-		std::clock_t start = clock();
+		////calc time
+		//std::clock_t start = clock();
 
 		size_t vertexNum = mesh->vertices.size();
 		std::vector<trimesh::point>& vertices = mesh->vertices;
@@ -144,9 +144,9 @@ namespace mmesh
 		mesh->need_bbox();
 		delete omesh;
 
-		//calc time
-		clock_t end = clock();
-		double endtime = (double)(end - start);
-		std::printf("total time: %f\n", endtime);
+		////calc time
+		//clock_t end = clock();
+		//double endtime = (double)(end - start);
+		//std::printf("total time: %f\n", endtime);
 	}
 }
