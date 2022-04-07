@@ -15,15 +15,22 @@ if(TARGET freeImage)
 	add_definitions(-DHAVE_FREEIMAGE)
 	list(APPEND LIBS freeImage)
 endif()
-
-__add_real_target(mmesh lib SOURCE ${SRCS} 
-							INC ${INCS}
-							LIB ${LIBS}
-							DEF ${DEFS}
-							INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
-							OPENMP
-							)
-							
+if(EMCC_WEB)
+	__add_real_target(mmesh lib SOURCE ${SRCS} 
+	INC ${INCS}
+	LIB ${LIBS}
+	DEF ${DEFS}
+	INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+else()
+	__add_real_target(mmesh lib SOURCE ${SRCS} 
+								INC ${INCS}
+								LIB ${LIBS}
+								DEF ${DEFS}
+								INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+								OPENMP
+								)
+endif()							
 if(INSTALL_MMESH)
 	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
 endif()
