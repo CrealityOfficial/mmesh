@@ -7,7 +7,7 @@
 #include "ccglobal/spycc.h"
 
 //calc time
-#include <ctime>
+//#include <ctime>
 
 namespace mmesh
 {
@@ -88,6 +88,11 @@ namespace mmesh
 		////calc time
 		//std::clock_t start = clock();
 
+		if (tracer)
+		{
+			tracer->progress(0.2f);
+		}
+
 		size_t vertexNum = mesh->vertices.size();
 		std::vector<trimesh::point>& vertices = mesh->vertices;
 
@@ -97,6 +102,10 @@ namespace mmesh
 		{
 			pVertices.push_back(point3dWithIndex(vertices[i],i));
 		}
+		if (tracer)
+		{
+			tracer->progress(0.4f);
+		}
 
 		sortPoint(pVertices);
 
@@ -104,6 +113,11 @@ namespace mmesh
 		for (int i = 0; i < pVertices.size(); i++)
 		{
 			tempArray[pVertices[i].Index] = i;
+		}
+
+		if (tracer)
+		{
+			tracer->progress(0.5f);
 		}
 
 		int lastIndex = 0;
@@ -122,11 +136,21 @@ namespace mmesh
 			}
 		}
 
+		if (tracer)
+		{
+			tracer->progress(0.6f);
+		}
+
 		trimesh::TriMesh* omesh = new trimesh::TriMesh();
 		omesh->vertices.reserve(lastIndex+1);
 		for (int i = 0; i <= lastIndex; i++)
 		{
 			omesh->vertices.push_back(pVertices[i].P);
+		}
+
+		if (tracer)
+		{
+			tracer->progress(0.8f);
 		}
 
 		omesh->faces.swap(mesh->faces);
@@ -137,6 +161,11 @@ namespace mmesh
 			t.y = tempArray[omesh->faces[i].y];
 			t.z = tempArray[omesh->faces[i].z];
 			omesh->faces[i] = t;
+		}
+
+		if (tracer)
+		{
+			tracer->progress(1.0f);
 		}
 
 		mesh->vertices.swap(omesh->vertices);
