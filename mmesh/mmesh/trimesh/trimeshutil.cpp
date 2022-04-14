@@ -581,6 +581,24 @@ namespace mmesh
 		}
 	}
 
+	void indexTriangle2Soup(trimesh::TriMesh* mesh)
+	{
+		if (!mesh || mesh->faces.size() == 0)
+			return;
+
+		int size = (int)mesh->faces.size();
+		std::vector<trimesh::vec3> positions(3 * size);
+		for (int i = 0; i < size; ++i)
+		{
+			trimesh::TriMesh::Face& face = mesh->faces.at(i);
+			for(int j = 0; j <3; ++j)
+				positions.at(3 * i + j) = mesh->vertices.at(face[j]);
+		}
+		mesh->vertices.swap(positions);
+		mesh->faces.clear();
+		fillTriangleSoupFaceIndex(mesh);
+	}
+
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh)
 	{
 		loadVectorT(in, mesh.vertices);
