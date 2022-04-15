@@ -359,7 +359,7 @@ namespace mmesh
 
 		clock_t end = clock();
 		double endtime = (double)(end - start);
-		std::printf("total time1: %f\n", endtime);
+//		std::printf("total time1: %f\n", endtime);
 	}
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
