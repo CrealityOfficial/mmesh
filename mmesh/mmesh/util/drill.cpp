@@ -51,7 +51,7 @@ namespace mmesh
 		return cylinderCollider.drill(tracer);
 	}
 
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger, bool useNewDrill)
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, const DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger, bool useNewDrill)
 	{
 		if (!mesh)
 		{
@@ -90,7 +90,7 @@ namespace mmesh
 		return cylinderCollider.drill(tracer);
 
 	}
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, std::vector<DrillParam>& params, ccglobal::Tracer* tracer, DrillDebugger* debugger)
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, std::vector<DrillParam>& params, ccglobal::Tracer* tracer, DrillDebugger* debugger, bool useNewDrill)
 	{
 		if (!mesh)
 		{
@@ -101,15 +101,11 @@ namespace mmesh
 		if (params.size() == 0)
 			return nullptr;
 
-		auto f = [](trimesh::TriMesh* mesh, const DrillParam& param)->trimesh::TriMesh * {
+		auto f = [&useNewDrill](trimesh::TriMesh* mesh, const DrillParam& param)->trimesh::TriMesh * {
 			if (!mesh)
 				return nullptr;
 
-			std::unique_ptr<trimesh::TriMesh> cMesh(mmesh::createSoupCylinder(param.cylinder_resolution,
-				param.cylinder_radius, param.cylinder_depth, param.cylinder_startPos, param.cylinder_Dir));
-			mmesh::dumplicateMesh(cMesh.get());
-			trimesh::TriMesh* out = mmesh::drill(mesh, cMesh.get(), nullptr, nullptr);
-			mmesh::dumplicateMesh(out);
+			trimesh::TriMesh* out = mmesh::drillCylinder(mesh, param, nullptr, nullptr, useNewDrill);
 			return out;
 		};
 

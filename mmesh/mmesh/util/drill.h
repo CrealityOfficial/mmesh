@@ -25,9 +25,9 @@ namespace mmesh
 		ccglobal::Tracer* tracer, DrillDebugger* debugger);
 
 	// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger,bool useNewDrill = false); //type false: 原始打洞 true:去重后的打洞
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, const DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger,bool useNewDrill = false); //type false: 原始打洞 true:去重后的打洞
 	//打印多个洞
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, std::vector<DrillParam>& params, ccglobal::Tracer* tracer, DrillDebugger* debugger);
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, std::vector<DrillParam>& params, ccglobal::Tracer* tracer, DrillDebugger* debugger, bool useNewDrill = false);
 
 
 
