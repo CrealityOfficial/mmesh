@@ -1039,10 +1039,13 @@ namespace mmesh
 		meshes.clear();
 
 		SAFE_TRACER(m_tracer, "drill dumplicateMesh.");
-		dumplicateMesh(drillMesh, m_tracer);
+		dumplicateMesh(drillMesh, nullptr);
 
 		if (m_tracer)
+		{
+			m_tracer->progress(1.0f);
 			m_tracer->success();
+		}
 		return drillMesh;
 	}
 }
