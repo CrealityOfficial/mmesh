@@ -51,7 +51,7 @@ namespace mmesh
 		return cylinderCollider.drill(tracer);
 	}
 
-	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger)
+	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, DrillParam& param, ccglobal::Tracer* tracer, DrillDebugger* debugger, bool useNewDrill)
 	{
 		if (!mesh)
 		{
@@ -60,6 +60,7 @@ namespace mmesh
 
 			return nullptr;
 		}
+
 		int vertexNum = mesh->vertices.size();
 		int faceNum = mesh->faces.size();
 
@@ -81,7 +82,13 @@ namespace mmesh
 			return nullptr;
 		}
 
+		if (useNewDrill)//new drill
+		{
+			return cylinderCollider.drilldrill(tracer);
+		}
+
 		return cylinderCollider.drill(tracer);
+
 	}
 	trimesh::TriMesh* drillCylinder(trimesh::TriMesh* mesh, std::vector<DrillParam>& params, ccglobal::Tracer* tracer, DrillDebugger* debugger)
 	{

@@ -58,7 +58,7 @@ namespace mmesh
 	public:
 		OptimizeCylinderCollide(trimesh::TriMesh* mesh, trimesh::TriMesh* cylinder,
 			ccglobal::Tracer* tracer, DrillDebugger* debugger);
-			
+
 		// depth 设置为小于等于 0 时，则打洞只打穿一层壁，若大于 0，则打穿指定深度内的所有壁
 		OptimizeCylinderCollide(trimesh::TriMesh* mesh,
 			int resolution, double radius, double depth, trimesh::point pointStart, trimesh::point dir,
@@ -68,6 +68,8 @@ namespace mmesh
 		bool valid();
 
 		trimesh::TriMesh* drill(ccglobal::Tracer* tracer);
+
+		trimesh::TriMesh* drilldrill(ccglobal::Tracer* tracer);
 	protected:
 		void calculate();
 		void mycalculate();
@@ -77,6 +79,7 @@ namespace mmesh
 		trimesh::TriMesh* createCylinderMesh(trimesh::vec3 top, trimesh::vec3 bottom, float radius, int num = 20, float theta = 0.0);
 
 		trimesh::TriMesh* postProcess(trimesh::TriMesh* Mout, trimesh::TriMesh* Cin);
+		trimesh::TriMesh* postProcessDrill(trimesh::TriMesh* Mout, trimesh::TriMesh* Cin);
 	protected:
 		trimesh::TriMesh* m_mesh;
 		trimesh::TriMesh* m_cylinder;
@@ -86,6 +89,7 @@ namespace mmesh
 		FacePatch meshFocusFaces;
 		std::vector<FaceCollide> meshTris;
 		std::vector<trimesh::vec3> focusNormals;
+		std::vector<int> meshFocusVertices;
 
 		int cylinderTriangles;
 		std::vector<FaceCollide> cylinderTris;
@@ -100,9 +104,13 @@ namespace mmesh
 		int m_cylinderResolution;
 		double m_cylinderRadius;
 		double m_cylinderDepth;
-		trimesh::point m_cylinderPointStart; 
-		trimesh::point m_cylinderDir; 
+		trimesh::point m_cylinderPointStart;
+		trimesh::point m_cylinderDir;
 	};
+
+	trimesh::TriMesh* getNewMesh(trimesh::TriMesh* mesh,
+		int resolution, double radius, double depth, trimesh::point pointStart, trimesh::point dir,
+		ccglobal::Tracer* tracer, DrillDebugger* debugger = nullptr);
 }
 
 #endif // MMESH_CYLINDERCOLLIDE_1631348831075_H

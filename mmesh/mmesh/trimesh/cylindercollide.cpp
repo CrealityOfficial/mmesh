@@ -413,6 +413,26 @@ namespace mmesh
 	{
 
 	}
+	
+	trimesh::TriMesh* generatePatchMeshDrill(trimesh::TriMesh* oldMesh, FlagPatch& flagFaces, int flag)
+	{
+
+		trimesh::TriMesh* newMesh = new trimesh::TriMesh();
+		newMesh->vertices = oldMesh->vertices;
+		int size = (int)flagFaces.size();
+		if (size > 0)
+		{
+			for (int i = 0; i < size; ++i)
+			{
+				if (flagFaces.at(i) == flag)
+				{
+					newMesh->faces.push_back(oldMesh->faces.at(i));
+				}				
+			}
+		}
+		return newMesh;
+	}
+
 
 	trimesh::TriMesh* generatePatchMesh(trimesh::TriMesh* oldMesh, FlagPatch& flagFaces, int flag)
 	{
@@ -445,6 +465,136 @@ namespace mmesh
 			}
 		}
 		fillmesh(newMesh);
+		return newMesh;
+	}
+
+	void findFocusVerticesIndex(trimesh::TriMesh* mesh, std::vector<int>& meshFocusVertices
+		, const trimesh::vec3& v1, const trimesh::vec3& v2, const trimesh::vec3& v3
+		,int& index1, int& index2, int& index3)
+	{
+		index1 = -1;
+		index2 = -1;
+		index3 = -1;
+		for (size_t i = 0; i < meshFocusVertices.size(); i++)
+		{
+			if (index1 == -1
+				&& mesh->vertices[meshFocusVertices[i]].x == v1.x
+				&& mesh->vertices[meshFocusVertices[i]].y == v1.y
+				&& mesh->vertices[meshFocusVertices[i]].z == v1.z)
+			{
+				index1 =  meshFocusVertices[i];
+			}
+
+			if (index2 == -1
+				&& mesh->vertices[meshFocusVertices[i]].x == v2.x
+				&& mesh->vertices[meshFocusVertices[i]].y == v2.y
+				&& mesh->vertices[meshFocusVertices[i]].z == v2.z)
+			{
+				index2 = meshFocusVertices[i];
+			}
+
+			if (index3 == -1
+				&& mesh->vertices[meshFocusVertices[i]].x == v3.x
+				&& mesh->vertices[meshFocusVertices[i]].y == v3.y
+				&& mesh->vertices[meshFocusVertices[i]].z == v3.z)
+			{
+				index3 = meshFocusVertices[i];
+			}
+
+			if (index1>=0 && index2 >= 0 && index3 >= 0)
+				break;
+		}
+	}
+
+	trimesh::TriMesh* getNewOriginMehsh(trimesh::TriMesh* oldMesh, FlagPatch& flagFaces, int flag, ccglobal::Tracer* tracer)
+	{
+		if (!oldMesh)
+		{
+			if (tracer)
+				tracer->failed("Mesh is empty");
+			return nullptr;
+		}
+
+		trimesh::TriMesh* newMesh = generatePatchMeshDrill(oldMesh, flagFaces, flag);
+		//trimesh::TriMesh* newMesh = generatePatchMesh(oldMesh, flagFaces, flag);
+		return newMesh;
+	}
+
+	trimesh::TriMesh* getNewFocusMehsh(TriPatch& newTriangles)
+	{
+		trimesh::TriMesh* newMesh = new trimesh::TriMesh();
+
+		auto addmesh = [](trimesh::TriMesh* mesh, const trimesh::vec3& v1,
+			const trimesh::vec3& v2, const trimesh::vec3& v3) {
+				int index = (int)mesh->vertices.size();
+				mesh->vertices.push_back(v1);
+				mesh->vertices.push_back(v2);
+				mesh->vertices.push_back(v3);
+
+				mesh->faces.push_back(trimesh::TriMesh::Face(index, index + 1, index + 2));
+		};
+
+		int newVertexSize = (int)(newTriangles.size() / 3);
+		for (int i = 0; i < newVertexSize; ++i)
+			addmesh(newMesh, newTriangles.at(3 * i), newTriangles.at(3 * i + 1), newTriangles.at(3 * i + 2));
+
+		return newMesh;
+
+
+	}
+	
+	trimesh::TriMesh* generateAppendMeshWithDumplicate(trimesh::TriMesh* oldMesh, std::vector<int>& meshFocusVertices, trimesh::TriMesh* drillMesh, ccglobal::Tracer* tracer)
+	{
+		if (!oldMesh)
+		{
+			if (tracer)
+				tracer->failed("Mesh is empty");
+			return nullptr;
+		}
+
+		trimesh::TriMesh* newMesh = new trimesh::TriMesh();
+		newMesh->vertices = oldMesh->vertices;
+		newMesh->faces = oldMesh->faces;
+
+		auto addmesh = [](trimesh::TriMesh* mesh, std::vector<int>& meshFocusVertices, const trimesh::vec3& v1,
+			const trimesh::vec3& v2, const trimesh::vec3& v3) {
+				
+				int index1, index2, index3;
+				findFocusVerticesIndex(mesh, meshFocusVertices, v1, v2, v3, index1, index2, index3);
+
+				if (index1 == -1)
+				{
+					index1 = (int)mesh->vertices.size();
+					mesh->vertices.push_back(v1);
+					meshFocusVertices.push_back(index1);
+				}
+
+				if (index2 == -1)
+				{
+					index2 = (int)mesh->vertices.size();
+					mesh->vertices.push_back(v2);
+					meshFocusVertices.push_back(index2);
+				}
+
+				if (index3 == -1)
+				{
+					index3 = (int)mesh->vertices.size();
+					mesh->vertices.push_back(v3);
+					meshFocusVertices.push_back(index3);
+				}
+
+				mesh->faces.push_back(trimesh::TriMesh::Face(index1, index2, index3));
+		};
+
+		for (int i = 0; i < drillMesh->faces.size(); ++i)
+		{
+			TriMesh::Face& face = drillMesh->faces.at(i);
+			addmesh(newMesh, meshFocusVertices, drillMesh->vertices[face.x], drillMesh->vertices[face.y], drillMesh->vertices[face.z]);
+		}
+
+		if(drillMesh)
+			delete drillMesh;
+
 		return newMesh;
 	}
 
@@ -545,6 +695,9 @@ namespace mmesh
 			{
 				meshFocusFacesMapper.push_back(i);
 				meshFocusFaces.push_back(face);
+				meshFocusVertices.push_back(face.x);
+				meshFocusVertices.push_back(face.y);
+				meshFocusVertices.push_back(face.z);
 			}
 			else
 			{
@@ -660,6 +813,9 @@ namespace mmesh
 			{
 				meshFocusFacesMapper.push_back(i);
 				meshFocusFaces.push_back(face);
+				meshFocusVertices.push_back(face.x);
+				meshFocusVertices.push_back(face.y);
+				meshFocusVertices.push_back(face.z);
 			}
 			else
 			{
@@ -990,6 +1146,41 @@ namespace mmesh
 		return focusTriangle > 0;
 	}
 
+	trimesh::TriMesh* OptimizeCylinderCollide::drilldrill(ccglobal::Tracer* tracer)
+	{
+		TriPatch newMeshTriangles;
+		generateNewTriangles(meshFocusFaces, m_mesh, focusNormals, meshTris, newMeshTriangles, true, totalMeshFlag, tracer, m_debugger);
+		if (tracer)
+		{
+			tracer->progress(0.2f);
+		}
+		TriPatch newCylinderTriangles;
+		generateNewTriangles(m_cylinder->faces, m_cylinder, cylinderNormals, cylinderTris, newCylinderTriangles, false, cylinderFlag, tracer, nullptr);
+		if (tracer)
+		{
+			tracer->progress(0.4f);
+		}
+		trimesh::TriMesh* originMesh = getNewOriginMehsh(m_mesh, totalMeshFlag, CylinderCollideOuter, tracer);
+		if (tracer)
+		{
+			tracer->progress(0.6f);
+		}
+		trimesh::TriMesh* Mout = getNewFocusMehsh(newMeshTriangles);
+		if (tracer)
+		{
+			tracer->progress(0.8f);
+		}
+		trimesh::TriMesh* Cyin = generateAppendMesh(m_cylinder, cylinderFlag, newCylinderTriangles, CylinderCollideInner, tracer);
+		if (tracer)
+		{
+			tracer->progress(0.9f);
+		}
+
+		trimesh::TriMesh* drillMesh = postProcessDrill(Mout, Cyin);
+
+		return generateAppendMeshWithDumplicate(originMesh, meshFocusVertices, drillMesh, tracer);
+	}
+
 	trimesh::TriMesh* OptimizeCylinderCollide::drill(ccglobal::Tracer* tracer)
 	{
 		TriPatch newMeshTriangles;
@@ -1004,16 +1195,19 @@ namespace mmesh
 		{
 			tracer->progress(0.6f);
 		}
+
 		trimesh::TriMesh* Mout = generateAppendMesh(m_mesh, totalMeshFlag, newMeshTriangles, CylinderCollideOuter, tracer);
 		if (tracer)
 		{
 			tracer->progress(0.8f);
 		}
+
 		trimesh::TriMesh* Cyin = generateAppendMesh(m_cylinder, cylinderFlag, newCylinderTriangles, CylinderCollideInner, tracer);
 		if (tracer)
 		{
 			tracer->progress(0.9f);
 		}
+
 		return postProcess(Mout, Cyin);
 	}
 
@@ -1026,6 +1220,7 @@ namespace mmesh
 		}
 
 		SAFE_TRACER(m_tracer, "drill mergeTriMesh.");
+
 		std::vector<trimesh::TriMesh*> meshes;
 		if(Mout)
 			meshes.push_back(Mout);
@@ -1044,5 +1239,88 @@ namespace mmesh
 		if (m_tracer)
 			m_tracer->success();
 		return drillMesh;
+	}
+
+	trimesh::TriMesh* OptimizeCylinderCollide::postProcessDrill(trimesh::TriMesh* Mout, trimesh::TriMesh* Cin)
+	{
+		if (Cin)
+		{
+			SAFE_TRACER(m_tracer, "drill reverseTrimesh.");
+			mmesh::reverseTriMesh(Cin);
+		}
+
+		SAFE_TRACER(m_tracer, "drill mergeTriMesh.");
+
+		std::vector<trimesh::TriMesh*> meshes;
+		if (Mout)
+			meshes.push_back(Mout);
+		if (Cin)
+			meshes.push_back(Cin);
+		trimesh::TriMesh* drillMesh = new trimesh::TriMesh();
+		mergeTriMesh(drillMesh, meshes);
+
+		for (trimesh::TriMesh* mesh : meshes)
+			delete mesh;
+		meshes.clear();
+
+		//SAFE_TRACER(m_tracer, "drill dumplicateMesh.");
+		//dumplicateMesh(drillMesh, m_tracer);
+
+		if (m_tracer)
+			m_tracer->success();
+		return drillMesh;
+	}
+
+	trimesh::TriMesh* getNewMesh(trimesh::TriMesh* mesh,
+		int resolution, double radius, double depth, trimesh::point pointStart, trimesh::point dir,
+		ccglobal::Tracer* tracer, DrillDebugger* debugger)
+	{
+		TriMesh* meshnew = new TriMesh();
+		*meshnew = *mesh;
+
+		int faces = (int)meshnew->faces.size();
+		//m_cylinder->need_bbox();
+		//box3 cylinderBox_old = m_cylinder->bbox;
+
+		mmesh::point ZAXIS(0.0f, 0.0f, 1.0f);
+		trimesh::vec3 ax = dir;
+		trimesh::quaternion quat = trimesh::quaternion::fromDirection(ax, ZAXIS);
+
+		trimesh::fxform xf = mmesh::fromQuaterian(quat);
+
+		meshnew->need_bbox();
+		trimesh::point  m_cylinderPointStart = pointStart + 2 * (-dir);
+		double cylinderInitDepth = 2 * meshnew->bbox.radius() + 2;
+
+		//box3 cylinderBox_new;
+		//int cylinderVertexNum = (int)m_cylinder->vertices.size();
+		//for (int i = 0; i < cylinderVertexNum; ++i)
+		//{
+		//	trimesh::vec3 v = xf * m_cylinder->vertices.at(i);
+		//	cylinderBox_new += v;
+		//}
+
+		trimesh::vec3 newStartPos = xf * m_cylinderPointStart;
+		trimesh::vec3 boxMin = trimesh::vec3(newStartPos.x - radius, newStartPos.y - radius, newStartPos.z);
+		trimesh::vec3 boxMax = trimesh::vec3(newStartPos.x + radius, newStartPos.y + radius, newStartPos.z + cylinderInitDepth);
+		box3 cylinderBox_new(boxMin, boxMax);
+
+		FacePatch meshFocusFaces;
+		for (int i = 0; i < faces; ++i)
+		{
+			TriMesh::Face& face = meshnew->faces.at(i);
+			box3 b;
+			for (int j = 0; j < 3; ++j)
+			{
+				b += xf * meshnew->vertices.at(face[j]);
+			}
+
+			if (cylinderBox_new.intersects(b))
+			{
+				meshFocusFaces.push_back(face);
+			}
+		}
+		meshnew->faces.swap(meshFocusFaces);
+		return meshnew;
 	}
 }
