@@ -136,31 +136,112 @@ namespace mmesh
 
 	void lines2polygon(std::vector<trimesh::vec3>& lines, std::vector<std::vector<int>>& polygons, std::vector<trimesh::vec3>& uniPoints)
 	{
-		size_t segsize = lines.size() / 2;//线段数量
-		std::vector<segment> segments(segsize);//segments 线段的点索引
-		unique_point points;// firtst 点数据 second 点索引
+		size_t size = lines.size();
+		size_t segsize = size / 2;
+
+		class point_cmp
+		{
+		public:
+			point_cmp(float e = FLT_MIN) :eps(e) {}
+
+			bool operator()(const trimesh::vec3& v0, const trimesh::vec3& v1) const
+			{
+				if (fabs(v0.x - v1.x) <= eps)
+				{
+					if (fabs(v0.y - v1.y) <= eps)
+					{
+						return (v0.z < v1.z - eps);
+					}
+					else return (v0.y < v1.y - eps);
+				}
+				else return (v0.x < v1.x - eps);
+			}
+		private:
+			float eps;
+		};
+
+		typedef std::map<trimesh::vec3, int, point_cmp> unique_point;
+		typedef unique_point::iterator point_iterator;
+
+		struct segment
+		{
+			int start;
+			int end;
+		};
+
+		typedef std::map<trimesh::vec3, int, point_cmp> unique_point;
+		typedef unique_point::iterator point_iterator;
+		unique_point points;
+
+		auto f = [&points](const trimesh::vec3& v)->int {
+			int index = -1;
+			point_iterator it = points.find(v);
+			if (it != points.end())
+			{
+				index = (*it).second;
+			}
+			else
+			{
+				index = (int)points.size();
+				points.insert(unique_point::value_type(v, index));
+			}
+
+			return index;
+		};
+
+		std::vector<segment> segments(segsize);
 		for (size_t i = 0; i < segsize; ++i)
 		{
-			trimesh::vec3 v1 = lines.at(2 * i);//2 * i==0 2 4
-			trimesh::vec3 v2 = lines.at(2 * i + 1);//2 * i + 1==1 3 5
-			segments.at(i).start = generateIndex(points,v1);
-			segments.at(i).end = generateIndex(points, v2);
+			trimesh::vec3 v1 = lines.at(2 * i);
+			trimesh::vec3 v2 = lines.at(2 * i + 1);
+
+			segments.at(i).start = f(v1);
+			segments.at(i).end = f(v2);
 		}
 
 		std::vector<trimesh::vec3> vecpoints(points.size());
 		for (auto it = points.begin(); it != points.end(); ++it)
 		{
-			vecpoints.at((*it).second) = (*it).first;//vecpoints 按索引的顺序存储点数据
+			vecpoints.at((*it).second) = (*it).first;
 		}
+
 		std::vector<segment*> segmap(points.size(), nullptr);
 		for (segment& s : segments)
 		{
-			segmap.at(s.start) = &s;//segmap 对 segments的start 点进行排序 
+			segmap.at(s.start) = &s;
 		}
+
 		std::vector<bool> used(points.size(), false);
+
+		auto check = [&used]() ->int {
+			int index = -1;
+			size_t size = used.size();
+			for (size_t i = 0; i < size; ++i)
+			{
+				if (!used.at(i))
+				{
+					index = (int)i;
+					break;
+				}
+			}
+			return index;
+		};
+
+		struct IndexPolygon
+		{
+			std::list<int> polygon;
+			int start;
+			int end;
+
+			bool closed()
+			{
+				return (polygon.size() >= 2) && (polygon.front() == polygon.back());
+			}
+		};
+
 		std::vector<IndexPolygon> indexPolygons;
-		int index = check(used);
-		while (index >= 0)//依次对所有的线段进行连接
+		int index = check();
+		while (index >= 0)
 		{
 			used.at(index) = true;
 			segment* seg = segmap.at(index);
@@ -172,13 +253,13 @@ namespace mmesh
 				bool find = false;
 				for (IndexPolygon& polygon : indexPolygons)
 				{
-					if (s == polygon.end)//连接头部
+					if (s == polygon.end)
 					{
 						polygon.polygon.push_back(e);
 						polygon.end = e;
 						find = true;
 					}
-					else if (e == polygon.start)//连接尾部
+					else if (e == polygon.start)
 					{
 						polygon.polygon.push_front(s);
 						polygon.start = s;
@@ -189,29 +270,45 @@ namespace mmesh
 						break;
 				}
 
-				if (!find)//没有发现连接的点，创建新轮廓
+				if (!find)
 				{
-					IndexPolygon Ipolygon;
-					Ipolygon.polygon.push_back(s);
-					Ipolygon.polygon.push_back(e);
-					Ipolygon.start = s;
-					Ipolygon.end = e;
-					indexPolygons.emplace_back(Ipolygon);
+					IndexPolygon polygon;
+					polygon.polygon.push_back(s);
+					polygon.polygon.push_back(e);
+					polygon.start = s;
+					polygon.end = e;
+					indexPolygons.emplace_back(polygon);
 				}
 			}
-			index = check(used);
+			index = check();
 		}
-
+		size_t indexPolygonSize = indexPolygons.size();
 		std::map<int, IndexPolygon*> IndexPolygonMap;
-		for (size_t i = 0; i < indexPolygons.size(); ++i)
+		for (size_t i = 0; i < indexPolygonSize; ++i)
 		{
 			IndexPolygon& p1 = indexPolygons.at(i);
 			if (!p1.closed())
 				IndexPolygonMap.insert(std::pair<int, IndexPolygon*>(p1.start, &p1));
 		}
 
-		//combime 生成闭合轮廓
-		for (size_t i = 0; i < indexPolygons.size(); ++i)
+		////sort
+		//for (size_t i = 0; i < indexPolygonSize; ++i)
+		//{
+		//	IndexPolygon& p1 = indexPolygons.at(i);
+		//	for (size_t j = i + 1; j < indexPolygonSize; ++j)
+		//	{
+		//		IndexPolygon& p2 = indexPolygons.at(j);
+
+		//		if (p1.end > p2.start)
+		//		{
+		//			std::swap(p1.polygon, p2.polygon);
+		//			std::swap(p1.start, p2.start);
+		//			std::swap(p1.end, p2.end);
+		//		}
+		//	}
+		//}
+		//combime
+		for (size_t i = 0; i < indexPolygonSize; ++i)
 		{
 			IndexPolygon& p1 = indexPolygons.at(i);
 
@@ -227,7 +324,7 @@ namespace mmesh
 					break;
 
 				bool merged = false;
-				if (p1.start == p2.end)//p1轮廓的起始点等于p2轮廓的end点，则合并2个轮廓到p1
+				if (p1.start == p2.end)
 				{
 					p1.start = p2.start;
 					for (auto iter = p2.polygon.rbegin(); iter != p2.polygon.rend(); ++iter)
@@ -236,7 +333,7 @@ namespace mmesh
 					}
 					merged = true;
 				}
-				else if (p1.end == p2.start)//p1轮廓的end点等于p2轮廓的起始点，则合并2个轮廓到p1
+				else if (p1.end == p2.start)
 				{
 					p1.end = p2.end;
 					for (auto iter = p2.polygon.begin(); iter != p2.polygon.end(); ++iter)
@@ -255,8 +352,38 @@ namespace mmesh
 
 				it = IndexPolygonMap.find(p1.end);
 			}
-		}
 
+			//for (size_t j = i + 1; j < indexPolygonSize; ++j)
+			//{
+			//	IndexPolygon& p2 = indexPolygons.at(j);
+			//	if (p2.polygon.size() == 0)
+			//		continue;
+
+			//	bool merged = false;
+			//	if (p1.start == p2.end)
+			//	{
+			//		p1.start = p2.start;
+			//		for (auto it = p2.polygon.rbegin(); it != p2.polygon.rend(); ++it)
+			//		{
+			//			if ((*it) != p1.polygon.front()) p1.polygon.push_front((*it));
+			//		}
+			//		merged = true;
+			//	}else if (p1.end == p2.start)
+			//	{
+			//		p1.end = p2.end;
+			//		for (auto it = p2.polygon.begin(); it != p2.polygon.end(); ++it)
+			//		{
+			//			if ((*it) != p1.polygon.back()) p1.polygon.push_back((*it));
+			//		}
+			//		merged = true;
+			//	}
+
+			//	if (merged)
+			//	{
+			//		p2.polygon.clear();
+			//	}
+			//}
+		}
 
 		size_t polygonSize = indexPolygons.size();
 		if (polygonSize > 0)
@@ -273,11 +400,11 @@ namespace mmesh
 
 				if (polygon.size() > 0)
 				{
-					polygons.emplace_back(polygon);//polygons 最终得到的数据索引
+					polygons.emplace_back(polygon);
 				}
 			}
 		}
-		uniPoints.swap(vecpoints);//uniPoints 最终得到的数据
+		uniPoints.swap(vecpoints);
 	}
 
 	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
