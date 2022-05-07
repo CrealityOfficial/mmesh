@@ -11,7 +11,9 @@ namespace mmesh
         trimesh::vec3& v0, trimesh::vec3& v1, trimesh::vec3& v2, trimesh::vec3& baryPosition);
 
 	bool rayIntersectPlane(const trimesh::vec3& orig, const trimesh::vec3& dir, trimesh::vec3& vertex, trimesh::vec3& normal, float& t);
-	bool PointinTriangle(trimesh::vec3 A, trimesh::vec3 B, trimesh::vec3 C, trimesh::vec3 P);
+	bool PointinTriangle(const trimesh::vec3& A, const trimesh::vec3& B, const trimesh::vec3& C, const trimesh::vec3& P);
+
+	float GetArea(const trimesh::vec3& A, const trimesh::vec3& B, const trimesh::vec3& C);
 
 	trimesh::box3 extendBox(const trimesh::box3& b, float r);
 
