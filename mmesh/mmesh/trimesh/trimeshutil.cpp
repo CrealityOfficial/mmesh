@@ -8,6 +8,8 @@
 #include "mmesh/create/ballcreator.h"
 #include "ccglobal/tracer.h"
 #include "ccglobal/spycc.h"
+#include "ccglobal/platform.h"
+#include "ccglobal/log.h"
 
 #include <ctime>
 
@@ -406,10 +408,63 @@ namespace mmesh
 
 		int index = 0;
 		std::vector<int> flags(vnum, -1);
+
+		auto ff = [](const trimesh::vec3& v)->bool {
+			for (int i = 0; i < 3; ++i)
+			{
+				if (isnan(v[i]))
+					return true;
+
+				if (!isnormal(v[i]))
+				{
+					if (v[i] != 0.0f)
+						return true;
+				}
+			}
+			return false;
+		};
 		for(int i = 0; i < vnum; ++i)
 		{
 			const trimesh::vec3& v = mesh->vertices.at(i);
-			//if(fin)
+			if (ff(v))
+			{
+#if _DEBUG
+				printf("error vertex [%f %f %f]\n", v.x, v.y, v.z);
+#endif
+			}
+			else
+			{
+				flags.at(i) = index;
+				mesh->vertices.at(index) = v;
+				++index;
+			}
+		}
+
+		if (index != vnum)  //have invlid
+		{
+			if (index > 0)
+				mesh->vertices.resize(index);
+			else
+				mesh->vertices.clear();
+
+			int findex = 0;
+			for (int i = 0; i < fnum; ++i)
+			{
+				trimesh::TriMesh::Face f = mesh->faces.at(i);
+				if ((flags[f.x] >= 0) && (flags[f.y] >= 0) && (flags[f.z] >= 0))
+				{
+					f.x = flags[f.x];
+					f.y = flags[f.y];
+					f.z = flags[f.z];
+					mesh->faces.at(findex) = f;
+					++findex;
+				}
+			}
+
+			if (findex > 0)
+				mesh->faces.resize(findex);
+			else
+				mesh->faces.clear();
 		}
 	}
 
