@@ -394,6 +394,24 @@ namespace mmesh
 			tracer->formatMessage("after faces %d", (int)mesh->faces.size());
 	}
 
+	void removeInvalidVertex(trimesh::TriMesh* mesh)
+	{
+		if(!mesh)
+			return;
+
+		int vnum = (int)mesh->vertices.size();
+		int fnum = (int)mesh->faces.size();
+		if(vnum == 0 || fnum == 0)
+			return;
+
+		int index = 0;
+		std::vector<int> flags(vnum, -1);
+		for(int i = 0; i < vnum; ++i)
+		{
+			const trimesh::vec3& v = mesh->vertices.at(i);
+			//if(fin)
+		}
+	}
 
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan)
 	{

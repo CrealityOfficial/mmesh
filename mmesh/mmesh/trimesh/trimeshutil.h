@@ -30,6 +30,7 @@ namespace mmesh
 	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr, float ratio = 0.3f);
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
+	void removeInvalidVertex(trimesh::TriMesh* mesh);
 
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan);
 
