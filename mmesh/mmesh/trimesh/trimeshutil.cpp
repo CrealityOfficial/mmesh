@@ -1,6 +1,7 @@
 #include "mmesh/trimesh/trimeshutil.h"
 #include "trimesh2/TriMesh.h"
 #include "trimesh2/TriMesh_algo.h"
+#include "trimesh2/quaternion.h"
 
 #include <unordered_map>
 #include <assert.h>
@@ -632,6 +633,14 @@ namespace mmesh
 		trimesh::fxform xf = xf3 * xf2 * xf1 * xf0;
 		//trimesh::fxform xf = xf3 * xf0;
 		return xf;
+	}
+
+	trimesh::fxform xformFromPlane(const trimesh::vec3& pos, const trimesh::vec3& normal)
+	{
+		trimesh::vec3 nn = trimesh::normalized(normal);
+		trimesh::quaternion q = trimesh::quaternion::fromDirection(nn, trimesh::vec3(0.0f, 0.0f, 1.0f));
+		trimesh::fxform m1 = trimesh::fromQuaterian(q);
+		return m1 * trimesh::fxform::trans(pos);
 	}
 
 	void fillTriangleSoupFaceIndex(trimesh::TriMesh* mesh)

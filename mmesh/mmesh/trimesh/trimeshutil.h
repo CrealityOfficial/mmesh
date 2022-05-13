@@ -43,7 +43,7 @@ namespace mmesh
 	void flipZ(trimesh::TriMesh* mesh);
 
 	trimesh::fxform beltXForm(const trimesh::vec3& offset, float angle);
-
+	trimesh::fxform xformFromPlane(const trimesh::vec3& pos, const trimesh::vec3& normal);
 	void fillTriangleSoupFaceIndex(trimesh::TriMesh* mesh);
 	void indexTriangle2Soup(trimesh::TriMesh* mesh);
 
