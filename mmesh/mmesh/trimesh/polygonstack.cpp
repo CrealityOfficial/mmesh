@@ -153,7 +153,8 @@ namespace mmesh
 						(tvertex.x < (vertj.x - verti.x) * (tvertex.y - verti.y) / (vertj.y - verti.y) + verti.x))
 						count = !count;
 				}
-				return count != 0 && (infos.at(c).area * infos.at(t).area < 0.0f);
+				//return count != 0 && (infos.at(c).area * infos.at(t).area < 0.0f);
+				return count != 0;
 			};
 			merge = [&merge, &polygons, &simplePolygons, &infos, &points, this](TreeNode& node) {
 				int index = node.index;
