@@ -94,13 +94,13 @@ namespace mmesh
 	}
 
 	trimesh::TriMesh* createSoupCylinder(int count, float _radius, float _height,
-		const trimesh::vec3& position, const trimesh::vec3& normal)
+		const trimesh::vec3& centerPoint, const trimesh::vec3& normal)
 	{
 		trimesh::TriMesh* mesh = createSoupCylinder(count, _radius, _height);
 
 		const trimesh::vec3 cyOriginNormal(0.0f, 0.0f, 1.0f);
 		trimesh::quaternion q = trimesh::quaternion::rotationTo(normal, cyOriginNormal);
-		trimesh::fxform xf = trimesh::fxform::trans(position) * fromQuaterian(q);
+		trimesh::fxform xf = trimesh::fxform::trans(centerPoint) * fromQuaterian(q);
 		trimesh::apply_xform(mesh, trimesh::xform(xf));
 
 		return mesh;
