@@ -413,10 +413,10 @@ namespace mmesh
 		auto ff = [](const trimesh::vec3& v)->bool {
 			for (int i = 0; i < 3; ++i)
 			{
-				if (isnan(v[i]))
+                if (std::isnan(v[i]))
 					return true;
 
-				if (!isnormal(v[i]))
+                if (!std::isnormal(v[i]))
 				{
 					if (v[i] != 0.0f)
 						return true;
