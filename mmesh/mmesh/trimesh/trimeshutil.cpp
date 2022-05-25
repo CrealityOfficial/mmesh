@@ -421,6 +421,9 @@ namespace mmesh
 					if (v[i] != 0.0f)
 						return true;
 				}
+
+				if (std::abs(v[i]) > 1e+10)
+					return true;
 			}
 			return false;
 		};
