@@ -6,6 +6,16 @@
 
 namespace mmesh
 {
+	//point inside triangle
+	bool sameSide(trimesh::vec3& p1, trimesh::vec3& p2, trimesh::vec3& a, trimesh::vec3& b)
+	{
+		trimesh::vec3 cp1 = trimesh::cross(b - a, p1 - a);
+		trimesh::vec3 cp2 = trimesh::cross(b - a, p2 - a);
+		if (dot(cp1, cp2) >= 0)
+			return true;
+		else
+			return false;
+	}
 
 	void pickPlane(trimesh::TriMesh* mesh, trimesh::vec3 positon, trimesh::vec3 normal, std::vector<int>& faceIndex, ccglobal::Tracer* tracer)
 	{
@@ -17,20 +27,35 @@ namespace mmesh
 		mesh->need_normals();
 
 		int faceNum = mesh->faces.size();
-		std::vector<trimesh::vec>	fn(faceNum);
 
 		std::vector<int> sameNormal;
 		for (size_t i = 0; i < faceNum; i++)
 		{
 			trimesh::TriMesh::Face& f = mesh->faces[i];
-			fn[i]= trimesh::normalized(trimesh::trinorm(mesh->vertices[f.x], mesh->vertices[f.y], mesh->vertices[f.z]));
-			if (fn[i] == normal)
+			trimesh::vec3 nf= trimesh::normalized(trimesh::trinorm(mesh->vertices[f.x], mesh->vertices[f.y], mesh->vertices[f.z]));
+			if (std::abs(normal.at(0) - nf.at(0)) < 0.01
+				&& std::abs(normal.at(1) - nf.at(1)) < 0.01
+				&& std::abs(normal.at(2) - nf.at(2)) < 0.01)
 			{
-				int a = 0;
+				sameNormal.push_back(i);
 			}
 		}
 
+		int curFaceIndex=0;
+		for (size_t i = 0; i < sameNormal.size(); i++)
+		{
+			trimesh::TriMesh::Face& f = mesh->faces[sameNormal[i]];
+			trimesh::vec& a = mesh->vertices[f.x];
+			trimesh::vec& b = mesh->vertices[f.y];
+			trimesh::vec& c = mesh->vertices[f.z];
+			if (sameSide(positon, a, b, c) && sameSide(positon, b, a, c) && sameSide(positon, c, a, b))
+			{
+				curFaceIndex = sameNormal[i];
+				break;
+			}
+		}
 
+		pickPlane(mesh, curFaceIndex, faceIndex, tracer);
 	}
 
 	trimesh::TriMesh::Face checkChild(trimesh::vec3& curFn, trimesh::vec3& fn1, trimesh::vec3& fn2, trimesh::vec3& fn3)
