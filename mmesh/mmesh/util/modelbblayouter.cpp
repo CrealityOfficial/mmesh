@@ -200,8 +200,6 @@ namespace mmesh
 			}
 			ModelBBLayouter::layout_by_search(i, modelIndices, model_flags, workspaceBox, step_size, getModelBoxFunc, modelPositionUpdateFunc);
 		}
-
-		//checkModelRange();
 	}
 
 
