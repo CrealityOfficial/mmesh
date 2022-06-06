@@ -301,9 +301,9 @@ namespace mmesh
 			traverse(pointPosition[cylinderFace[2]], pointPosition[cylinderFace[0]], pointPosition[cylinderFace[1]]);
 
 			bool bFfinished = true;
-			for (auto n : pointPosition)
+			for (int nn : pointPosition)
 			{
-				if (n == -1)
+				if (nn == -1)
 				{
 					bFfinished = false;
 					break;
