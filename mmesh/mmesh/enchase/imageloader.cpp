@@ -139,6 +139,11 @@ namespace enchase
 			memcpy(cd, cs, src.width);
 		}
 	}
+	void ImageData::clone(int w, int h, unsigned char* srcdata)
+	{
+		allocate(w, h);
+		memcpy(data, srcdata, w*h);
+	}
 
 	typedef struct BitmapFileHeader
 	{

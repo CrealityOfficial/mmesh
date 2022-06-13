@@ -28,7 +28,7 @@ namespace enchase
 		void gradient(unsigned char start, unsigned char end);
 		bool valid();
 		void fromFlipY(const ImageData& src);
-
+		void clone( int w, int h, unsigned char* data);
 		inline void blend(int x, int y, unsigned char value, unsigned char alpha)
 		{
 			if (alpha == 0 || x < 0 || x >= width || y < 0 || y >= height)
