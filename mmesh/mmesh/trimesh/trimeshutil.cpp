@@ -615,7 +615,7 @@ namespace mmesh
 		trimesh::apply_xform(mesh, xf);
 	}
 
-	trimesh::fxform beltXForm(const trimesh::vec3& offset, float angle)
+	trimesh::fxform beltXForm(const trimesh::vec3& offset, float angle, int beltType)
 	{
 		float theta = angle * M_PIf / 180.0f;
 
@@ -631,11 +631,21 @@ namespace mmesh
 		xf2(2, 1) = -1.0f;
 		xf2(1, 2) = 1.0f;
 
-		trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 5000.0f);
+		if (1 == beltType)
+		{
+			trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 5000.0f);
 
-		trimesh::fxform xf = xf3 * xf2 * xf1 * xf0;
-		//trimesh::fxform xf = xf3 * xf0;
-		return xf;
+			trimesh::fxform xf = xf3 * xf2 * xf1 * xf0;
+			//trimesh::fxform xf = xf3 * xf0;
+			return xf;
+		} 
+		else
+		{
+			trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 200.0f);
+			trimesh::fxform xf = xf3 * xf2 * xf1 * xf0;
+			return xf;
+		}
+
 	}
 
 	trimesh::fxform xformFromPlane(const trimesh::vec3& pos, const trimesh::vec3& normal)
