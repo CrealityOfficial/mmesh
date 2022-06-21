@@ -48,9 +48,9 @@ namespace mmesh
 		boxMesh->faces.push_back(trimesh::TriMesh::Face(6, 7, 3));
 
 		//µ×Ãæadd face 1
-		boxMesh->faces.push_back(trimesh::TriMesh::Face(0, 1, 5));
+		boxMesh->faces.push_back(trimesh::TriMesh::Face(5, 1, 0));
 		//µ×Ãæ add face 2
-		boxMesh->faces.push_back(trimesh::TriMesh::Face(5, 4, 0));
+		boxMesh->faces.push_back(trimesh::TriMesh::Face(5, 0, 4));
 
 		return boxMesh;
 	}
