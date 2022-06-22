@@ -58,27 +58,46 @@ namespace mmesh
 		pickPlane(mesh, curFaceIndex, faceIndex, tracer);
 	}
 
-	trimesh::TriMesh::Face checkChild(trimesh::vec3& curFn, trimesh::vec3& fn1, trimesh::vec3& fn2, trimesh::vec3& fn3)
+	trimesh::TriMesh::Face checkChild(std::vector<trimesh::vec3>&fn,int c, int f1, int f2, int f3)
 	{
 		trimesh::TriMesh::Face f(-1,-1,-1);
 
-		if (std::abs(curFn.at(0) - fn1.at(0)) < 0.01
-			&& std::abs(curFn.at(1) - fn1.at(1)) < 0.01
-			&& std::abs(curFn.at(2) - fn1.at(2)) < 0.01)
+		if (c > 0 && c < fn.size())
 		{
-			f.x = 1;
-		}
-		if (std::abs(curFn.at(0) - fn2.at(0)) < 0.01
-			&& std::abs(curFn.at(1) - fn2.at(1)) < 0.01
-			&& std::abs(curFn.at(2) - fn2.at(2)) < 0.01)
-		{
-			f.y = 1;
-		}
-		if (std::abs(curFn.at(0) - fn3.at(0)) < 0.01
-			&& std::abs(curFn.at(1) - fn3.at(1)) < 0.01
-			&& std::abs(curFn.at(2) - fn3.at(2)) < 0.01)
-		{
-			f.z = 1;
+			trimesh::vec3& curfn = fn[c];
+			if (f1 > 0 && f1 < fn.size())
+			{
+				trimesh::vec3& fn1 = fn[f1];
+				if (std::abs(curfn.at(0) - fn1.at(0)) < 0.01
+					&& std::abs(curfn.at(1) - fn1.at(1)) < 0.01
+					&& std::abs(curfn.at(2) - fn1.at(2)) < 0.01)
+				{
+					f.x = 1;
+				}
+			}
+
+			if (f2 > 0 && f2 < fn.size())
+			{
+				trimesh::vec3& fn2 = fn[f2];
+				if (std::abs(curfn.at(0) - fn2.at(0)) < 0.01
+					&& std::abs(curfn.at(1) - fn2.at(1)) < 0.01
+					&& std::abs(curfn.at(2) - fn2.at(2)) < 0.01)
+				{
+					f.y = 1;
+				}
+			}
+
+			if (f3 > 0 && f3 < fn.size())
+			{
+				trimesh::vec3& fn3 = fn[f3];
+				if (std::abs(curfn.at(0) - fn3.at(0)) < 0.01
+					&& std::abs(curfn.at(1) - fn3.at(1)) < 0.01
+					&& std::abs(curfn.at(2) - fn3.at(2)) < 0.01)
+				{
+					f.z = 1;
+				}
+			}
+
 		}
 
 		return f;
@@ -103,6 +122,7 @@ namespace mmesh
 
 		mesh->clear_normals();
 		mesh->need_normals();
+		mesh->clear_across_edge();
 		mesh->need_across_edge();
 
 		int faceNum = mesh->faces.size();
@@ -121,7 +141,7 @@ namespace mmesh
 		{
 			int i = fIndexCnt.front();
 			trimesh::TriMesh::Face& f = mesh->across_edge[i];
-			trimesh::TriMesh::Face fchind = checkChild(fn[i], fn[f.x], fn[f.y], fn[f.z]);
+			trimesh::TriMesh::Face fchind = checkChild(fn,i, f.x, f.y, f.z);
 			if (fchind.x > -1
 				&& !existedElement(faceIndex, f.x))
 			{
