@@ -1,14 +1,15 @@
 #ifndef ENCHASE_IMAGELOADER_1608004787715_H
 #define ENCHASE_IMAGELOADER_1608004787715_H
 #include <string>
-
+#include <vector>
 namespace enchase
 {
 	enum ImageDataFormat
 	{
 		FORMAT_RGB_565 = 3,
 		FORMAT_RGBA_4444,
-		FORMAT_RGBA_8888
+		FORMAT_RGBA_8888,
+		FORMAT_GRAY_8,
 	};
 
 	class ImageData
@@ -17,7 +18,8 @@ namespace enchase
 		unsigned char* data;
 		int width;
 		int height;
-
+		ImageDataFormat format= ImageDataFormat::FORMAT_GRAY_8;
+	public:
 		ImageData();
 		ImageData(const ImageData& data);
 		~ImageData();
@@ -70,6 +72,8 @@ namespace enchase
 	void loadImage_freeImage(ImageData& data, const std::string& fileName);
 	void loadImage_freeImage(ImageData& data, const std::string& extension, int fd);
 	void writeImage_freeImage(unsigned char* data, int width, int height, const std::string& fileName);  //rgba
+	ImageData* constructNewFreeImage(std::vector<ImageData*> data, ImageDataFormat format);
+	ImageData* scaleFreeImage(ImageData* imagedata, float scaleX, float scaleY);
 }
 
 #endif // ENCHASE_IMAGELOADER_1608004787715_H

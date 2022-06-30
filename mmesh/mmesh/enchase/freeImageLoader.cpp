@@ -89,7 +89,7 @@ namespace enchase
 {
 
 #if HAVE_FREEIMAGE
-	void convert(ImageData& data, FIBITMAP* dib)
+	void convert2Gray(ImageData& data, FIBITMAP* dib)
 	{
 		const int nBitCounts = 8;
 		int nBpp = FreeImage_GetBPP(dib);
@@ -146,6 +146,39 @@ namespace enchase
 			}
 		}
 	}
+	bool convertBaseFormat(ImageData& data, FIBITMAP* dib)
+	{
+		bool ret = true;
+		switch (data.format)
+		{
+		case ImageDataFormat::FORMAT_RGBA_8888:
+		{
+			//! 获取数据指针
+			FIBITMAP* newdib = FreeImage_ConvertTo32Bits(dib);
+
+			BYTE* pixels = (BYTE*)FreeImage_GetBits(newdib);
+			int     width = FreeImage_GetWidth(newdib);
+			int     height = FreeImage_GetHeight(newdib);
+			data.allocate(width * 4, height);
+			data.format = ImageDataFormat::FORMAT_RGBA_8888;
+			for (int i = 0; i < width * height * 4; i += 4)
+			{
+				data.data[i] = pixels[i + 2];//bgr->rgb
+				data.data[i + 1] = pixels[i + 1];
+				data.data[i + 2] = pixels[i];//bgr->rgb
+				data.data[i + 3] = pixels[i + 3] > 0 ? pixels[i + 3] : 255;
+			}
+			FreeImage_Unload(newdib);
+		}
+		break;
+		default:
+		{
+			convert2Gray(data, dib);
+		}
+		}
+		return ret;
+
+	}
 
 #endif
 
@@ -157,7 +190,7 @@ namespace enchase
 		FIBITMAP* dib = GenericLoader(fileName.c_str(), 0);
 		if (dib != NULL) {
 
-			convert(data, dib);
+			convertBaseFormat(data, dib);
 			// free the dib
 			FreeImage_Unload(dib);
 		}else
@@ -179,7 +212,7 @@ namespace enchase
 		FIBITMAP* dib = GenericLoader(format, 0, fd);
 		if (dib != NULL) {
 
-			convert(data, dib);
+			convertBaseFormat(data, dib);
 			// free the dib
 			FreeImage_Unload(dib);
 		}else
@@ -207,5 +240,139 @@ namespace enchase
 			FreeImage_Unload(dib);
 		}
 #endif
+	}
+	ImageData* constructNewFreeImage(std::vector<ImageData*> imagedata, ImageDataFormat format)
+	{
+		//int H = FreeImage_GetHeight(dib);
+
+		//得到图像宽度int W = FreeImage_GetWidth(dib);
+
+		//得到图像像素 BYTE* data = FreeImage_GetBits(dib);
+
+		//得到图像位深 int bpp = FreeImage_GetBpp(dib);
+
+		//得到x, y像素 RGBQUAD color; FreeImage_GetPixelColor(dib, x, y, &color);
+
+		//写入x, y像素 FreeImage_SetPixelColor(dib, x, y, color);
+
+		//开辟新图像 FIBITMAP* re = FreeImage_Allocate(W, H, bpp);
+
+		//拷贝exif信息 FreeImage_CloneMetadata(dib, re);
+		int widthMax = 0;
+		int heightMax = 0;
+		int widthTotal = 0;
+		int heightTotal = 0;
+		int widthoffset = 0;
+		int heightoffset = 0;
+		int bytesPerPixel = 4;//FORMAT_RGBA_8888
+		int bpp = 32;
+		switch (format)
+		{
+		case FORMAT_RGBA_8888:
+			bytesPerPixel = 4;
+			bpp = 32;
+			break;
+			//case FORMAT_RGB_565:
+			//case FORMAT_RGBA_4444:
+			//	bytesPerPixel = 2;
+			//	break;
+		default://other format is not test
+		{
+			printf("other format is not test");
+			return nullptr;
+
+		}
+		}
+		for (auto dataPtr: imagedata)
+		{
+			if (dataPtr == nullptr)
+			{
+				continue;//should be not empty
+			}
+			widthMax = widthMax > dataPtr->width?widthMax:dataPtr->width;
+			heightMax = heightMax > dataPtr->height? heightMax :dataPtr->height;
+			widthTotal += dataPtr->width/ bytesPerPixel;
+			heightTotal += dataPtr->height;
+		}
+		widthMax = widthMax/ bytesPerPixel;
+		heightMax = heightMax;
+		FIBITMAP* dibptr =FreeImage_Allocate(widthMax, heightTotal, bpp);
+		for (int index=0;index<imagedata.size();index++)
+		{
+			auto &dataPtr = imagedata[index];
+			if (dataPtr == nullptr)
+				continue;
+			for (int indexW = 0; indexW < dataPtr->width/ bytesPerPixel; indexW++)
+			{
+				for (int indexH = 0; indexH < dataPtr->height; indexH++)
+				{
+					RGBQUAD rgb;
+					rgb.rgbRed =   dataPtr->data[dataPtr->width * indexH + indexW * bytesPerPixel];
+					rgb.rgbGreen = dataPtr->data[dataPtr->width * indexH + indexW * bytesPerPixel +1];
+					rgb.rgbBlue =  dataPtr->data[dataPtr->width * indexH + indexW * bytesPerPixel +2];
+					FreeImage_SetPixelColor(dibptr, widthoffset + indexW, heightoffset + indexH, &rgb);
+				}
+
+			}
+			//widthoffset += dataPtr->width / bytesPerPixel;
+			heightoffset += dataPtr->height;
+				
+		}
+		//FreeImage_Save(FREE_IMAGE_FORMAT::FIF_BMP, dibptr, "test.bmp", 0);
+		{
+			enchase::ImageData* dataret = nullptr;
+			dataret = new enchase::ImageData;
+			dataret->format = format;
+			convertBaseFormat(*dataret, dibptr);
+			FreeImage_Unload(dibptr);
+			return dataret;
+		}
+	}
+	ImageData* scaleFreeImage(ImageData* imagedata, float scaleX, float scaleY)
+	{
+		int bytesPerPixel = 4;//FORMAT_RGBA_8888
+		int bpp = 32;
+		switch (imagedata->format)
+		{
+		case FORMAT_RGBA_8888:
+			bytesPerPixel = 4;
+			bpp = 32;
+			break;
+			//case FORMAT_RGB_565:
+			//case FORMAT_RGBA_4444:
+			//	bytesPerPixel = 2;
+			//	break;
+		default://other format is not test
+		{
+			printf("other format is not test");
+			return nullptr;
+
+		}
+		}
+
+		FIBITMAP* dibOrignal = FreeImage_Allocate(imagedata->width / bytesPerPixel, imagedata->height, bpp);
+		for (int indexW = 0; indexW < imagedata->width / bytesPerPixel; indexW++)
+		{
+			for (int indexH = 0; indexH < imagedata->height; indexH++)
+			{
+				RGBQUAD rgb;
+				rgb.rgbRed = imagedata->data[imagedata->width * indexH + indexW * bytesPerPixel];
+				rgb.rgbGreen = imagedata->data[imagedata->width * indexH + indexW * bytesPerPixel + 1];
+				rgb.rgbBlue = imagedata->data[imagedata->width * indexH + indexW * bytesPerPixel + 2];
+				FreeImage_SetPixelColor(dibOrignal, indexW, indexH, &rgb);
+			}
+
+		}
+		int newW = imagedata->width * scaleX / bytesPerPixel;
+		int newH = imagedata->height * scaleY;
+		FIBITMAP* newdib = FreeImage_Rescale(dibOrignal, newW, newH);
+		FreeImage_Unload(dibOrignal);
+		enchase::ImageData* dataret = new enchase::ImageData;
+		dataret->format = imagedata->format;
+		convertBaseFormat(*dataret, newdib);
+		FreeImage_Unload(newdib);
+
+		return dataret;
+
 	}
 }

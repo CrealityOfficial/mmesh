@@ -8,6 +8,37 @@
 
 namespace enchase
 {
+	typedef struct BitmapFileHeader
+	{
+		unsigned short bfType;
+		unsigned long bfSize;
+		unsigned short bfReserved1;
+		unsigned short bfReserved2;
+		unsigned long bfOffBits;
+	} BITMAPFILE;
+
+	struct BitmapInfoHeader
+	{
+		unsigned long biSize;
+		long biWidth;
+		long biHeight;
+		unsigned short biPlanes;
+		unsigned short biBitCount;
+		unsigned long biCompression;
+		unsigned long biSizeImage;
+		long biXPixPerMeter;
+		long biYPixPerMeter;
+		unsigned long biClrUsed;
+		unsigned long biClrImporant;
+	};
+
+	struct RGBQUAD
+	{
+		unsigned char rgbBlue;
+		unsigned char rgbGreen;
+		unsigned char rgbRed;
+		unsigned char rgbReserved;
+	};
 	ImageData::ImageData()
 		:data(nullptr)
 			, width(0)
@@ -145,37 +176,7 @@ namespace enchase
 		memcpy(data, srcdata, w*h);
 	}
 
-	typedef struct BitmapFileHeader
-	{
-		unsigned short bfType;
-		unsigned long bfSize;
-		unsigned short bfReserved1;
-		unsigned short bfReserved2;
-		unsigned long bfOffBits;
-	} BITMAPFILE;
 
-	struct BitmapInfoHeader
-	{
-		unsigned long biSize;
-		long biWidth;
-		long biHeight;
-		unsigned short biPlanes;
-		unsigned short biBitCount;
-		unsigned long biCompression;
-		unsigned long biSizeImage;
-		long biXPixPerMeter;
-		long biYPixPerMeter;
-		unsigned long biClrUsed;
-		unsigned long biClrImporant;
-	};
-
-	struct RGBQUAD 
-	{
-		unsigned char rgbBlue;
-		unsigned char rgbGreen;
-		unsigned char rgbRed;
-		unsigned char rgbReserved;
-	};
 
 	void loadBMP(ImageData& data, const std::string& fileName)
 	{
