@@ -243,6 +243,8 @@ namespace enchase
 	}
 	ImageData* constructNewFreeImage(std::vector<ImageData*> imagedata, ImageDataFormat format)
 	{
+		enchase::ImageData* dataret = nullptr;
+		#if HAVE_FREEIMAGE
 		//int H = FreeImage_GetHeight(dib);
 
 		//µÃµ½Í¼Ïñ¿í¶Èint W = FreeImage_GetWidth(dib);
@@ -319,17 +321,19 @@ namespace enchase
 				
 		}
 		//FreeImage_Save(FREE_IMAGE_FORMAT::FIF_BMP, dibptr, "test.bmp", 0);
-		{
-			enchase::ImageData* dataret = nullptr;
+
 			dataret = new enchase::ImageData;
 			dataret->format = format;
 			convertBaseFormat(*dataret, dibptr);
 			FreeImage_Unload(dibptr);
+			#endif
 			return dataret;
 		}
 	}
 	ImageData* scaleFreeImage(ImageData* imagedata, float scaleX, float scaleY)
 	{
+		enchase::ImageData* dataret = nullptr;
+		#ifdef HAVE_FREEIMAGE
 		int bytesPerPixel = 4;//FORMAT_RGBA_8888
 		int bpp = 32;
 		switch (imagedata->format)
@@ -367,11 +371,11 @@ namespace enchase
 		int newH = imagedata->height * scaleY;
 		FIBITMAP* newdib = FreeImage_Rescale(dibOrignal, newW, newH);
 		FreeImage_Unload(dibOrignal);
-		enchase::ImageData* dataret = new enchase::ImageData;
+		dataret = new enchase::ImageData;
 		dataret->format = imagedata->format;
 		convertBaseFormat(*dataret, newdib);
 		FreeImage_Unload(newdib);
-
+		#endif
 		return dataret;
 
 	}
