@@ -11,11 +11,29 @@
 #include "ccglobal/spycc.h"
 #include "ccglobal/platform.h"
 #include "ccglobal/log.h"
-
+#include "mmesh/create/createcylinder.h"
 #include <ctime>
 
 namespace mmesh
 {
+	trimesh::TriMesh* LinePlusline2Model(std::vector<edge>* edges) 
+	{
+		trimesh::TriMesh* outMesh = new trimesh::TriMesh();
+		std::vector<trimesh::TriMesh*> resuMerge;
+		for (int i = 0; i < edges->size(); i++)
+		{
+			trimesh::vec3 centerPoint0(edges->at(i).p0);
+			trimesh::vec3 centerPoint1(edges->at(i).p1);
+			trimesh::vec3 vmiddle = (centerPoint0 + centerPoint1) / 2;
+			trimesh::vec3 v0(centerPoint1 - centerPoint0);
+			float len = trimesh::dist(centerPoint0, centerPoint1);
+			len += 1.0;
+			trimesh::TriMesh* symesh  = createSoupCylinder(10, 1.6, len, vmiddle, v0);
+			resuMerge.emplace_back(symesh);
+		}
+		mmesh::mergeTriMesh(outMesh, resuMerge, false);
+		return outMesh;
+	}
 	void mergeTriMesh(trimesh::TriMesh* outMesh, const std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)
 	{
 		assert(outMesh);
