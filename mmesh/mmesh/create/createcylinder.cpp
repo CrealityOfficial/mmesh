@@ -105,4 +105,72 @@ namespace mmesh
 
 		return mesh;
 	}
+
+	trimesh::TriMesh* createCylinderBasepos(int count, float radius, float height, const trimesh::vec3& sp, const trimesh::vec3& normal)
+	{
+
+		trimesh::TriMesh* cylinderMesh = new trimesh::TriMesh();
+
+		auto steps = int(count);
+		auto& points = cylinderMesh->vertices;
+		auto& indices = cylinderMesh->faces;
+		points.reserve(2 * count);
+		double a = 2 * PI / steps;
+
+		trimesh::vec3 jp = sp;
+		trimesh::vec3 endp (sp.x, sp.y, sp.z + height);
+
+		// Upper circle points
+		for (int i = 0; i < steps; ++i) {
+			double phi = i * a;
+			double ex = endp.x + radius * std::cos(phi);
+			double ey = endp.y + radius * std::sin(phi);
+			points.emplace_back(ex, ey, endp.z);
+		}
+
+		// Lower circle points
+		for (int i = 0; i < steps; ++i) {
+			double phi = i * a;
+			double x = jp.x + radius * std::cos(phi);
+			double y = jp.y + radius * std::sin(phi);
+			points.emplace_back(x, y, jp.z);
+		}
+
+		// Now create long triangles connecting upper and lower circles
+		indices.reserve(2 * count);
+		auto offs = steps;
+		for (int i = 0; i < steps - 1; ++i) {
+			indices.emplace_back(i, i + offs, offs + i + 1);
+			indices.emplace_back(i, offs + i + 1, i + 1);
+		}
+
+		// Last triangle connecting the first and last vertices
+		auto last = steps - 1;
+		indices.emplace_back(0, last, offs);
+		indices.emplace_back(last, offs + last, offs);
+
+		// According to the slicing algorithms, we need to aid them with generating
+		// a watertight body. So we create a triangle fan for the upper and lower
+		// ending of the cylinder to close the geometry.
+		points.emplace_back(jp); int ci = int(points.size() - 1);
+		for (int i = 0; i < steps - 1; ++i)
+			indices.emplace_back(i + offs + 1, i + offs, ci);
+
+		indices.emplace_back(offs, steps + offs - 1, ci);
+
+		points.emplace_back(endp); ci = int(points.size() - 1);
+		for (int i = 0; i < steps - 1; ++i)
+			indices.emplace_back(ci, i, i + 1);
+
+		indices.emplace_back(steps - 1, 0, ci);
+		mmesh::dumplicateMesh(cylinderMesh);
+
+		const trimesh::vec3 cydestNormal(0.0f, 0.0f, 1.0f);
+		trimesh::quaternion q = trimesh::quaternion::rotationTo(trimesh::normalized(normal), cydestNormal);
+		trimesh::fxform xf = fromQuaterian(q);
+		trimesh::apply_xform(cylinderMesh, trimesh::xform(xf));
+
+		return cylinderMesh;
+	}
+
 }

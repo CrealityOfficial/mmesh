@@ -8,6 +8,8 @@ namespace mmesh
 	trimesh::TriMesh* createSoupCylinder(int count, float _radius, float _height);
 	trimesh::TriMesh* createSoupCylinder(int count, float _radius, float _height,
 		const trimesh::vec3& centerPoint, const trimesh::vec3& normal);
+	trimesh::TriMesh* createCylinderBasepos(int count, float radius, float height, const trimesh::vec3& sp, const trimesh::vec3& normal);
+
 }
 
 #endif // MMESH_CREATECYLINDER_1619866821989_H
