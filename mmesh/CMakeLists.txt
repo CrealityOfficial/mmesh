@@ -10,6 +10,8 @@ endif()
 set(LIBS trimesh2)
 set(INCS )
 
+__cc_find(freeImage)
+
 if(TARGET freeImage)
 	message(STATUS "build mmesh use freeImage ...........................")
 	add_definitions(-DHAVE_FREEIMAGE)
