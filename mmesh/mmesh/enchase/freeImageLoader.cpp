@@ -328,7 +328,6 @@ namespace enchase
 			FreeImage_Unload(dibptr);
 			#endif
 			return dataret;
-		}
 	}
 	ImageData* scaleFreeImage(ImageData* imagedata, float scaleX, float scaleY)
 	{
