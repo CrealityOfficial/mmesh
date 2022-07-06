@@ -27,8 +27,8 @@ namespace mmesh
 			trimesh::vec3 vmiddle = (centerPoint0 + centerPoint1) / 2;
 			trimesh::vec3 v0(centerPoint1 - centerPoint0);
 			float len = trimesh::dist(centerPoint0, centerPoint1);
-			len += 1.0;
-			trimesh::TriMesh* symesh  = createSoupCylinder(10, 1.6, len, vmiddle, v0);
+			//len += 1.0;
+			trimesh::TriMesh* symesh  = createSoupCylinder(10, 0.4, len, vmiddle, v0);
 			resuMerge.emplace_back(symesh);
 		}
 		mmesh::mergeTriMesh(outMesh, resuMerge, false);
