@@ -304,6 +304,8 @@ namespace enchase
 			auto &dataPtr = imagedata[index];
 			if (dataPtr == nullptr)
 				continue;
+			if (dibptr == nullptr)
+				break;
 			for (int indexW = 0; indexW < dataPtr->width/ bytesPerPixel; indexW++)
 			{
 				for (int indexH = 0; indexH < dataPtr->height; indexH++)
@@ -321,11 +323,14 @@ namespace enchase
 				
 		}
 		//FreeImage_Save(FREE_IMAGE_FORMAT::FIF_BMP, dibptr, "test.bmp", 0);
+			if(dibptr)
+			{
+				dataret = new enchase::ImageData;
+				dataret->format = format;
+				convertBaseFormat(*dataret, dibptr);
+				FreeImage_Unload(dibptr);
 
-			dataret = new enchase::ImageData;
-			dataret->format = format;
-			convertBaseFormat(*dataret, dibptr);
-			FreeImage_Unload(dibptr);
+			}
 			#endif
 			return dataret;
 	}
