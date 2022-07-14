@@ -182,6 +182,10 @@ namespace enchase
 
 #endif
 
+	void freeImage_Initialise()
+	{
+		FreeImage_Initialise(FALSE);
+	}
 	void loadImage_freeImage(ImageData& data, const std::string& fileName)
 	{
 #if HAVE_FREEIMAGE
