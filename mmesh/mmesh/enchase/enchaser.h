@@ -18,6 +18,7 @@ namespace enchase
 		void write(const std::string& stlFile);
 
 		void enchaseCache(Mapper* mapper, int index);
+        void enchaseCache(Mapper* mapper, int index, float horizontalMargin, float verticalMargin, float maxThickness);
 		trimesh::TriMesh* takeCurrent();
 	protected:
 		trimesh::TriMesh* m_source;

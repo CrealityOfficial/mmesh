@@ -60,6 +60,20 @@ namespace enchase
 		mapper->map(m_current.get(), index);
 	}
 
+    void Enchaser::enchaseCache(Mapper* mapper, int index, float horizontalMargin, float verticalMargin, float maxThickness)
+    {
+        if (!mapper)
+            return;
+
+        if (!m_current)
+        {
+            m_current.reset(new trimesh::TriMesh());
+            *m_current = *m_source;
+        }
+
+        mapper->map(m_current.get(), index, horizontalMargin, verticalMargin, maxThickness);
+    }
+
 	trimesh::TriMesh* Enchaser::takeCurrent()
 	{
 		return m_current.release();

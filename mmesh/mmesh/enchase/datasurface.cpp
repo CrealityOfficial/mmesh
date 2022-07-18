@@ -70,7 +70,7 @@ namespace enchase
     void DataSurface::original(MatrixU* matrix)
     {
         //ԭͼ
-        enchase::blur(matrix, 3);
+//        enchase::blur(matrix, 3);
     }
 
     void DataSurface::oilPainting(MatrixU* matrix)

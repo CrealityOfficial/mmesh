@@ -21,7 +21,7 @@ namespace enchase
 		invert = false;
 		useIndex = 0;
 
-		maxPixel = 600;
+		maxPixel = 1000;
 		realWidth = 140.0f;
 	}
 
@@ -148,7 +148,8 @@ namespace enchase
 
 		enchase::MatrixFSource* source = new enchase::MatrixFSource(matrix);
 		mapper.setSource(source);
-		enchaser.enchaseCache(&mapper, 0);
+        
+		enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, param.maxThickness);
 
 		trimesh::TriMesh* generated = enchaser.takeCurrent();
 		delete mesh;

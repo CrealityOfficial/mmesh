@@ -20,6 +20,7 @@ namespace enchase
 		~Mapper();
 
 		void map(trimesh::TriMesh* dest, int index);
+        void map(trimesh::TriMesh* dest, int index, float horizontalMargin, float verticalMargin, float maxThickness);
 		void setSource(Source* source);
 		void addTextureGroup(TextureGroup* textureGroup);
 		int textureGroups();
