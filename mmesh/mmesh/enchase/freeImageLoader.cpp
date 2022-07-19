@@ -183,7 +183,9 @@ namespace enchase
 #endif
 	void freeImage_Deinitialise()
 	{
-		FreeImage_DeInitialise();
+#if HAVE_FREEIMAGE
+        FreeImage_DeInitialise();
+#endif
     }
 
 

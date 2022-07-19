@@ -145,7 +145,7 @@ namespace enchase
 		enchase::MatrixFSource* source = new enchase::MatrixFSource(matrix);
 		mapper.setSource(source);
         
-		enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, param.maxThickness);
+		enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, 2.2);
 
 		trimesh::TriMesh* generated = enchaser.takeCurrent();
 		delete mesh;
