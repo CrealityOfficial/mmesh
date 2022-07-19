@@ -68,10 +68,6 @@ namespace enchase
 	{
 		enchase::ImageData image;
 
-#ifdef FREEIMAGE_LIB
-		enchase::freeImage_Initialise();
-#endif
-
 		enchase::loadImage_freeImage(image, imageName);
 
 		if(image.width == 0 || image.height == 0 || image.data == nullptr)

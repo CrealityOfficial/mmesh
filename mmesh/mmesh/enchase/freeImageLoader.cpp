@@ -181,6 +181,11 @@ namespace enchase
 	}
 
 #endif
+	void freeImage_Deinitialise()
+	{
+		FreeImage_DeInitialise();
+    }
+
 
 	void freeImage_Initialise()
 	{

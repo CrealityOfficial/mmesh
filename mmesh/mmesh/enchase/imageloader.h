@@ -69,6 +69,7 @@ namespace enchase
 	void fillImageData(ImageData& raw, ImageData* alpha, int width, int height, unsigned char* data, int type = 5, bool flipY = true);
 
 	void freeImage_Initialise();
+	void freeImage_Deinitialise();
 	void loadImage(ImageData& data, const std::string& fileName);
 	void loadImage_freeImage(ImageData& data, const std::string& fileName);
 	void loadImage_freeImage(ImageData& data, const std::string& extension, int fd);
