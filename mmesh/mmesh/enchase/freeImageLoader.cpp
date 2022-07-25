@@ -254,7 +254,7 @@ namespace enchase
 		}
 #endif
 	}
-	ImageData* constructNewFreeImage(std::vector<ImageData*> imagedata, ImageDataFormat format)
+	ImageData* constructNewFreeImage(std::vector<ImageData*> imagedata, ImageDataFormat format, std::vector<std::pair<ImageData::point, ImageData::point>> &offset)
 	{
 		enchase::ImageData* dataret = nullptr;
 		#if HAVE_FREEIMAGE
@@ -300,10 +300,16 @@ namespace enchase
 		}
 		for (auto dataPtr: imagedata)
 		{
+
 			if (dataPtr == nullptr)
 			{
 				continue;//should be not empty
 			}
+			if (dataPtr->format != format)//channels must be same
+			{
+				return nullptr;
+			}
+
 			widthMax = widthMax > dataPtr->width?widthMax:dataPtr->width;
 			heightMax = heightMax > dataPtr->height? heightMax :dataPtr->height;
 			widthTotal += dataPtr->width/ bytesPerPixel;
@@ -312,13 +318,24 @@ namespace enchase
 		widthMax = widthMax/ bytesPerPixel;
 		heightMax = heightMax;
 		FIBITMAP* dibptr =FreeImage_Allocate(widthMax, heightTotal, bpp);
+		if (dibptr == nullptr)
+		{
+			return nullptr;
+		}
+
+		offset.resize(imagedata.size());
+		int offsetIndex=0;
 		for (int index=0;index<imagedata.size();index++)
 		{
 			auto &dataPtr = imagedata[index];
 			if (dataPtr == nullptr)
+			{
+				widthoffset = 0;
+				ImageData::point startpos = { widthoffset,heightoffset };
+				ImageData::point endpos = { widthoffset ,heightoffset };
+				offset[offsetIndex++] = std::make_pair(startpos, endpos);
 				continue;
-			if (dibptr == nullptr)
-				break;
+			}
 			for (int indexW = 0; indexW < dataPtr->width/ bytesPerPixel; indexW++)
 			{
 				for (int indexH = 0; indexH < dataPtr->height; indexH++)
@@ -331,8 +348,12 @@ namespace enchase
 				}
 
 			}
-			//widthoffset += dataPtr->width / bytesPerPixel;
+			ImageData::point startpos = { widthoffset ,heightoffset };
 			heightoffset += dataPtr->height;
+			widthoffset = dataPtr->width / bytesPerPixel;
+			ImageData::point endpos = { widthoffset ,heightoffset };
+			offset[offsetIndex++] = std::make_pair(startpos, endpos);
+			widthoffset = 0;
 				
 		}
 		//FreeImage_Save(FREE_IMAGE_FORMAT::FIF_BMP, dibptr, "test.bmp", 0);

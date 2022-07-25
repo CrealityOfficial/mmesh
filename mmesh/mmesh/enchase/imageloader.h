@@ -19,6 +19,10 @@ namespace enchase
 		int width;
 		int height;
 		ImageDataFormat format= ImageDataFormat::FORMAT_GRAY_8;
+		struct point {
+			int x;
+			int y;
+		};
 	public:
 		ImageData();
 		ImageData(const ImageData& data);
@@ -74,7 +78,7 @@ namespace enchase
 	void loadImage_freeImage(ImageData& data, const std::string& fileName);
 	void loadImage_freeImage(ImageData& data, const std::string& extension, int fd);
 	void writeImage_freeImage(unsigned char* data, int width, int height, const std::string& fileName);  //rgba
-	ImageData* constructNewFreeImage(std::vector<ImageData*> data, ImageDataFormat format);
+	ImageData* constructNewFreeImage(std::vector<ImageData*> data, ImageDataFormat format, std::vector<std::pair<ImageData::point, ImageData::point>>& offset);
 	ImageData* scaleFreeImage(ImageData* imagedata, float scaleX, float scaleY);
 }
 
