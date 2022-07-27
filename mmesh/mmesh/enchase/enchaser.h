@@ -5,6 +5,7 @@
 
 namespace enchase
 {
+    class Source;
 	class Mapper;
 	class Enchaser
 	{
@@ -19,6 +20,9 @@ namespace enchase
 
 		void enchaseCache(Mapper* mapper, int index);
         void enchaseCache(Mapper* mapper, int index, float horizontalMargin, float verticalMargin, float maxThickness);
+        void enchaseCache(Mapper* mapper, int index, float horizontalMargin, float verticalMargin, float maxThickness, Source* serial);
+        
+        
 		trimesh::TriMesh* takeCurrent();
 	protected:
 		trimesh::TriMesh* m_source;

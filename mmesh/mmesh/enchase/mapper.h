@@ -21,6 +21,7 @@ namespace enchase
 
 		void map(trimesh::TriMesh* dest, int index);
         void map(trimesh::TriMesh* dest, int index, float horizontalMargin, float verticalMargin, float maxThickness);
+        void map(trimesh::TriMesh* dest, int index, float horizontalMargin, float verticalMargin, float maxThickness, Source *serial);
 		void setSource(Source* source);
 		void addTextureGroup(TextureGroup* textureGroup);
 		int textureGroups();

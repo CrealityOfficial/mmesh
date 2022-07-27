@@ -31,7 +31,8 @@ namespace enchase
 	}
 
 	Photo3D::Photo3D()
-		:m_surface(nullptr)
+        : m_surface(nullptr),
+          m_serialNumber(nullptr)
 	{
 	}
 
@@ -42,6 +43,11 @@ namespace enchase
 			delete m_surface;
 			m_surface = nullptr;
 		}
+        
+        if (m_serialNumber) {
+            delete m_serialNumber;
+            m_serialNumber = nullptr;
+        }
 	}
 
 	void Photo3D::setLogger(const std::string& logger)
@@ -93,6 +99,33 @@ namespace enchase
 		surface->setData(data, width, height);
 		m_surface = surface;
 	}
+    
+    void Photo3D::setSerialNumber(unsigned char* data, int width, int height)
+    {
+        enchase::MatrixF* imgMtx = new enchase::MatrixF(width, height, 1);
+        float* imgData = imgMtx->ptr(0);
+
+        for (int h = 0; h < height; h++)
+        {
+            imgData = imgMtx->ptr(h);
+            for (int w = 0; w < width; w++)
+            {
+                unsigned char c = data[h * width + w];
+                imgData[w] = (float)c / 255.0f;
+            }
+        }
+
+        m_serialNumber = imgMtx;
+    }
+
+    void Photo3D::setSerialNumber(enchase::MatrixF *serial)
+    {
+        if (m_serialNumber) {
+            delete m_serialNumber;
+        }
+        enchase::MatrixF *newMat = new enchase::MatrixF(*serial);
+        m_serialNumber = newMat;
+    }
 
 	bool Photo3D::generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode)
 	{		
@@ -145,7 +178,14 @@ namespace enchase
 		enchase::MatrixFSource* source = new enchase::MatrixFSource(matrix);
 		mapper.setSource(source);
         
-		enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, 2.2);
+        if (m_serialNumber) {
+            enchase::MatrixF* newSerial = new enchase::MatrixF(*m_serialNumber);
+            enchase::MatrixFSource s(newSerial);
+//            enchaser.enchaseCache(&mapper, 0, 0.137, 0.137*whRatio, 2.2, &s);
+            enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, 2.2, &s);
+        } else {
+            enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, 2.2);
+        }
 
 		trimesh::TriMesh* generated = enchaser.takeCurrent();
 		delete mesh;

@@ -48,6 +48,11 @@ namespace enchase
 
     void Mapper::map(trimesh::TriMesh* dest, int index, float horizontalMargin, float verticalMargin, float maxThickness)
     {
+        return map(dest, index, horizontalMargin, verticalMargin, maxThickness, nullptr);
+    }
+
+    void Mapper::map(trimesh::TriMesh* dest, int index, float horizontalMargin, float verticalMargin, float maxThickness, Source *serial)
+    {
         if (!dest || !m_source.get())
             return;
 
@@ -58,6 +63,16 @@ namespace enchase
         if (horizontalMargin <= 0.0 && verticalMargin <= 0.0) {
             map(dest, index);
             return;
+        }
+        trimesh::vec2 range(1.0 + horizontalMargin * 2.0,
+                            1.0 + verticalMargin * 2.0);
+        
+        trimesh::vec2 serialRange = trimesh::vec2(-1.0, -1.0);
+        if (serial) {
+            float serialY = verticalMargin / range.y;
+            float serialX = serialY * serial->width() / serial->height();
+            serialX = fmin(serialX, 1.0);
+            serialRange = trimesh::vec2(serialX, serialY);
         }
         
         size_t size = texture->m_indexes.size();
@@ -71,13 +86,22 @@ namespace enchase
                 trimesh::vec3& n = dest->normals.at(index);
                 trimesh::vec2& xy = texture->m_texcoord.at(i);
 
-                trimesh::vec2 range(1.0 + horizontalMargin * 2.0,
-                                    1.0 + verticalMargin * 2.0);
-                
                 trimesh::vec2 newxy = (xy - 0.5) * range + 0.5;
                 
                 if (newxy.x < 0.0 || newxy.x > 1.0 || newxy.y < 0.0 || newxy.y > 1.0) {
-                    p += n * maxThickness;
+                    
+                    if (xy.x <= serialRange.x && newxy.y > 1.0) {
+                        //序列号摆在左上角特定位置
+                        float t = 0.0f;
+                        if (serial->tex(t, xy.x/serialRange.x, (1.0 - xy.y)/serialRange.y))
+                        {
+                            p += n * maxThickness * (1.0-t);
+                        }
+                        
+                    } else {
+                        //等距边框
+                        p += n * maxThickness;
+                    }
                 } else {
                     float t = 0.0f;
                     if (m_source->tex(t, newxy.x, newxy.y))
