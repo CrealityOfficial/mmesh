@@ -35,6 +35,6 @@ else()
 								OPENMP
 								)
 endif()							
-if(INSTALL_MMESH)
+if(CC_INSTALL_MMESH)
 	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mmesh/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
 endif()
