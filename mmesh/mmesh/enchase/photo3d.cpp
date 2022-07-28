@@ -122,9 +122,12 @@ namespace enchase
     {
         if (m_serialNumber) {
             delete m_serialNumber;
+            m_serialNumber = nullptr;
         }
-        enchase::MatrixF *newMat = new enchase::MatrixF(*serial);
-        m_serialNumber = newMat;
+        if (serial) {
+            enchase::MatrixF *newMat = new enchase::MatrixF(*serial);
+            m_serialNumber = newMat;
+        }
     }
 
 	bool Photo3D::generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode)
@@ -181,7 +184,6 @@ namespace enchase
         if (m_serialNumber) {
             enchase::MatrixF* newSerial = new enchase::MatrixF(*m_serialNumber);
             enchase::MatrixFSource s(newSerial);
-//            enchaser.enchaseCache(&mapper, 0, 0.137, 0.137*whRatio, 2.2, &s);
             enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, 2.2, &s);
         } else {
             enchaser.enchaseCache(&mapper, 0, 0.037, 0.037*whRatio, 2.2);
