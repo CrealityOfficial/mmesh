@@ -115,6 +115,9 @@ namespace enchase
             }
         }
 
+        if (m_serialNumber) {
+            delete m_serialNumber;
+        }
         m_serialNumber = imgMtx;
     }
 
