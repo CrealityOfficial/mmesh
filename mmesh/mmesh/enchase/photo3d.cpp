@@ -129,6 +129,18 @@ namespace enchase
             m_serialNumber = newMat;
         }
     }
+    
+    void Photo3D::setSerialNumber(const std::string& serialPath)
+    {
+        enchase::ImageData image;
+
+        enchase::loadImage_freeImage(image, serialPath);
+
+        if (image.width == 0 || image.height == 0 || image.data == nullptr)
+            return;
+        
+        setSerialNumber(image.data, image.width, image.height);
+    }
 
 	bool Photo3D::generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode)
 	{		

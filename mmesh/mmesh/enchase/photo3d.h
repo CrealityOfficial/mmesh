@@ -40,8 +40,10 @@ namespace enchase
 		void setSource(const std::string& imageName);   //现在支持bmp, png, jpg
 		void setSource(const std::string& extension, int fd);
 		void setSource(unsigned char* data, int width, int height);   //灰度值
+        
         void setSerialNumber(unsigned char* data, int width, int height);
         void setSerialNumber(enchase::MatrixF *serial);
+        void setSerialNumber(const std::string& serialPath);
         
 		bool generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode);
 		trimesh::TriMesh* generate(const Photo3DParam& param, int& errorCode);
