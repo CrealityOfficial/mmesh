@@ -133,7 +133,7 @@ namespace enchase
         }
     }
     
-    void Photo3D::setSerialNumber(const std::string& serialPath)
+    void Photo3D::setSerialNumber(const std::string& serialPath, bool flipY)
     {
         enchase::ImageData image;
 
@@ -142,10 +142,14 @@ namespace enchase
         if (image.width == 0 || image.height == 0 || image.data == nullptr)
             return;
         
-        enchase::ImageData flip;
-        flip.fromFlipY(image);
-        
-        setSerialNumber(flip.data, flip.width, flip.height);
+        if (flipY) {
+            enchase::ImageData flip;
+            flip.fromFlipY(image);
+            
+            setSerialNumber(flip.data, flip.width, flip.height);
+        } else {
+            setSerialNumber(image.data, image.width, image.height);
+        }
     }
 
 	bool Photo3D::generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode)

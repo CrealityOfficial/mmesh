@@ -43,7 +43,7 @@ namespace enchase
         
         void setSerialNumber(unsigned char* data, int width, int height);
         void setSerialNumber(enchase::MatrixF *serial);
-        void setSerialNumber(const std::string& serialPath);
+        void setSerialNumber(const std::string& serialPath, bool flipY=false);
         
 		bool generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode);
 		trimesh::TriMesh* generate(const Photo3DParam& param, int& errorCode);
