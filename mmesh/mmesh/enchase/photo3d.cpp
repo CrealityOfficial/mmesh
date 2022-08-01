@@ -142,7 +142,10 @@ namespace enchase
         if (image.width == 0 || image.height == 0 || image.data == nullptr)
             return;
         
-        setSerialNumber(image.data, image.width, image.height);
+        enchase::ImageData flip;
+        flip.fromFlipY(image);
+        
+        setSerialNumber(flip.data, flip.width, flip.height);
     }
 
 	bool Photo3D::generate(const std::string& stlFile, const Photo3DParam& param, int& errorCode)
