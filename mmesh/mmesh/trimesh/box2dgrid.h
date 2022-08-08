@@ -85,10 +85,12 @@ namespace mmesh
 		bool checkFace(int primitiveID);
 		trimesh::vec3 checkFaceNormal(int primitiveID);
 
+		void autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size);
 		void autoSupport(std::vector<VerticalSeg>& segments, float size, float angle, bool platform);
 		void autoDLPSupport(std::vector<VerticalSeg>& supports, float ratio, float angle, bool platform);
 
 		void genSource(GenSource& source);
+		void genSourceOfVecAndSeg(GenSource& source);
 	protected:
 		inline int halfcode(int face, int index)
 		{
@@ -122,7 +124,7 @@ namespace mmesh
 		void genSupports(std::vector<VerticalSeg>& segments, GenSource& source);
 
 		void addVertexSupports(std::vector<VerticalSeg>& segments, GenSource& source);
-		void addEdgeSupports(std::vector<VerticalSeg>& segments, GenSource& source);
+		void addEdgeSupports(std::vector<VerticalSeg>& segments, GenSource& source, float size = 3.0f);
 		void addFaceSupports(std::vector<VerticalSeg>& segments, GenSource& source);
 
 		void addVertexSources(std::vector<DLPSource>& sources, GenSource& source);
