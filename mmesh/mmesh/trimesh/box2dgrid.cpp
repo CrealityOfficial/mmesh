@@ -436,14 +436,14 @@ namespace mmesh
 					//	m_logCallback->log("test cell %d : dotValue %f", i, m_dotValues.at(i));
 					//}
 
-					if (abs(m_dotValues.at(i)) > 0.001f)
+					if (abs(m_dotValues.at(i)) > -0.001f)
 					{
 						vec3& v0 = m_vertexes.at(f[0]);
 						vec3& v1 = m_vertexes.at(f[1]);
 						vec3& v2 = m_vertexes.at(f[2]);
 
 						float t, u, v;
-						if (rayIntersectTriangle(c, n, v0, v1, v2, &t, &u, &v) && t >= 0.0f)
+						if (rayIntersectTriangle(c, n, v0, v1, v2, &t, &u, &v) && t >= -0.001f)
 						{
 							VerticalCollide result;
 							result.faceid = i;
@@ -497,18 +497,40 @@ namespace mmesh
 		return n;
 	}
 
+	void mergeSupport(std::vector<mmesh::VerticalSeg>& supports, std::vector<mmesh::VerticalSeg> supportsOfVecAndEdge, float supportSize)
+	{
+		for (mmesh::VerticalSeg vs : supportsOfVecAndEdge)
+		{
+			bool repeat = false;
+			for (mmesh::VerticalSeg vs_face : supports)
+			{
+				trimesh::vec3 diff = vs_face.t - vs.t;
+				diff[2] = 0;
+				if (len(diff) < supportSize)
+				{
+					repeat = true;
+					break;
+				}
+			}
+			if (!repeat)
+			{
+				supports.push_back(vs);
+			}
+		}
+	}
 	void Box2DGrid::autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size)
 	{
-		supports.clear();
+		std::vector<mmesh::VerticalSeg> supportsOfVecAndEdge;
 		GenSource source;
 		genSourceOfVecAndSeg(source);
-		addVertexSupports(supports, source);
-		addEdgeSupports(supports, source, size);
+		addVertexSupports(supportsOfVecAndEdge, source);
+		addEdgeSupports(supportsOfVecAndEdge, source, size);
 		//稍微抬高支撑使支撑更稳定
-		for (VerticalSeg& seg : supports)
+		for (VerticalSeg& seg : supportsOfVecAndEdge)
 		{
 			seg.t[2] += 3.0f;
 		}
+		mergeSupport(supports, supportsOfVecAndEdge, size);
 	}
 
 	void Box2DGrid::autoSupport(std::vector<VerticalSeg>& supports, float size, float angle, bool platform)
@@ -778,11 +800,16 @@ namespace mmesh
 		}
 	}
 
-	bool bDownwardHorizontalPlane(vec3 faceNormal)
+	bool checkLowest(std::vector<trimesh::vec3> vertexes, TriMesh::Face face, int ptIdx1, int ptIdx2)
 	{
-		normalized(faceNormal);
-		if (fabs(faceNormal[0]) < 0.00001 && fabs(faceNormal[1]) < 0.00001 && fabs(faceNormal[2] - (-1)) < 0.00001)
-			return true;
+		for (int i = 0; i < 3; i++)
+		{
+			if (face[i] != ptIdx1 && face[i] != ptIdx2)
+			{
+				if (vertexes[face[i]].z >= vertexes[ptIdx1].z && vertexes[face[i]].z >= vertexes[ptIdx2].z)
+					return true;
+			}
+		}
 		return false;
 	}
 
@@ -811,7 +838,7 @@ namespace mmesh
 			for (int halfIndex = 0; halfIndex < halfSize; ++halfIndex)
 			{
 				int endVertexID = endvertexid(vertexHalfs.at(halfIndex));
-				if (m_vertexes.at(endVertexID).z < vertex.z)
+				if (m_vertexes.at(endVertexID).z - vertex.z < 0.01)
 				{
 					lowest = false;
 					break;
@@ -827,7 +854,8 @@ namespace mmesh
 		std::vector<ivec2>& supportEdges = source.supportEdges;
 		std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
 		float edgeCosValue = cosf(M_PIf * 70.0f / 180.0f);
-		float edgeFaceCosValue = cosf(M_PIf * 60.0f / 180.0f);
+		float edgeFaceCosValue = cosf(M_PIf * 5.0f / 180.0f);
+		float edgeNormalsCosValue = cosf(M_PIf * 30.0f / 180.0f);
 		for (int faceID = 0; faceID < faceNum; ++faceID)
 		{
 			ivec3& oppoHalfs = m_oppositeHalfEdges.at(faceID);
@@ -835,7 +863,7 @@ namespace mmesh
 			TriMesh::Face& tFace = m_mesh->faces.at(faceID);
 			vec3& faceNormal = m_faceNormals.at(faceID);
 
-			bool faceSupport = (m_dotValues.at(faceID) < (-edgeFaceCosValue)) && !bDownwardHorizontalPlane(faceNormal);
+			bool faceNotSupport = m_dotValues.at(faceID) > (-edgeFaceCosValue) && m_dotValues.at(faceID) < 0.f;
 			for (int edgeIndex = 0; edgeIndex < 3; ++edgeIndex)
 			{
 				if (edgeFlag[edgeIndex] == 0)
@@ -859,18 +887,19 @@ namespace mmesh
 							edgesFlags.at(oppoFaceID)[edgeID] = 1;
 
 							vec3& oppoFaceNormal = m_faceNormals.at(oppoFaceID);
-							bool oppoFaceSupport = (m_dotValues.at(oppoFaceID) < (-edgeFaceCosValue)) && !bDownwardHorizontalPlane(m_faceNormals.at(oppoFaceID));
-							if (oppoFaceSupport && faceSupport)
+							bool oppoFaceNotSupport = m_dotValues.at(oppoFaceID) > (-edgeFaceCosValue) && m_dotValues.at(oppoFaceID) < 0.f;
+							if (oppoFaceNotSupport && faceNotSupport)
 							{
-								if (trimesh::dot(faceNormal, oppoFaceNormal) <= 0.000001)
+								if ((trimesh::dot(normalized(faceNormal + oppoFaceNormal), vec3(0.0f, 0.0f, -1.0f)) > edgeNormalsCosValue)
+									&& checkLowest(m_vertexes, tFace, vertexID1, vertexID2))
 								{
-									shouldAdd = true;
+									shouldAdd = true;		
 								}
 							}
 						}
 						else  // hole edge
 						{
-							shouldAdd = faceSupport;
+							shouldAdd = faceNotSupport;
 						}
 
 						if (shouldAdd)
@@ -939,12 +968,12 @@ namespace mmesh
 		}
 	}
 
-	void Box2DGrid::addEdgeSupports(std::vector<VerticalSeg>& segments, GenSource& source, float size)
+	void Box2DGrid::addEdgeSupports(std::vector<VerticalSeg>& segments, GenSource& source, float supportSize)
 	{
 		std::vector<ivec2>& supportEdges = source.supportEdges;
 		std::vector<int>& vertexFlags = source.vertexFlags;
 
-		float minDelta = size;
+		float minDelta = supportSize;
 		float samePointsDelta = 0.01f;
 		for (ivec2 vertexesID : supportEdges)
 		{
@@ -973,7 +1002,7 @@ namespace mmesh
 				vertexFlags.at(vertexID2) = 2;
 			}
 
-			int sampleEdgeNum = floorf(maxLen / minDelta) + 1;
+			int sampleEdgeNum = floorf(maxLen / minDelta) - 1;
 			if (sampleEdgeNum > 0)
 			{
 				float dt = 1.0f / (float)(sampleEdgeNum + 1);

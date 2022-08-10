@@ -124,7 +124,7 @@ namespace mmesh
 		void genSupports(std::vector<VerticalSeg>& segments, GenSource& source);
 
 		void addVertexSupports(std::vector<VerticalSeg>& segments, GenSource& source);
-		void addEdgeSupports(std::vector<VerticalSeg>& segments, GenSource& source, float size = 3.0f);
+		void addEdgeSupports(std::vector<VerticalSeg>& segments, GenSource& source, float minDelta = 3.0);
 		void addFaceSupports(std::vector<VerticalSeg>& segments, GenSource& source);
 
 		void addVertexSources(std::vector<DLPSource>& sources, GenSource& source);
