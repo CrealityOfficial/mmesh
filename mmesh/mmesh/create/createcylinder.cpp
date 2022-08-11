@@ -172,5 +172,103 @@ namespace mmesh
 
 		return cylinderMesh;
 	}
+	
+	trimesh::TriMesh* createCylinderWallBasepos(int count, float radius, float height, const trimesh::vec3& sp)
+	{
+
+		trimesh::TriMesh* cylinderMesh = new trimesh::TriMesh();
+
+		auto steps = int(count);
+		auto& points = cylinderMesh->vertices;
+		auto& indices = cylinderMesh->faces;
+		points.reserve(2 * count);
+		double a = 2 * PI / steps;
+
+		trimesh::vec3 jp = sp;
+		trimesh::vec3 endp(sp.x, sp.y, sp.z + height);
+
+		// Upper circle points
+		for (int i = 0; i < steps; ++i) {
+			double phi = i * a;
+			double ex = endp.x + radius * std::cos(phi);
+			double ey = endp.y + radius * std::sin(phi);
+			points.emplace_back(ex, ey, endp.z);
+		}
+
+		// Lower circle points
+		for (int i = 0; i < steps; ++i) {
+			double phi = i * a;
+			double x = jp.x + radius * std::cos(phi);
+			double y = jp.y + radius * std::sin(phi);
+			points.emplace_back(x, y, jp.z);
+		}
+
+		// Now create long triangles connecting upper and lower circles
+		indices.reserve(2 * count);
+		auto offs = steps;
+		for (int i = 0; i < steps - 1; ++i) {
+			indices.emplace_back(i, i + offs, offs + i + 1);
+			indices.emplace_back(i, offs + i + 1, i + 1);
+		}
+
+		// Last triangle connecting the first and last vertices
+		auto last = steps - 1;
+		indices.emplace_back(0, last, offs);
+		indices.emplace_back(last, offs + last, offs);
+
+		return cylinderMesh;
+	}
+	trimesh::TriMesh* createHollowCylinder(trimesh::TriMesh* wallOutter, trimesh::TriMesh* wallInner, int sectionCount, const trimesh::vec3& normal)
+	{
+
+		//mmesh::reverseTriMesh(cylinderMeshInner);
+		int vertexsizeOutter = wallOutter->vertices.size();
+		int vertexsizeInner = wallInner->vertices.size();
+
+		trimesh::TriMesh* mergedMesh = new trimesh::TriMesh();
+		std::vector<trimesh::TriMesh*> meshes;
+		meshes.push_back(wallOutter);
+		meshes.push_back(wallInner);
+		mmesh::mergeTriMesh(mergedMesh, meshes);
+		
+		// Now create upper triangles connecting outter and inner circles wall
+		auto offs = vertexsizeOutter;
+		for (int i = 0; i < sectionCount - 1; ++i) {
+			int k0 = i;
+			int k1 = k0 + offs;
+			mergedMesh->faces.emplace_back(  k1, k0, k1 + 1);
+			mergedMesh->faces.emplace_back(k0 + 1, k1 + 1, k0);
+		}
+
+		// Last upper triangle connecting the first and last vertices
+		auto last = sectionCount - 1;
+		mergedMesh->faces.emplace_back(offs, last,0 );
+		mergedMesh->faces.emplace_back(offs, offs + last, last);
+
+		// Now create lower triangles connecting outter and inner circles wall
+		offs = vertexsizeOutter;
+		for (int i = sectionCount; i < vertexsizeOutter - 1; ++i) {
+			int k0 = i;
+			int k1 = k0 + offs;
+			mergedMesh->faces.emplace_back(k0, k1, k1 + 1);
+			mergedMesh->faces.emplace_back(k0, k1 + 1, k0 + 1);
+		}
+
+		// Last lower triangle connecting the first and last vertices
+		last = vertexsizeOutter - 1;
+
+		mergedMesh->faces.emplace_back(sectionCount, last, sectionCount +offs);
+		mergedMesh->faces.emplace_back(sectionCount + offs,  last, last+offs);
+
+
+		mmesh::dumplicateMesh(mergedMesh);
+
+		const trimesh::vec3 cydestNormal(0.0f, 0.0f, 1.0f);
+		trimesh::quaternion q = trimesh::quaternion::rotationTo(trimesh::normalized(normal), cydestNormal);
+		trimesh::fxform xf = fromQuaterian(q);
+		trimesh::apply_xform(mergedMesh, trimesh::xform(xf));
+
+		return mergedMesh;
+	}
 
 }
