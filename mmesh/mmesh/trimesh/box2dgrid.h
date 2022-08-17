@@ -73,7 +73,7 @@ namespace mmesh
 		bool contain(trimesh::vec2 xy);
 
 		void check(std::vector<VerticalSeg>& segments, trimesh::vec3& c, int faceID);
-		
+		std::vector<VerticalSeg> recheckVertexSupports(std::vector<VerticalSeg> Vertexes);
 		void checkDown(std::vector<CollideResult>& collides, trimesh::vec3& c);
 		void autoCheckDown(DLPSource& source, DLPResult& result, float len);
 		void autoCheckDown(std::vector<DLPSource>& sources, std::vector<DLPResult>& results, float len);
@@ -85,7 +85,7 @@ namespace mmesh
 		bool checkFace(int primitiveID);
 		trimesh::vec3 checkFaceNormal(int primitiveID);
 
-		void autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size);
+		void autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool uplight = true);
 		void autoSupport(std::vector<VerticalSeg>& segments, float size, float angle, bool platform);
 		void autoDLPSupport(std::vector<VerticalSeg>& supports, float ratio, float angle, bool platform);
 

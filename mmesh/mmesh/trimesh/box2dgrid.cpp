@@ -506,7 +506,7 @@ namespace mmesh
 			{
 				trimesh::vec3 diff = vs_face.t - vs.t;
 				diff[2] = 0;
-				if (len(diff) < supportSize)
+				if (len(diff) < supportSize && vs_face.b[2] == vs.b[2])
 				{
 					repeat = true;
 					break;
@@ -518,7 +518,7 @@ namespace mmesh
 			}
 		}
 	}
-	void Box2DGrid::autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size)
+	void Box2DGrid::autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool uplight)
 	{
 		std::vector<mmesh::VerticalSeg> supportsOfVecAndEdge;
 		GenSource source;
@@ -526,10 +526,13 @@ namespace mmesh
 		addVertexSupports(supportsOfVecAndEdge, source);
 		addEdgeSupports(supportsOfVecAndEdge, source, size);
 		//稍微抬高支撑使支撑更稳定
-		for (VerticalSeg& seg : supportsOfVecAndEdge)
-		{
-			seg.t[2] += 3.0f;
-		}
+		 if(uplight)
+		 {
+			for (VerticalSeg& seg : supportsOfVecAndEdge)
+			{
+				seg.t[2] += 2.0f;
+			}
+		 }
 		mergeSupport(supports, supportsOfVecAndEdge, size);
 	}
 
@@ -818,7 +821,7 @@ namespace mmesh
 		int vertexNum = (int)m_mesh->vertices.size();
 		int faceNum = (int)m_mesh->faces.size();
 
-		if (vertexNum == 0 || faceNum == 0)
+		if (vertexNum == 0 || faceNum == 0 || vertexNum > 200000 || faceNum > 300000)
 			return;
 
 		source.vertexNum = vertexNum;
@@ -850,7 +853,7 @@ namespace mmesh
 				vertexFlags.at(vertexID) = 1;
 			}			
 		}
-
+		
 		std::vector<ivec2>& supportEdges = source.supportEdges;
 		std::vector<ivec3> edgesFlags(faceNum, ivec3(0, 0, 0));
 		float edgeCosValue = cosf(M_PIf * 70.0f / 180.0f);
@@ -928,6 +931,44 @@ namespace mmesh
 		addVertexSupports(segments, source);
 		addEdgeSupports(segments, source);
 		addFaceSupports(segments, source);
+	}
+
+	std::vector<VerticalSeg> Box2DGrid::recheckVertexSupports(std::vector<VerticalSeg> Vertexes)
+	{
+		std::vector<VerticalSeg> segments;
+		for (VerticalSeg vex : Vertexes)
+		{
+			vec3 vertex = vex.t;
+			std::vector<VerticalCollide> collides;
+			check(collides, vertex, CheckDir::eDown, -1, false, false);
+
+			std::sort(collides.begin(), collides.end(), [](VerticalCollide& r1, VerticalCollide& r2)->bool {
+				return r1.z < r2.z;
+				});
+
+			float optimizeZ = -1.0f;
+			if (collides.size() == 0)
+			{
+				optimizeZ = 0.0f;
+			}
+			else
+			{
+				VerticalCollide& vCollide = collides.back();
+				if (m_dotValues.at(vCollide.faceid) > 0.0f)
+				{
+					optimizeZ = vCollide.z;
+				}
+			}
+
+			if (optimizeZ >= 0.0f)
+			{
+				VerticalSeg seg;
+				seg.t = vertex;
+				seg.b = vec3(vertex.x, vertex.y, optimizeZ);
+				segments.push_back(seg);
+			}
+		}
+		return segments;
 	}
 
 	void Box2DGrid::addVertexSupports(std::vector<VerticalSeg>& segments, GenSource& source)
