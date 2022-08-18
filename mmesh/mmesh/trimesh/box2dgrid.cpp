@@ -946,27 +946,20 @@ namespace mmesh
 				return r1.z < r2.z;
 				});
 
-			float optimizeZ = -1.0f;
-			if (collides.size() == 0)
+			float optimizeZ = 0.0f;
+			for (int idx = collides.size() - 1; idx >= 0; idx --)
 			{
-				optimizeZ = 0.0f;
-			}
-			else
-			{
-				VerticalCollide& vCollide = collides.back();
-				if (m_dotValues.at(vCollide.faceid) > 0.0f)
+				VerticalCollide& vCollide = collides[idx];
+				if ( vertex[2] - vCollide.z > 0.01 &&  m_dotValues.at(vCollide.faceid) > 0.0f)
 				{
 					optimizeZ = vCollide.z;
+					break;
 				}
 			}
-
-			if (optimizeZ >= 0.0f)
-			{
-				VerticalSeg seg;
-				seg.t = vertex;
-				seg.b = vec3(vertex.x, vertex.y, optimizeZ);
-				segments.push_back(seg);
-			}
+			VerticalSeg seg;
+			seg.t = vertex;
+			seg.b = vec3(vertex.x, vertex.y, optimizeZ);
+			segments.push_back(seg);
 		}
 		return segments;
 	}
