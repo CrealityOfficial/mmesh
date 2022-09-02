@@ -85,7 +85,7 @@ namespace mmesh
 		bool checkFace(int primitiveID);
 		trimesh::vec3 checkFaceNormal(int primitiveID);
 
-		void autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool uplight = true);
+		void autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool platform, bool uplight = true);
 		void autoSupport(std::vector<VerticalSeg>& segments, float size, float angle, bool platform);
 		void autoDLPSupport(std::vector<VerticalSeg>& supports, float ratio, float angle, bool platform);
 

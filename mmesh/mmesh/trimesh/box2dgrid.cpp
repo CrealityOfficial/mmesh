@@ -518,21 +518,29 @@ namespace mmesh
 			}
 		}
 	}
-	void Box2DGrid::autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool uplight)
+	void Box2DGrid::autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool platform, bool uplight)
 	{
-		std::vector<mmesh::VerticalSeg> supportsOfVecAndEdge;
+		std::vector<mmesh::VerticalSeg> supportsOfVecAndEdge, supportsOfVecAndEdge_blk;
 		GenSource source;
 		genSourceOfVecAndSeg(source);
 		addVertexSupports(supportsOfVecAndEdge, source);
 		addEdgeSupports(supportsOfVecAndEdge, source, size);
-		//稍微抬高支撑使支撑更稳定
-		 if(uplight)
-		 {
-			for (VerticalSeg& seg : supportsOfVecAndEdge)
+		
+		supportsOfVecAndEdge_blk.reserve(supportsOfVecAndEdge.size());
+		for (VerticalSeg seg : supportsOfVecAndEdge)
+		{
+			if (platform && seg.b.z>0.f)
 			{
+				continue;
+			}
+			if (uplight)
+			{
+				//稍微抬高支撑使支撑更稳定
 				seg.t[2] += 2.0f;
 			}
-		 }
+			supportsOfVecAndEdge_blk.push_back(seg);
+		}
+		supportsOfVecAndEdge_blk.swap(supportsOfVecAndEdge);
 		mergeSupport(supports, supportsOfVecAndEdge, size);
 	}
 
