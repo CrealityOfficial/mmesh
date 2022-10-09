@@ -170,13 +170,21 @@ namespace enchase
 			memcpy(cd, cs, src.width);
 		}
 	}
+
 	void ImageData::clone(int w, int h, unsigned char* srcdata)
 	{
 		allocate(w, h);
 		memcpy(data, srcdata, w*h);
 	}
 
-
+	void ImageData::cloneFrom(const ImageData& src)
+	{
+		if (src.width > 0 && src.height > 0)
+		{
+			allocate(src.width, src.height);
+			memcpy(data, src.data, src.width * src.height);
+		}
+	}
 
 	void loadBMP(ImageData& data, const std::string& fileName)
 	{
