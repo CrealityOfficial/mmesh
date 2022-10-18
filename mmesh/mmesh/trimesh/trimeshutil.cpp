@@ -710,6 +710,20 @@ namespace mmesh
 		mesh->vertices.swap(positions);
 		mesh->faces.clear();
 		fillTriangleSoupFaceIndex(mesh);
+		if (mesh->faceUVs.size() > 0)
+		{
+			std::vector<trimesh::vec2> uvs(3 * size);
+			for (int i = 0; i < size; ++i)
+			{
+				trimesh::TriMesh::Face& faceUV = mesh->faceUVs.at(i);
+				for (int j = 0; j < 3; ++j)
+				{
+					uvs.at(3 * i + j) = mesh->UVs.at(faceUV[j]);
+				}
+				mesh->faceUVs.at(i) = mesh->faces.at(i);
+			}
+			mesh->UVs.swap(uvs);
+		}
 	}
 
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh)
