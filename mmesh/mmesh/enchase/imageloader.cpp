@@ -1,5 +1,6 @@
-﻿#include "imageloader.h"
+#include "imageloader.h"
 #include <string.h>
+#include <float.h>
 #include "optimizeenchaser.h"
 #include "trimesh2/Vec.h"
 #include "trimesh2/XForm.h"
