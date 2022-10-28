@@ -221,8 +221,8 @@ namespace mmesh
 				trimesh::vec3& v = mesh->vertices.at(iindex);
 				trimesh::vec3& uv = mesh->cornerareas.at(iindex);
 
-				v.x = r * longiCoss[i];
-				v.y = r * longiSins[i];
+				v.x = r * longiSins[i];
+				v.y = - r * longiCoss[i];
 				v.z = (float)z;
 
 				uv.z = 0.0f;
