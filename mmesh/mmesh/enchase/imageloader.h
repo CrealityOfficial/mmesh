@@ -35,7 +35,7 @@ namespace enchase
 		void gradient(unsigned char start, unsigned char end);
 		bool valid();
 		void fromFlipY(const ImageData& src);
-		void rotate(double rotateRadians, int channels = 4, bool releaseFlag = true);
+		void rotate(double rotateRadians, int channels = 4, bool releaseFlag = true, int maxWidth = -1, int maxHeight = -1);
 		void clone( int w, int h, unsigned char* data);
 		void cloneFrom(const ImageData& src);
 		inline void blend(int x, int y, unsigned char value, unsigned char alpha)
