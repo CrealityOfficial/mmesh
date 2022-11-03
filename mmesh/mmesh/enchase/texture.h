@@ -41,6 +41,7 @@ namespace enchase
 	protected:
 		virtual void onStateChanged() {}
 		virtual void onDataChanged(const ImageData& data, ImageData* alpha) {}
+		virtual void setBump(bool bump) {}
 	protected:
 		enchase::GrayImage textureImage;
 
