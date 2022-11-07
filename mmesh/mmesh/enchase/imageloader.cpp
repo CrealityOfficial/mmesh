@@ -263,6 +263,35 @@ namespace enchase
 		}
 	}
 
+	void ImageData::extendChannels(int targetChannels)
+	{
+		int newWidth = width;
+		int newHeight = height;
+		unsigned char* newData = new unsigned char[newWidth * newHeight * targetChannels];
+		memset(newData, 0, newWidth * newHeight * targetChannels);
+
+		for (int i = 0; i < newWidth; ++i)
+		{
+			for (int j = 0; j < newHeight; ++j)
+			{
+				int indexNew = j * newWidth * targetChannels + i * targetChannels;
+				unsigned char gray = data[j * width + i];
+
+				for (int k = 0; k < targetChannels; k++)
+				{
+					newData[indexNew] = gray;
+					indexNew++;
+				}
+			}
+		}
+
+		release();
+
+		data = newData;
+		width = newWidth;
+		height = newHeight;
+	}
+
 	void loadBMP(ImageData& data, const std::string& fileName)
 	{
 		FILE* fp = fopen(fileName.c_str(), "rb");
