@@ -5,7 +5,9 @@
 #include "trimesh2/XForm.h"
 
 #include <functional>
-
+#include <limits.h>
+#define FLT_MIN 1.175494351e-38F 
+#define FLT_MAX 3.402823466e+38F
 namespace enchase
 {
 	typedef struct BitmapFileHeader
@@ -178,7 +180,7 @@ namespace enchase
 			return vec2f(origin.first * cosf(rotRadians) - origin.second * sinf(rotRadians), origin.first * sinf(rotRadians) + origin.second * cosf(rotRadians));
 		};
 
-		// ÒÔÎÆÀí×ø±ê(0.5, 0.5)ÎªÔ­µã£¬½¨Á¢Æ½Ãæ×ø±êÏµ
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(0.5, 0.5)ÎªÔ­ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
 		double halfWidth = width / 2.0;
 		double halfHeight = height / 2.0;
 		std::vector<vec2f> edgePos = { vec2f(-halfWidth , halfHeight), vec2f(halfWidth, halfHeight), vec2f(-halfWidth, -halfHeight), vec2f(halfWidth, -halfHeight) };
