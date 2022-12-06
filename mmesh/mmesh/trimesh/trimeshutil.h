@@ -39,6 +39,7 @@ namespace mmesh
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan);
 
 	trimesh::vec3 moveTrimesh2Center(trimesh::TriMesh* mesh, bool zZero = true);
+	trimesh::vec3 moveToOriginal(trimesh::TriMesh* mesh);
 	void moveMeshes2BoxCenter(std::vector<trimesh::TriMesh*> meshes, const trimesh::box3& box, bool zZero = true);
 
 	void convertUV2Azi(trimesh::TriMesh* mesh);
