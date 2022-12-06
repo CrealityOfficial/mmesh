@@ -518,21 +518,29 @@ namespace mmesh
 			}
 		}
 	}
-	void Box2DGrid::autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool uplight)
+	void Box2DGrid::autoSupportOfVecAndSeg(std::vector<VerticalSeg>& supports, float size, bool platform, bool uplight)
 	{
-		std::vector<mmesh::VerticalSeg> supportsOfVecAndEdge;
+		std::vector<mmesh::VerticalSeg> supportsOfVecAndEdge, supportsOfVecAndEdge_blk;
 		GenSource source;
 		genSourceOfVecAndSeg(source);
 		addVertexSupports(supportsOfVecAndEdge, source);
 		addEdgeSupports(supportsOfVecAndEdge, source, size);
-		//稍微抬高支撑使支撑更稳定
-		 if(uplight)
-		 {
-			for (VerticalSeg& seg : supportsOfVecAndEdge)
+		
+		supportsOfVecAndEdge_blk.reserve(supportsOfVecAndEdge.size());
+		for (VerticalSeg seg : supportsOfVecAndEdge)
+		{
+			if (platform && seg.b.z>0.f)
 			{
+				continue;
+			}
+			if (uplight)
+			{
+				//稍微抬高支撑使支撑更稳定
 				seg.t[2] += 2.0f;
 			}
-		 }
+			supportsOfVecAndEdge_blk.push_back(seg);
+		}
+		supportsOfVecAndEdge_blk.swap(supportsOfVecAndEdge);
 		mergeSupport(supports, supportsOfVecAndEdge, size);
 	}
 
@@ -803,26 +811,27 @@ namespace mmesh
 		}
 	}
 
-	bool checkLowest(std::vector<trimesh::vec3> vertexes, TriMesh::Face face, int ptIdx1, int ptIdx2)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			if (face[i] != ptIdx1 && face[i] != ptIdx2)
-			{
-				if (vertexes[face[i]].z >= vertexes[ptIdx1].z && vertexes[face[i]].z >= vertexes[ptIdx2].z)
-					return true;
-			}
-		}
-		return false;
-	}
-
 	void Box2DGrid::genSourceOfVecAndSeg(GenSource& source)
 	{
 		int vertexNum = (int)m_mesh->vertices.size();
 		int faceNum = (int)m_mesh->faces.size();
 
-		if (vertexNum == 0 || faceNum == 0 || vertexNum > 200000 || faceNum > 300000)
+		if (vertexNum == 0 || faceNum == 0)
 			return;
+
+		auto checkLowest = [this](TriMesh::Face face, int ptIdx1, int ptIdx2)
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				if (face[i] != ptIdx1 && face[i] != ptIdx2)
+				{
+					float z = m_vertexes.at(face[i]).z;
+					if (z >= m_vertexes.at(ptIdx1).z && z >= m_vertexes.at(ptIdx2).z)
+						return true;
+				}
+			}
+			return false;
+		};
 
 		source.vertexNum = vertexNum;
 		source.faceNum = faceNum;
@@ -872,7 +881,7 @@ namespace mmesh
 				if (edgeFlag[edgeIndex] == 0)
 				{
 					edgeFlag[edgeIndex] = 1;
-
+					if (!faceNotSupport) continue;
 					int vertexID1 = tFace[edgeIndex];
 					int vertexID2 = tFace[(edgeIndex + 1) % 3];
 					vec3 edge = m_vertexes.at(vertexID1) - m_vertexes.at(vertexID2);
@@ -894,7 +903,7 @@ namespace mmesh
 							if (oppoFaceNotSupport && faceNotSupport)
 							{
 								if ((trimesh::dot(normalized(faceNormal + oppoFaceNormal), vec3(0.0f, 0.0f, -1.0f)) > edgeNormalsCosValue)
-									&& checkLowest(m_vertexes, tFace, vertexID1, vertexID2))
+									&& checkLowest(tFace, vertexID1, vertexID2))
 								{
 									shouldAdd = true;		
 								}

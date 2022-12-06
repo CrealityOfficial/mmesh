@@ -6,7 +6,9 @@
 #include "trimesh2/XForm.h"
 
 #include <functional>
-
+#include <limits.h>
+#define FLT_MIN 1.175494351e-38F 
+#define FLT_MAX 3.402823466e+38F
 namespace enchase
 {
 	typedef struct BitmapFileHeader
@@ -180,7 +182,6 @@ namespace enchase
 			return vec2f(origin.first * cosf(rotRadians) - origin.second * sinf(rotRadians), origin.first * sinf(rotRadians) + origin.second * cosf(rotRadians));
 		};
 
-		// 以纹理坐标(0.5, 0.5)为原点，建立平面坐标系
 		double halfWidth = width / 2.0;
 		double halfHeight = height / 2.0;
 		std::vector<vec2f> edgePos = { vec2f(-halfWidth , halfHeight), vec2f(halfWidth, halfHeight), vec2f(-halfWidth, -halfHeight), vec2f(halfWidth, -halfHeight) };
@@ -210,6 +211,7 @@ namespace enchase
 
 		float iOffset = (rotateWidth - newWidth) / 2.0;
 		float jOffset = (rotateHeight - newHeight) / 2.0;
+
 		enchase::Texture texRaw(width, height, data);
 		for (int i = 0; i < newWidth; ++i)
 		{
@@ -218,6 +220,7 @@ namespace enchase
 				float realI = i + iOffset;
 				float realJ = j + jOffset;
 				vec2f originPos = rotateFunc(vec2f(realI - centerX, centerY - realJ), -radians);
+
 				float x = (originPos.first + halfWidth) / width;
 				float y = (halfHeight - originPos.second) / height;
 
@@ -371,6 +374,7 @@ namespace enchase
 			alpha->allocate(width, height);
 
 		int pixel = (type == 3 || type == 4) ? 2 : 4;
+
 		if (type == 0 || type == 6)
 			pixel = 1;
 

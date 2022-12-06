@@ -784,9 +784,8 @@ namespace mmesh
 		trimesh::fxform xf = mmesh::fromQuaterian(quat);
 
 		m_mesh->need_bbox();
-		m_cylinderPointStart = m_cylinderPointStart + 2 * (-m_cylinderDir);
-		double cylinderInitDepth = 2 * m_mesh->bbox.radius() + 2;
-
+		m_cylinderPointStart = m_cylinderPointStart + 0.2 * (-m_cylinderDir);
+		//double cylinderInitDepth = 2 * m_mesh->bbox.radius() + 2;
 		//box3 cylinderBox_new;
 		//int cylinderVertexNum = (int)m_cylinder->vertices.size();
 		//for (int i = 0; i < cylinderVertexNum; ++i)
@@ -796,8 +795,12 @@ namespace mmesh
 		//}
 		
 		trimesh::vec3 newStartPos = xf * m_cylinderPointStart;
-		trimesh::vec3 boxMin = trimesh::vec3(newStartPos.x - m_cylinderRadius, newStartPos.y - m_cylinderRadius, newStartPos.z);
-		trimesh::vec3 boxMax = trimesh::vec3(newStartPos.x + m_cylinderRadius, newStartPos.y + m_cylinderRadius, newStartPos.z + cylinderInitDepth);
+		
+		trimesh::vec3 boxCenterWorld = xf * m_mesh->bbox.center();
+		double cylinderInitDepth = trimesh::dist(boxCenterWorld, newStartPos) + m_mesh->bbox.radius() + 2;
+		double boxRadius = m_cylinderRadius;
+		trimesh::vec3 boxMin = trimesh::vec3(newStartPos.x - boxRadius, newStartPos.y - boxRadius, newStartPos.z);
+		trimesh::vec3 boxMax = trimesh::vec3(newStartPos.x + boxRadius, newStartPos.y + boxRadius, newStartPos.z + cylinderInitDepth);
 		box3 cylinderBox_new(boxMin, boxMax);
 
 		for (int i = 0; i < faces; ++i)
@@ -932,7 +935,7 @@ namespace mmesh
 				double depth2 = trimesh::dist2(intersectedPos, trimesh::dvec3(m_cylinderPointStart));
 				faceDisMap[faceIndex] = depth2;
 
-				focusFacesIntersected.push_back(faceIndex);
+				focusFacesIntersected.push_back(faceIndex); 
 			}
 			else
 			{
@@ -951,7 +954,7 @@ namespace mmesh
 		std::sort(focusFacesIntersected.begin(), focusFacesIntersected.end(), compareFunc);
 
 		// 确定打洞深度
-		int i;
+		int i;   
 		int layerFlag = 0;
 		double drillDepth = 0.0;
 		double presetDepth2 = m_cylinderDepth * m_cylinderDepth;

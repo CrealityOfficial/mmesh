@@ -582,6 +582,17 @@ namespace mmesh
 		return offset;
 	}
 
+	trimesh::vec3 moveToOriginal(trimesh::TriMesh* mesh)
+	{
+		const trimesh::box3& box = mesh->bbox;
+
+		trimesh::vec3 offset = box.center();
+		offset.z = box.min.z / 2.0f;
+
+		trimesh::trans(mesh, -offset);
+		return offset;
+	}
+
 	void moveMeshes2BoxCenter(std::vector<trimesh::TriMesh*> meshes, const trimesh::box3& box, bool zZero)
 	{
 		trimesh::box3 b;

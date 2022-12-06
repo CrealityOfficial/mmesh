@@ -178,4 +178,55 @@ namespace mmesh
 		//double endtime = (double)(end - start);
 		//std::printf("total time: %f\n", endtime);
 	}
+
+    void removeNorVector2(trimesh::TriMesh* mesh)
+    {
+        if (!mesh)
+        {
+            return;
+        }
+
+        int nf = mesh->faces.size();
+        int nv = mesh->vertices.size();
+
+        if (nv <= 0 )
+        {
+            return;
+        }
+
+        std::vector<bool> isIsolated(nv, false);
+        trimesh::point p = mesh->vertices[0];
+        bool bchanged = false;
+#if defined(_OPENMP)
+#pragma omp parallel for
+#endif
+        for (int i = 0; i < nf; i++) {
+            const int& f1 = mesh->faces[i].x;
+            const int& f2 = mesh->faces[i].y;
+            const int& f3 = mesh->faces[i].z;
+            if (f1 != f2 && f1 != f3 && f2 != f3)
+            {
+                if (!isIsolated[mesh->faces[i].x])
+                    isIsolated[mesh->faces[i].x] = true;
+                if (!isIsolated[mesh->faces[i].y])
+                    isIsolated[mesh->faces[i].y] = true;
+                if (!isIsolated[mesh->faces[i].z])
+                    isIsolated[mesh->faces[i].z] = true;
+
+                if (!bchanged)
+                {
+                    p = mesh->vertices[mesh->faces[i].x];
+                    bchanged = true;
+                }
+            }
+        }
+         
+        for (size_t i = 0; i < nv; i++)
+        {
+            if (!isIsolated[i])
+            {
+                mesh->vertices[i] = p;
+            }
+        }
+    }
 }
