@@ -16,7 +16,7 @@
 
 namespace mmesh
 {
-	trimesh::TriMesh* LinePlusline2Model(std::vector<edge>& edges) 
+	trimesh::TriMesh* LinePlusline2Model(std::vector<edge>& edges, float _radius)
 	{
 		trimesh::TriMesh* outMesh = new trimesh::TriMesh();
 		std::vector<trimesh::TriMesh*> resuMerge;
@@ -28,7 +28,7 @@ namespace mmesh
 			trimesh::vec3 v0(centerPoint1 - centerPoint0);
 			float len = trimesh::dist(centerPoint0, centerPoint1);
 			//len += 1.0;
-			trimesh::TriMesh* symesh  = createSoupCylinder(10, 0.4, len, vmiddle, v0);
+			trimesh::TriMesh* symesh  = createSoupCylinder(10, _radius, len, vmiddle, v0);
 			resuMerge.emplace_back(symesh);
 		}
 		mmesh::mergeTriMesh(outMesh, resuMerge, false);
