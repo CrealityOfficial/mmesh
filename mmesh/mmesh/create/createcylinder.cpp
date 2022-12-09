@@ -57,6 +57,140 @@ namespace mmesh
 		return cylinderMesh;
 	}
 
+	trimesh::TriMesh* createSoupObliqueCylinder(int count, const trimesh::vec2& v1, const trimesh::vec2& v2, float _radius)
+	{
+		int  trianglesCount = count;
+		if (trianglesCount < 3)
+			trianglesCount = 3;
+		trimesh::TriMesh* cylinderMesh = new trimesh::TriMesh();
+		float radian = 2.0f * PI / (float)trianglesCount;//4度换算成弧度	
+		float _height = trimesh::dist(v1, v2);
+		//float _height = 200;
+		trimesh::vec3 top(v1[0], v1[1], _radius);
+		trimesh::vec3 bottom(v2[0], v2[1], _radius);
+		trimesh::vec3 offset(0.0f, _height, 0.0f );
+		std::vector<trimesh::vec3> circles(trianglesCount, trimesh::vec3());
+		std::vector<trimesh::vec3> circlesup(trianglesCount, trimesh::vec3());
+		for (int i = 0; i < trianglesCount; ++i)
+		{
+			circlesup[i] = trimesh::vec3( _radius * cos(i * radian) + v2[0], v2[1],
+				_radius * sin(i * radian) + _radius);
+
+			circles[i] = trimesh::vec3(_radius * cos(i * radian) + v1[0], v1[1],
+				_radius * sin(i * radian) + _radius);
+		}
+
+		circles.push_back(circles[0]);
+		circlesup.push_back(circlesup[0]);
+		cylinderMesh->vertices.resize(12 * trianglesCount);
+		int index = 0;
+
+		auto f = [&index, &cylinderMesh](const trimesh::vec3& v1, const trimesh::vec3& v2, const trimesh::vec3& v3) {
+			cylinderMesh->vertices[index++] = v1;
+			cylinderMesh->vertices[index++] = v2;
+			cylinderMesh->vertices[index++] = v3;
+		};
+		for (int i = 0; i < trianglesCount; ++i)
+		{
+			f(top, circles[i + 1], circles[i]);
+			f(circlesup[i] , circles[i], circlesup[i + 1] );
+			f(circlesup[i + 1] , circles[i], circles[i + 1]);
+			f(circlesup[i], circlesup[i + 1], bottom);
+		}
+
+		fillTriangleSoupFaceIndex(cylinderMesh);
+		return cylinderMesh;
+
+	}
+
+	//trimesh::TriMesh* createSoupObliqueCylinder(int count, const trimesh::vec2& v1, const trimesh::vec2& v2, float _radius)
+	//{
+	//	int  trianglesCount = count;
+	//	if (trianglesCount < 3)
+	//		trianglesCount = 3;
+	//	trimesh::TriMesh* cylinderMesh = new trimesh::TriMesh();
+	//	float radian = 2.0f * PI / (float)trianglesCount;//4度换算成弧度	
+	//	float _height = trimesh::dist(v1, v2);
+	//	//float _height = 200;
+	//	trimesh::vec3 top(v1[0], v1[1], _height / 2.0f);
+	//	trimesh::vec3 bottom(v2[0], v2[1], -_height / 2.0f);
+	//	trimesh::vec3 offset(0.0f, 0.0f, _height);
+	//	std::vector<trimesh::vec3> circles(trianglesCount, trimesh::vec3());
+	//	std::vector<trimesh::vec3> circlesup(trianglesCount, trimesh::vec3());
+	//	for (int i = 0; i < trianglesCount; ++i)
+	//	{
+	//		circlesup[i] = trimesh::vec3(_radius * cos(i * radian) + v1[0],
+	//			_radius * sin(i * radian) + v1[1], -_height / 2.0f);
+	//		circles[i] = trimesh::vec3(_radius * cos(i * radian) + v2[0],
+	//			_radius * sin(i * radian) + v2[1], -_height / 2.0f);
+	//	}
+
+	//	circles.push_back(circles[0]);
+	//	circlesup.push_back(circlesup[0]);
+	//	cylinderMesh->vertices.resize(12 * trianglesCount);
+	//	int index = 0;
+
+	//	auto f = [&index, &cylinderMesh](const trimesh::vec3& v1, const trimesh::vec3& v2, const trimesh::vec3& v3) {
+	//		cylinderMesh->vertices[index++] = v1;
+	//		cylinderMesh->vertices[index++] = v2;
+	//		cylinderMesh->vertices[index++] = v3;
+	//	};
+	//	for (int i = 0; i < trianglesCount; ++i)
+	//	{
+	//		f(top, circlesup[i] + offset, circlesup[i + 1] + offset);
+	//		f(circlesup[i] + offset, circles[i], circlesup[i + 1] + offset);
+	//		f(circlesup[i + 1] + offset, circles[i], circles[i + 1]);
+	//		f(bottom, circles[i + 1], circles[i]);
+	//	}
+
+	//	fillTriangleSoupFaceIndex(cylinderMesh);
+	//	return cylinderMesh;
+	//
+	//}
+
+	trimesh::TriMesh* createSoupObliqueCylinder(int count, float _radius, float _height)
+	{
+		int  trianglesCount = count;
+		if (trianglesCount < 3)
+			trianglesCount = 3;
+		trimesh::TriMesh* cylinderMesh = new trimesh::TriMesh();
+		float radian = 2.0f * PI / (float)trianglesCount;//4度换算成弧度
+
+		trimesh::vec3 top(20.0f, 0.0f, _height / 2.0f);
+		trimesh::vec3 bottom(0.0f, 0.0f, -_height / 2.0f);
+		trimesh::vec3 offset(0.0f, 0.0f, _height);
+		std::vector<trimesh::vec3> circles(trianglesCount, trimesh::vec3());
+		std::vector<trimesh::vec3> circlesup(trianglesCount, trimesh::vec3());
+		for (int i = 0; i < trianglesCount; ++i)
+		{
+			circles[i] = trimesh::vec3(_radius * cos(i * radian),
+				_radius * sin(i * radian), -_height / 2.0f);
+			circlesup[i] = trimesh::vec3(_radius * cos(i * radian) + 20.0f,
+				_radius * sin(i * radian), -_height / 2.0f);
+		}
+
+		circles.push_back(circles[0]);
+		circlesup.push_back(circlesup[0]);
+		cylinderMesh->vertices.resize(12 * trianglesCount);
+		int index = 0;
+
+		auto f = [&index, &cylinderMesh](const trimesh::vec3& v1, const trimesh::vec3& v2, const trimesh::vec3& v3) {
+			cylinderMesh->vertices[index++] = v1;
+			cylinderMesh->vertices[index++] = v2;
+			cylinderMesh->vertices[index++] = v3;
+		};
+		for (int i = 0; i < trianglesCount; ++i)
+		{
+			f(top, circlesup[i] + offset, circlesup[i + 1] + offset);
+			f(circlesup[i] + offset, circles[i], circlesup[i + 1] + offset);
+			f(circlesup[i + 1] + offset, circles[i], circles[i + 1]);
+			f(bottom, circles[i + 1], circles[i]);
+		}
+
+		fillTriangleSoupFaceIndex(cylinderMesh);
+		return cylinderMesh;
+	}
+
 	trimesh::TriMesh* createSoupCylinder(int count, float _radius, float _height)
 	{
 		int  trianglesCount = count;
