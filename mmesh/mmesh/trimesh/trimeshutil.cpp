@@ -721,7 +721,7 @@ namespace mmesh
 		mesh->vertices.swap(positions);
 		mesh->faces.clear();
 		fillTriangleSoupFaceIndex(mesh);
-		if (mesh->faceUVs.size() > 0)
+		if (mesh->faceUVs.size() > 0 && mesh->UVs.size() > 0)
 		{
 			std::vector<trimesh::vec2> uvs(3 * size);
 			for (int i = 0; i < size; ++i)
