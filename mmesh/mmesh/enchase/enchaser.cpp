@@ -65,6 +65,10 @@ namespace enchase
         return enchaseCache(mapper, index, horizontalMargin, verticalMargin, maxThickness, nullptr);
     }
 
+    /*
+     *horizontalMargin：水平边框所占比例
+     *verticalMargin  ：垂直边框所占比例
+     */
     void Enchaser::enchaseCache(Mapper* mapper, int index, float horizontalMargin, float verticalMargin, float maxThickness, Source* serial)
     {
         if (!mapper)
