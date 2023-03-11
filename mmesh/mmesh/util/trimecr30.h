@@ -21,8 +21,8 @@ namespace mmesh
         double machine_depth;
         Cr30Param()
         {
-            belt_support_enable = false;
-            support_angle = 0.0f;
+            belt_support_enable = true;
+            support_angle = 45.0f;
             machine_width = 0.0f;
             machine_depth = 0.0f;
         }
