@@ -86,9 +86,9 @@ namespace mmesh
         //std::vector<MeshObject>& meshes = cxslice->getCurrentMesh();
         size_t size = meshs.size();
 
-        std::string belt_support_enable = cr30Param.belt_support_enable;
-        std::transform(belt_support_enable.begin(), belt_support_enable.end(), belt_support_enable.begin(), ::tolower);
-        if (belt_support_enable == "true")
+        //std::string belt_support_enable = cr30Param.belt_support_enable;
+        //std::transform(belt_support_enable.begin(), belt_support_enable.end(), belt_support_enable.begin(), ::tolower);
+        if (cr30Param.belt_support_enable)
         {
             //CXLogInfo("Belt Slice Enable Support");
             std::vector<trimesh::TriMesh*> tmps;
@@ -96,12 +96,8 @@ namespace mmesh
             {
                 trimesh::TriMesh* mesh = meshs.at(i);
                 float angle = 45.0f;
-                std::string belt_support_enable = cr30Param.support_angle;
-                if (!belt_support_enable.empty())
-                {
-                    angle = (float)std::atof(belt_support_enable.c_str());
-                }
 
+                angle = (float)cr30Param.support_angle;
                 trimesh::TriMesh* support= _generateBeltSupport(mesh, angle);
 
                 if (support)
@@ -122,8 +118,8 @@ namespace mmesh
             ;// CXLogError("Belt Slice Disable Support.");
         }
 
-        double w = (double)std::atof(cr30Param.machine_width.c_str());
-        double d = (double)std::atof(cr30Param.machine_depth.c_str());
+        double w = cr30Param.machine_width;
+        double d = cr30Param.machine_depth;
 
         std::vector<trimesh::TriMesh*> meshes;
         meshes.insert(meshes.end(),meshs.begin(), meshs.end());
@@ -193,10 +189,11 @@ namespace mmesh
         return out;
     }
 
-    std::vector<trimesh::TriMesh*> sliceBelt(const std::vector<trimesh::TriMesh*>& meshs, const Cr30Param& cr30Param, ccglobal::Tracer* m_progress )
+    std::vector<trimesh::TriMesh*> sliceBelt(trimesh::TriMesh* mesh, const Cr30Param& cr30Param, ccglobal::Tracer* m_progress )
     {
         trimesh::fxform m_xf;
-
+        std::vector<trimesh::TriMesh*> meshs;
+        meshs.push_back(mesh);
         return _beforeSliceBelt(meshs, cr30Param, m_xf);
     }
 }

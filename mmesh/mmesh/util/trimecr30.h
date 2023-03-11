@@ -15,14 +15,20 @@ namespace mmesh
 {
     struct Cr30Param
     {
-        std::string belt_support_enable;
-        std::string support_angle;
-        std::string machine_width;
-        std::string machine_depth;
-
+        bool belt_support_enable;
+        double support_angle;
+        double machine_width;
+        double machine_depth;
+        Cr30Param()
+        {
+            belt_support_enable = false;
+            support_angle = 0.0f;
+            machine_width = 0.0f;
+            machine_depth = 0.0f;
+        }
     };
 
-    std::vector<trimesh::TriMesh*> sliceBelt(const std::vector<trimesh::TriMesh*>& meshs, const Cr30Param& cr30Param, ccglobal::Tracer* m_progress = nullptr);
+    std::vector<trimesh::TriMesh*> sliceBelt(trimesh::TriMesh* mesh, const Cr30Param& cr30Param, ccglobal::Tracer* m_progress = nullptr);
 }
 
 #endif //
