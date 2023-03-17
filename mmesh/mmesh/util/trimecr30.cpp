@@ -73,21 +73,18 @@ namespace mmesh
         xf2(2, 1) = -1.0f;
         xf2(1, 2) = 1.0f;
 
-        trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 200.0f);
+        trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 5000.0f);
 
         trimesh::fxform xf = xf3 * xf2 * xf1 * xf0;
         //trimesh::fxform xf = xf3 * xf0;
         return xf;
     }
 
-    std::vector<trimesh::TriMesh*> _beforeSliceBelt(const std::vector<trimesh::TriMesh*>& meshs, const Cr30Param& cr30Param, trimesh::fxform & m_xf)
+    std::vector<trimesh::TriMesh*> _beforeSliceBelt(const std::vector<trimesh::TriMesh*>& meshs, Cr30Param& cr30Param, trimesh::fxform & m_xf)
     {
         std::vector<trimesh::TriMesh*> out;
-        //std::vector<MeshObject>& meshes = cxslice->getCurrentMesh();
         size_t size = meshs.size();
 
-        //std::string belt_support_enable = cr30Param.belt_support_enable;
-        //std::transform(belt_support_enable.begin(), belt_support_enable.end(), belt_support_enable.begin(), ::tolower);
         if (cr30Param.belt_support_enable)
         {
             //CXLogInfo("Belt Slice Enable Support");
@@ -102,10 +99,6 @@ namespace mmesh
 
                 if (support)
                 {
-                    //support->write("f:/support.stl");
-                    //meshObject.values.insert(std::make_pair("support_enable", "false"));
-                    //meshObject.values.insert(std::make_pair("support_mesh", "true"));
-                    //meshObject.values.insert(std::make_pair("support_mesh_drop_down", "false"));
                     tmps.push_back(support);
                 }
             }
@@ -115,7 +108,7 @@ namespace mmesh
         }
         else
         {
-            ;// CXLogError("Belt Slice Disable Support.");
+            ;
         }
 
         double w = cr30Param.machine_width;
@@ -157,6 +150,8 @@ namespace mmesh
             box += mesh->bbox;
         }
 
+        cr30Param.beltOffsetX = w / 2.0 - box0.center().x;
+        cr30Param.beltOffsetY = box0.min.y - box.min.z;
         trimesh::xform txf = trimesh::xform::trans(0.0, -box.min.y, -box.min.z);
         for (size_t i = 0; i < size; ++i)
         {
@@ -183,17 +178,15 @@ namespace mmesh
         }
         if (has_error)
         {
-            ;// CXLogError("Belt Slice Mesh Vertex Error!");
+            ;
         }
 
         return out;
     }
 
-    std::vector<trimesh::TriMesh*> sliceBelt(trimesh::TriMesh* mesh, const Cr30Param& cr30Param, ccglobal::Tracer* m_progress )
+    std::vector<trimesh::TriMesh*> sliceBelt(std::vector<trimesh::TriMesh*>& meshs, Cr30Param& cr30Param, ccglobal::Tracer* m_progress )
     {
         trimesh::fxform m_xf;
-        std::vector<trimesh::TriMesh*> meshs;
-        meshs.push_back(mesh);
         return _beforeSliceBelt(meshs, cr30Param, m_xf);
     }
 }

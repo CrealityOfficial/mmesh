@@ -662,7 +662,7 @@ namespace mmesh
 
 		if (1 == beltType)
 		{
-			trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 5000.0f);
+			trimesh::fxform xf3 = trimesh::fxform::trans(0.0f, 0.0f, 0.0f);
 
 			trimesh::fxform xf = xf3 * xf2 * xf1 * xf0;
 			//trimesh::fxform xf = xf3 * xf0;
