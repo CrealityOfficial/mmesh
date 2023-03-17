@@ -27,7 +27,7 @@ namespace mmesh
             support_angle = 45.0f;
             machine_width = 0.0f;
             machine_depth = 0.0f;
-            beltOffsetY = 0.0f;
+            beltOffsetX = 0.0f;
             beltOffsetY = 0.0f;
         }
     };
