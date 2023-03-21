@@ -261,11 +261,41 @@ namespace mmesh
 		return outMesh;
 	}
 
+	bool testNeedfitMesh(trimesh::TriMesh* mesh, float& scale)
+	{
+		if (!mesh)
+			return false;
+
+		mesh->need_bbox();
+		trimesh::vec3 size = mesh->bbox.size();
+
+		bool needScale = false;
+		scale = 1.0f;
+		if (size.max() > 1000.0f)
+		{
+			needScale = true;
+			scale = 100.0f / size.max();
+		}
+		else if (size.min() < 1.0f)
+		{
+			needScale = true;
+			scale = 100.0f / size.min();
+		}
+
+		return needScale;
+	}
+
 	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)
 	{
 		std::clock_t start = clock();
 		if (!mesh)
 			return;
+
+		float sValue = 1.0f;
+		bool needScale = testNeedfitMesh(mesh, sValue);
+
+		if (needScale)
+			trimesh::apply_xform(mesh, trimesh::xform::scale(sValue));
 
 		size_t vertexNum = mesh->vertices.size();
 
@@ -274,7 +304,7 @@ namespace mmesh
 			size_t operator()(const trimesh::vec3& v)const
 			{
 #if _WIN32
-				return abs(v.x) * 100000000.0f / 23.0f + abs(v.y) * 100000000.0f / 19.0f + abs(v.z) * 100000000.0f / 17.0f;
+				return abs(v.x) * 10000.0f / 23.0f + abs(v.y) * 10000.0f / 19.0f + abs(v.z) * 10000.0f / 17.0f;
 #else
 				return fabs(v.x) * 100000000.0f / 23.0f + fabs(v.y) * 100000000.0f / 19.0f + abs(v.z) * 100000000.0f / 17.0f;
 #endif
@@ -374,6 +404,11 @@ namespace mmesh
 
 		mesh->vertices.swap(omesh->vertices);
 		mesh->faces.swap(omesh->faces);
+
+		if (needScale)
+			trimesh::apply_xform(mesh, trimesh::xform::scale(1.0f / sValue));
+
+		mesh->clear_bbox();
 		mesh->need_bbox();
 
 		delete omesh;

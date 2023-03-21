@@ -31,6 +31,7 @@ namespace mmesh
 
 	trimesh::TriMesh* partMesh(const std::vector<int>& indices, trimesh::TriMesh* inMesh);
 
+	bool testNeedfitMesh(trimesh::TriMesh* mesh, float& scale);
 	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr, float ratio = 0.3f);
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
