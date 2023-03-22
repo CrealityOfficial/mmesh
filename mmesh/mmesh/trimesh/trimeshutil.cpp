@@ -404,6 +404,7 @@ namespace mmesh
 
 		mesh->vertices.swap(omesh->vertices);
 		mesh->faces.swap(omesh->faces);
+		mesh->flags.clear();
 
 		if (needScale)
 			trimesh::apply_xform(mesh, trimesh::xform::scale(1.0f / sValue));
