@@ -2,6 +2,8 @@
 #define ENCHASE_IMAGELOADER_1608004787715_H
 #include <string>
 #include <vector>
+
+class LogCallback;
 namespace enchase
 {
 	enum ImageDataFormat
@@ -9,6 +11,7 @@ namespace enchase
 		FORMAT_RGB_565 = 3,
 		FORMAT_RGBA_4444,
 		FORMAT_RGBA_8888,
+        FORMAT_RGBA_888,
 		FORMAT_GRAY_8,
 	};
 
@@ -84,6 +87,10 @@ namespace enchase
 	void writeImage_freeImage(unsigned char* data, int width, int height, const std::string& fileName);  //rgba
 	ImageData* constructNewFreeImage(std::vector<ImageData*> data, ImageDataFormat format, std::vector<std::pair<ImageData::point, ImageData::point>>& offset);
 	ImageData* scaleFreeImage(ImageData* imagedata, float scaleX, float scaleY);
+    bool loadImage_freeImage888(unsigned char* data, const std::string& fileName, int width, int height);
+    bool loadImage_freeImage565(unsigned char* data, const std::string& fileName, int width, int height);
+
+    void convert8888to565(unsigned char* source, unsigned char* dest, int width, int height);
 }
 
 #endif // ENCHASE_IMAGELOADER_1608004787715_H
