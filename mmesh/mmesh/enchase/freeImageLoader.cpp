@@ -1,9 +1,8 @@
 #include "imageloader.h"
-#include "FreeImage.h"
-#include "Utilities.h"
 
 #if HAVE_FREEIMAGE
 #include "FreeImage.h"
+#include "Utilities.h"
 
 /** Generic image loader
 	@param lpszPathName Pointer to the full file name
@@ -89,6 +88,7 @@ void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char* message) {
 
 namespace enchase
 {
+#if HAVE_FREEIMAGE
     void convert(ImageData& data, FIBITMAP* dib, LogCallback* callback)
     {
         const int nBitCounts = 8;
@@ -179,7 +179,7 @@ namespace enchase
             }
         }
     }
-#if HAVE_FREEIMAGE
+
 	void convert2Gray(ImageData& data, FIBITMAP* dib)
 	{
 		const int nBitCounts = 8;
@@ -482,7 +482,7 @@ namespace enchase
 	ImageData* scaleFreeImage(ImageData* imagedata, float scaleX, float scaleY)
 	{
 		enchase::ImageData* dataret = nullptr;
-		#ifdef HAVE_FREEIMAGE
+#ifdef HAVE_FREEIMAGE
 		int bytesPerPixel = 4;//FORMAT_RGBA_8888
 		int bpp = 32;
 		switch (imagedata->format)
@@ -528,14 +528,17 @@ namespace enchase
 		dataret->format = imagedata->format;
 		convertBaseFormat(*dataret, newdib);
 		FreeImage_Unload(newdib);
-		#endif
+#endif
 		return dataret;
 
 	}
 
     bool loadImage_freeImage565(unsigned char* data, const std::string& fileName, int width, int height)
     {
-        if (!data || fileName.empty() || width <= 0 || height <= 0) return false;
+        if (!data || fileName.empty() || width <= 0 || height <= 0)
+			return false;
+
+#ifdef HAVE_FREEIMAGE
         try {
             unsigned char* p = data;
             FIBITMAP* dib = GenericLoader(fileName.c_str(), 0);
@@ -581,12 +584,16 @@ namespace enchase
             //CXLogCritical("loadImage_freeImage565 exception!");
             return false;
         }
+#endif
         return true;
     }
 
     bool loadImage_freeImage888(unsigned char* data, const std::string& fileName, int width, int height)
     {
-        if (!data) return false;
+        if (!data) 
+			return false;
+
+#ifdef HAVE_FREEIMAGE
         try {
             unsigned char* p = data;
             FIBITMAP* dib = GenericLoader(fileName.c_str(), 0);
@@ -612,6 +619,7 @@ namespace enchase
         {
             return false;
         }
+#endif
         return true;
     }
 
@@ -621,6 +629,7 @@ namespace enchase
         data.width = 0;
         data.height = 0;
 
+#ifdef HAVE_FREEIMAGE
         FreeImage_SetOutputMessage(FreeImageErrorHandler);
 
         FIBITMAP* dib = GenericLoader(fileName.c_str(), 0);
@@ -637,6 +646,7 @@ namespace enchase
             ///CXLogInfo("converted--> width height :%d x %d", data.width, data.height);
             FreeImage_Unload(dib);
         }
+#endif
     }
 
     void convert8888to565(unsigned char* source, unsigned char* dest, int width, int height)
@@ -644,6 +654,7 @@ namespace enchase
         if (!source || !dest)
             return;
 
+#ifdef HAVE_FREEIMAGE
         for (int rows = 0; rows < height; rows++) {
             unsigned short* new_bits = (unsigned short*)(dest + rows * width * 2);
             for (int cols = 0; cols < width; cols++) {
@@ -651,6 +662,6 @@ namespace enchase
                 source += 4;
             }
         }
-        return;
+#endif
     }
 }
