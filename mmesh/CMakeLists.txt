@@ -17,7 +17,7 @@ endif()
 if(TARGET freeImage)
 	message(STATUS "build mmesh use freeImage ...........................")
 	add_definitions(-DHAVE_FREEIMAGE)
-	list(APPEND LIBS freeImage)
+	list(APPEND LIBS freeimage)
 endif()
 if(EMCC_WEB)
 	__add_real_target(mmesh lib SOURCE ${SRCS} 
