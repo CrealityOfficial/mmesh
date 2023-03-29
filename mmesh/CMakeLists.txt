@@ -14,7 +14,7 @@ if(MMESH_USE_FREEIMAGE)
 	__cc_find(freeImage)
 endif()
 
-if(TARGET freeImage)
+if(TARGET freeimage)
 	message(STATUS "build mmesh use freeImage ...........................")
 	add_definitions(-DHAVE_FREEIMAGE)
 	list(APPEND LIBS freeimage)
