@@ -54,4 +54,63 @@ namespace mmesh
 
 		return boxMesh;
 	}
+
+	void boxLineIndices(const trimesh::box3& box, std::vector<trimesh::vec3>& corners, std::vector<int>& indices)
+	{
+		const trimesh::vec3& cmin = box.min;
+		const trimesh::vec3& cmax = box.max;
+
+		corners.clear();
+		corners.resize(8);
+
+		corners[0] = trimesh::vec3(cmin.x, cmin.y, cmin.z);
+		corners[1] = trimesh::vec3(cmax.x, cmin.y, cmin.z);
+		corners[2] = trimesh::vec3(cmax.x, cmax.y, cmin.z);
+		corners[3] = trimesh::vec3(cmin.x, cmax.y, cmin.z);
+		corners[4] = trimesh::vec3(cmin.x, cmin.y, cmax.z);
+		corners[5] = trimesh::vec3(cmax.x, cmin.y, cmax.z);
+		corners[6] = trimesh::vec3(cmax.x, cmax.y, cmax.z);
+		corners[7] = trimesh::vec3(cmin.x, cmax.y, cmax.z);
+
+		indices.clear();
+		indices.reserve(24);
+
+		indices.push_back(0);
+		indices.push_back(1);
+		indices.push_back(1);
+		indices.push_back(2);
+		indices.push_back(2);
+		indices.push_back(3);
+		indices.push_back(3);
+		indices.push_back(0);
+		indices.push_back(0);
+		indices.push_back(4);
+		indices.push_back(3);
+		indices.push_back(7);
+		indices.push_back(1);
+		indices.push_back(5);
+		indices.push_back(2);
+		indices.push_back(6);
+		indices.push_back(4);
+		indices.push_back(5);
+		indices.push_back(5);
+		indices.push_back(6);
+		indices.push_back(6);
+		indices.push_back(7);
+		indices.push_back(7);
+		indices.push_back(4);
+	}
+
+	void boxLines(const trimesh::box3& box, std::vector<trimesh::vec3>& lines)
+	{
+		lines.clear();
+
+		std::vector<trimesh::vec3> corners;
+		std::vector<int> indices;
+		boxLineIndices(box, corners, indices);
+
+		lines.reserve(indices.size());
+		for (int index : indices)
+			lines.push_back(corners.at(index));
+	}
 }
