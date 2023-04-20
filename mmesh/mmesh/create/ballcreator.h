@@ -29,6 +29,9 @@ namespace mmesh
 		// create longitude and latitude ball , r = 1.0f
 		static trimesh::TriMesh* createLL(unsigned longitude, unsigned latitude);
 	};
+
+
+	void circleLines(const trimesh::vec3& center, float r, int n, std::vector<trimesh::vec3>& lines);
 }
 
 #endif // MMESH_BALLCREATOR_1620831280553_H

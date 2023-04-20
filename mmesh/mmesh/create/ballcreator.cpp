@@ -255,4 +255,20 @@ namespace mmesh
 
 		return mesh;
 	}
+
+	void circleLines(const trimesh::vec3& center, float r, int n, std::vector<trimesh::vec3>& lines)
+	{
+		float theta = M_PIf / (float)n;
+		auto f = [&center, &r](float theta)->trimesh::vec3 {
+			float dx = r * std::cos(theta);
+			float dy = r * std::sin(theta);
+
+			trimesh::vec3 p = center + trimesh::vec3(dx, dy, 0.0f);
+			return p;
+		};
+		for (int i = 0; i < n; ++i) {
+			lines.push_back(f((float)i * theta));
+			lines.push_back(f((float)(i + 1) * theta));
+		}
+	}
 }
