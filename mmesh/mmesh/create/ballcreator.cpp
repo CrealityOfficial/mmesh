@@ -258,7 +258,7 @@ namespace mmesh
 
 	void circleLines(const trimesh::vec3& center, float r, int n, std::vector<trimesh::vec3>& lines)
 	{
-		float theta = M_PIf / (float)n;
+		float theta = 2.0f * M_PIf / (float)n;
 		auto f = [&center, &r](float theta)->trimesh::vec3 {
 			float dx = r * std::cos(theta);
 			float dy = r * std::sin(theta);
