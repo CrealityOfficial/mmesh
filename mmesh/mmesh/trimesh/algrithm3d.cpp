@@ -162,4 +162,18 @@ namespace mmesh
 		for (trimesh::vec3& point : points)
 			point += offset;
 	}
+
+	void applyMatrix2Points(std::vector<trimesh::vec3>& points, const trimesh::fxform& xf)
+	{
+		for (trimesh::vec3& point : points)
+			point = xf * point;
+	}
+
+	trimesh::box3 pointsBox(const std::vector<trimesh::vec3>& points)
+	{
+		trimesh::box3 box;
+		for (const trimesh::vec3& point : points)
+			box += point;
+		return box;
+	}
 }

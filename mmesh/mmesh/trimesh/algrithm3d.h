@@ -2,6 +2,7 @@
 #define CREATIVE_KERNEL_ALGRITHM3D_1593580656409_H
 #include "trimesh2/Vec.h"
 #include "trimesh2/Box.h"
+#include "trimesh2/XForm.h"
 #include <vector>
 
 namespace mmesh
@@ -19,5 +20,7 @@ namespace mmesh
 	trimesh::box3 extendBox(const trimesh::box3& b, float r);
 
 	void offsetPoints(std::vector<trimesh::vec3>& points, const trimesh::vec3& offset);
+	void applyMatrix2Points(std::vector<trimesh::vec3>& points, const trimesh::fxform& xf);
+	trimesh::box3 pointsBox(const std::vector<trimesh::vec3>& points);
 }
 #endif // CREATIVE_KERNEL_ALGRITHM3D_1593580656409_H
