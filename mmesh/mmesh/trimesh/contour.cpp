@@ -187,4 +187,29 @@ namespace mmesh
 			}
 		}
 	}
+
+	void loopPolygons2Lines(const std::vector<std::vector<trimesh::vec3>>& polygons, std::vector<trimesh::vec3>& lines, bool loop)
+	{
+		for (const std::vector<trimesh::vec3>& polygon : polygons)
+			loopPolygon2Lines(polygon, lines, loop, true);
+	}
+
+	void loopPolygon2Lines(const std::vector<trimesh::vec3>& polygon, std::vector<trimesh::vec3>& lines, bool loop, bool append)
+	{
+		if (!append)
+			lines.clear();
+
+		size_t size = polygon.size();
+		if (size <= 1)
+			return;
+
+		int end = loop ? size : size - 1;
+		for (size_t i = 0; i < end; ++i)
+		{
+			const trimesh::vec3& point = polygon.at(i);
+			const trimesh::vec3& point1 = polygon.at((i + 1) % size);
+			lines.push_back(point);
+			lines.push_back(point1);
+		}
+	}
 }
