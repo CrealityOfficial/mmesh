@@ -40,9 +40,11 @@ namespace mmesh
 	ShapeCreator::ShapeCreator()
 	{
 	}
+
 	ShapeCreator::~ShapeCreator()
 	{
 	}
+
 	trimesh::TriMesh* ShapeCreator::createCuboidMesh(trimesh::vec3 size)
 	{
 		trimesh::TriMesh* mesh = new trimesh::TriMesh();
@@ -271,7 +273,18 @@ namespace mmesh
 		return mesh;
 	}
 
-	trimesh::TriMesh* ShapeCreator::createCylinderMesh(trimesh::vec3 top, trimesh::vec3 bottom, float radius, int num, float theta)
+	trimesh::TriMesh* ShapeCreator::createCylinderMeshFromCenter(const trimesh::vec3& position, const trimesh::vec3& normal,
+		float depth, float radius, int num, float theta)
+	{
+		trimesh::vec3 _normal = trimesh::normalized(normal);
+
+		trimesh::vec3 bottom = position + 2.0f * _normal;
+		trimesh::vec3 top = position - (depth + 2.0f) * _normal;
+
+		return createCylinderMesh(top, bottom, radius, num);
+	}
+
+	trimesh::TriMesh* ShapeCreator::createCylinderMesh(const trimesh::vec3& top, const trimesh::vec3& bottom, float radius, int num, float theta)
 	{
 		trimesh::TriMesh* mesh = new trimesh::TriMesh();
 

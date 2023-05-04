@@ -41,7 +41,10 @@ namespace mmesh
         ShapeCreator();
         virtual ~ShapeCreator();
 
-        static trimesh::TriMesh* createCylinderMesh(trimesh::vec3 top, trimesh::vec3 bottom, float radius, int num = 20, float theta = 0.0f);
+        static trimesh::TriMesh* createCylinderMesh(const trimesh::vec3& top, const trimesh::vec3& bottom, float radius, int num = 20, float theta = 0.0f);
+        static trimesh::TriMesh* createCylinderMeshFromCenter(const trimesh::vec3& position, const trimesh::vec3& normal,
+            float depth, float radius, int num = 20, float theta = 0.0f);
+
         static trimesh::TriMesh* createCuboidMesh(trimesh::vec3 size);
         static trimesh::TriMesh* createCuboidMesh(trimesh::vec3 bottom, trimesh::vec3 top, int n, float radius, float startTheta = 0.7853981634f);
 
