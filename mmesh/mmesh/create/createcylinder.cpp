@@ -191,7 +191,7 @@ namespace mmesh
 		return cylinderMesh;
 	}
 
-	trimesh::TriMesh* createSoupCylinder(int count, float _radius, float _height)
+	trimesh::TriMesh* createSoupCylinder(int count, float _radius, float _height, bool offsetOnZero)
 	{
 		int  trianglesCount = count;
 		if (trianglesCount < 3)
@@ -224,6 +224,9 @@ namespace mmesh
 		}
 
 		fillTriangleSoupFaceIndex(cylinderMesh);
+
+		if(offsetOnZero)
+			trimesh::apply_xform(cylinderMesh, trimesh::xform::trans(0.0f, 0.0f, _height / 2.0f));
 		return cylinderMesh;
 	}
 
