@@ -22,5 +22,9 @@ namespace mmesh
 	void offsetPoints(std::vector<trimesh::vec3>& points, const trimesh::vec3& offset);
 	void applyMatrix2Points(std::vector<trimesh::vec3>& points, const trimesh::fxform& xf);
 	trimesh::box3 pointsBox(const std::vector<trimesh::vec3>& points);
+
+	float getAngelOfTwoVector(const trimesh::vec& pt1, const trimesh::vec& pt2, const trimesh::vec& c);
+	void getDevidePoint(const trimesh::vec& p0, const trimesh::vec& p1,
+		std::vector<trimesh::vec>& out, float theta, bool clockwise);
 }
 #endif // CREATIVE_KERNEL_ALGRITHM3D_1593580656409_H
