@@ -2,6 +2,7 @@
 #define MMESH_TRIMESHUTIL_1602590289222_H
 #include <vector>
 #include <fstream>
+#include <memory>
 
 #include "trimesh2/XForm.h"
 #include "trimesh2/Box.h"
@@ -10,16 +11,18 @@ namespace trimesh
 {
 	class TriMesh;
 }
+typedef std::shared_ptr<trimesh::TriMesh> TriMeshPointer;
 
 namespace ccglobal
 {
 	class Tracer;
 }
+
 struct edge {
 	trimesh::vec3 p0;
 	trimesh::vec3 p1;
-
 };
+
 namespace mmesh
 {
 	void mergeTriMesh(trimesh::TriMesh* outMesh, const std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan = false);
@@ -52,6 +55,9 @@ namespace mmesh
 	trimesh::fxform xformFromPlane(const trimesh::vec3& pos, const trimesh::vec3& normal);
 	void fillTriangleSoupFaceIndex(trimesh::TriMesh* mesh);
 	void indexTriangle2Soup(trimesh::TriMesh* mesh);
+
+	TriMeshPointer meshMerge(const std::vector<TriMeshPointer>& meshes);
+	std::vector<TriMeshPointer> meshSplit(const std::vector<TriMeshPointer>& meshes);
 
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh);
 	void saveTrimesh(std::fstream& out, trimesh::TriMesh& mesh);

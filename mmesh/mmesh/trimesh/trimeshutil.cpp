@@ -773,6 +773,16 @@ namespace mmesh
 		}
 	}
 
+	TriMeshPointer meshMerge(const std::vector<TriMeshPointer>& meshes)
+	{
+		return nullptr;
+	}
+
+	std::vector<TriMeshPointer> meshSplit(const std::vector<TriMeshPointer>& meshes)
+	{
+		return std::vector<TriMeshPointer>();
+	}
+
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh)
 	{
 		loadVectorT(in, mesh.vertices);
