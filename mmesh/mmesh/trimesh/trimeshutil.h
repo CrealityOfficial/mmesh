@@ -56,8 +56,8 @@ namespace mmesh
 	void fillTriangleSoupFaceIndex(trimesh::TriMesh* mesh);
 	void indexTriangle2Soup(trimesh::TriMesh* mesh);
 
-	TriMeshPointer meshMerge(const std::vector<TriMeshPointer>& meshes);
-	std::vector<TriMeshPointer> meshSplit(const std::vector<TriMeshPointer>& meshes);
+	void meshMerge(TriMeshPointer& outMesh,const std::vector<TriMeshPointer>& meshes, const trimesh::fxform& globalMatrix, bool fanzhuan, ccglobal::Tracer* tracer);
+	std::vector<std::vector<TriMeshPointer>> meshSplit(const std::vector<TriMeshPointer>& meshes, ccglobal::Tracer* tracer = nullptr);
 
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh);
 	void saveTrimesh(std::fstream& out, trimesh::TriMesh& mesh);

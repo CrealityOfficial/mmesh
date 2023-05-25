@@ -12,6 +12,7 @@
 #include "ccglobal/platform.h"
 #include "ccglobal/log.h"
 #include "mmesh/create/createcylinder.h"
+#include "mmesh/trimesh/meshtopo.h"
 #include <ctime>
 
 namespace mmesh
@@ -773,14 +774,165 @@ namespace mmesh
 		}
 	}
 
-	TriMeshPointer meshMerge(const std::vector<TriMeshPointer>& meshes)
+	void meshMerge(TriMeshPointer& outMesh,const std::vector<TriMeshPointer>& inMeshes, const trimesh::fxform& globalMatrix, bool fanzhuan, ccglobal::Tracer* progressor)
 	{
-		return nullptr;
+		std::vector<trimesh::TriMesh*> _inMeshes;
+		for (auto mesh : inMeshes)
+		{
+			_inMeshes.push_back(mesh.get());
+				
+		}
+		mergeTriMesh(outMesh.get(), _inMeshes, globalMatrix, fanzhuan);
 	}
 
-	std::vector<TriMeshPointer> meshSplit(const std::vector<TriMeshPointer>& meshes)
+	std::vector < std::vector<TriMeshPointer>> meshSplit(const std::vector<TriMeshPointer>& meshes, ccglobal::Tracer* progressor)
 	{
-		return std::vector<TriMeshPointer>();
+		std::vector < std::vector<TriMeshPointer>> outMeshes;
+		outMeshes.reserve(meshes.size());
+
+		for (auto mesh : meshes)
+		{
+			int originV = mesh->vertices.size();
+			originV = originV >= 0 ? originV : 1;
+			mmesh::dumplicateMesh(mesh.get(), nullptr);;
+
+			if (!mesh || mesh->faces.size() <= 0)
+			{
+				continue;
+			}
+
+			if (progressor)
+			{
+				progressor->progress(0.1f);
+			}
+
+			mmesh::MeshTopo topo;
+			topo.build(mesh.get());
+			if (progressor)
+			{
+				progressor->progress(0.3f);
+
+				if (progressor->interrupt())
+				{
+					return outMeshes;
+				}
+			}
+
+			int faceNum = (int)mesh->faces.size();
+			std::vector<bool> visitFlags(faceNum, false);
+
+			std::vector<int> visitStack;
+			std::vector<int> nextStack;
+
+			std::vector<std::vector<int>> parts;
+			parts.reserve(100);
+			for (int faceID = 0; faceID < faceNum; ++faceID)
+			{
+				if (visitFlags.at(faceID) == false)
+				{
+					visitFlags.at(faceID) = true;
+					visitStack.push_back(faceID);
+
+					std::vector<int> facesChunk;
+					facesChunk.push_back(faceID);
+					while (!visitStack.empty())
+					{
+						int seedSize = (int)visitStack.size();
+						for (int seedIndex = 0; seedIndex < seedSize; ++seedIndex)
+						{
+							int cFaceID = visitStack.at(seedIndex);
+							trimesh::ivec3& oppoHalfs = topo.m_oppositeHalfEdges.at(cFaceID);
+							for (int halfID = 0; halfID < 3; ++halfID)
+							{
+								int oppoHalf = oppoHalfs.at(halfID);
+								if (oppoHalf >= 0)
+								{
+									int oppoFaceID = topo.faceid(oppoHalf);
+									if (visitFlags.at(oppoFaceID) == false)
+									{
+										nextStack.push_back(oppoFaceID);
+										facesChunk.push_back(oppoFaceID);
+										visitFlags.at(oppoFaceID) = true;
+									}
+								}
+							}
+						}
+
+						visitStack.swap(nextStack);
+						nextStack.clear();
+					}
+
+					parts.push_back(std::vector<int>());
+					parts.back().swap(facesChunk);
+				}
+				else
+				{
+					visitFlags.at(faceID) = true;
+				}
+
+				if ((faceID + 1) % 100 == 0)
+				{
+					if (progressor->interrupt())
+					{
+						return outMeshes;
+					}
+				}
+
+			}
+
+			std::vector<trimesh::TriMesh*> meshes;
+			size_t partSize = parts.size();
+			for (size_t i = 0; i < partSize; ++i)
+			{
+				if (parts.at(i).size() > 10)
+				{
+					trimesh::TriMesh* outMesh = mmesh::partMesh(parts.at(i), mesh.get());
+					if (outMesh) meshes.push_back(outMesh);
+				}
+			}
+
+			//merge small ones
+			int tSize = (int)meshes.size();
+			int maxCount = 0;
+			for (int i = 0; i < tSize; ++i)
+			{
+				if (maxCount < (int)meshes.at(i)->vertices.size())
+					maxCount = (int)meshes.at(i)->vertices.size();
+			}
+
+			//策略改变 顶点少于150个 面少于50个
+			//int smallCount = (int)((float)maxCount * 0.05f);
+			const int smallV = 150;
+			const int samllF = 50;
+			std::vector<trimesh::TriMesh*> allInOne;
+			//std::vector<trimesh::TriMesh*> validMeshes;
+			std::vector<TriMeshPointer> validMeshes;
+			for (int i = 0; i < tSize; ++i)
+			{
+				//if ((int)meshes.at(i)->vertices.size() < smallCount)
+				float ratio = meshes.at(i)->vertices.size() * 1.0f / originV;
+				if ((int)meshes.at(i)->vertices.size() < smallV
+					&& (int)meshes.at(i)->faces.size() < samllF
+					&& ratio< 0.1f)
+					allInOne.push_back(meshes.at(i));
+				else
+					validMeshes.push_back(TriMeshPointer(meshes.at(i)));
+			}
+
+			if (allInOne.size() > 0)
+			{
+				trimesh::TriMesh* newMesh = new trimesh::TriMesh();
+				mmesh::mergeTriMesh(newMesh, allInOne);
+				validMeshes.push_back(TriMeshPointer(newMesh));
+
+				for (trimesh::TriMesh* m : allInOne)
+					delete m;
+				allInOne.clear();
+			}
+			outMeshes.push_back(validMeshes);
+		}
+		
+		return outMeshes;
 	}
 
 	void loadTrimesh(std::fstream& in, trimesh::TriMesh& mesh)
