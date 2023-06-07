@@ -542,6 +542,46 @@ namespace mmesh
 		return true;
 	}
 
+	bool splitRangeZ(trimesh::TriMesh* inputMesh, float Upz, float Dowmz, trimesh::TriMesh** mesh)
+	{
+		trimesh::vec3 normalUp = trimesh::vec3(0.0f, 0.0f, 1.0f);
+		trimesh::vec3 normalDown = trimesh::vec3(0.0f, 0.0f, -1.0f);
+
+		trimesh::TriMesh* mesh1 = nullptr;
+		trimesh::TriMesh* mesh2 = nullptr;
+		split(inputMesh, Upz, normalUp, &mesh1, &mesh2);
+		if (mesh1 == nullptr && mesh2 == nullptr)
+		{
+			mesh2 = new trimesh::TriMesh();
+			*mesh2 = *inputMesh;
+		}
+
+		if (mesh1 != nullptr)
+		{
+			delete mesh1;
+			mesh1 = nullptr;
+		}
+
+		split(mesh2, Dowmz, normalUp, mesh, &mesh1);
+		if (*mesh == nullptr && mesh1 == nullptr)
+		{
+			*mesh = new trimesh::TriMesh();
+			**mesh = *mesh2;
+		}
+
+		if (mesh1 != nullptr)
+		{
+			delete mesh1;
+			mesh1 = nullptr;
+		}
+		if (mesh2 != nullptr)
+		{
+			delete mesh2;
+			mesh2 = nullptr;
+		}
+		return true;
+	}
+
 	//face 和 vetices 生成新mesh
 	void FaceGenerateMesh(trimesh::TriMesh* newMesh, trimesh::TriMesh* inputMesh, std::vector<trimesh::TriMesh::Face>& inputface)
 	{
