@@ -55,6 +55,10 @@ namespace mmesh
 	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
 		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2);
 
+	//ÇÐ¸îÇø¼ä
+	bool splitRangeZ(trimesh::TriMesh* inputMesh, float Upz, float Dowmz,
+		trimesh::TriMesh** mesh1);
+
 	void FaceGenerateMesh(trimesh::TriMesh* newMesh, trimesh::TriMesh* inputMesh, std::vector<trimesh::TriMesh::Face>& inputface);
 
 	void fcollid(std::vector<trimesh::vec3>& lines, trimesh::TriMesh* inputMesh, std::vector<float>& distances,
