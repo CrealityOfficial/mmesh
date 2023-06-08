@@ -53,11 +53,16 @@ typedef unique_point::iterator point_iterator;
 namespace mmesh
 {
 	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
-		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2);
+		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2, float x = 0.0f, float y=0.0f);
 
 	//切割区间
-	bool splitRangeZ(trimesh::TriMesh* inputMesh, float Upz, float Dowmz,
-		trimesh::TriMesh** mesh1);
+	bool splitRangeZ(trimesh::TriMesh* inputMesh, float Upz, float Dowmz,trimesh::TriMesh** mesh);
+
+	//切成小方块
+	bool splitRangeXYZ(trimesh::TriMesh* inputMesh
+		, std::vector<trimesh::vec3>& horizon
+		, std::vector<trimesh::vec3>& vertical
+		, std::vector < trimesh::TriMesh*>& outMesh);
 
 	void FaceGenerateMesh(trimesh::TriMesh* newMesh, trimesh::TriMesh* inputMesh, std::vector<trimesh::TriMesh::Face>& inputface);
 

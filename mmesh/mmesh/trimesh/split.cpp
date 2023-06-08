@@ -408,13 +408,13 @@ namespace mmesh
 	}
 
 	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
-		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2)
+		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2, float x, float y)
 	{
 		size_t vertex_size = inputMesh->vertices.size();
 		if (vertex_size == 0)
 			return false;
 
-		trimesh::vec3 pos(0, 0, z);//切割点与法线normal 共同决定切割面
+		trimesh::vec3 pos(x, y, z);//切割点与法线normal 共同决定切割面
 		std::vector<float> distances;
 		distances.resize(vertex_size);
 #define min_value 1e-4
@@ -579,6 +579,76 @@ namespace mmesh
 			delete mesh2;
 			mesh2 = nullptr;
 		}
+		return true;
+	}
+
+	//切成小方块
+	bool splitRangeXYZ(trimesh::TriMesh* inputMesh
+		, std::vector<trimesh::vec3>& horizon
+		, std::vector<trimesh::vec3>& vertical
+		, std::vector <trimesh::TriMesh*>& outMesh)
+	{
+		int hsize = horizon.size();
+		int vsize = vertical.size();
+
+		if (hsize == 0 && vsize == 0)
+		{
+			trimesh::TriMesh* mesh = new trimesh::TriMesh();
+			*mesh = *inputMesh;
+			outMesh.push_back(mesh);
+			return true;
+		}
+
+		int capacity = hsize == 0 ? vsize+1 : vsize == 0 ? hsize+1 : (vsize+1) * (hsize+1);
+
+		outMesh.resize(capacity);
+		for (size_t i = 0; i < outMesh.size(); i++)
+		{
+			outMesh[i] = nullptr;
+		}
+
+		trimesh::vec3 normalH = trimesh::vec3(1.0f, 0.0f, 0.0f);
+		trimesh::vec3 normalV = trimesh::vec3(0.0f, 1.0f, 0.0f);
+
+		//horizon  水平切
+		if (hsize>0)
+		{
+			if (inputMesh != nullptr)
+				split(inputMesh, horizon[0].z, normalH, &outMesh[1], &outMesh[0], horizon[0].x, horizon[0].y);
+		}
+		for (int i = 1; i < hsize; i++)
+		{
+			if (outMesh[i] != nullptr)
+			{
+				trimesh::TriMesh* tempMesh = nullptr;
+				split(outMesh[i], horizon[i].z, normalH, &outMesh[i + 1], &tempMesh, horizon[i].x, horizon[i].y);
+				if (outMesh[i] != nullptr)
+				{
+					delete outMesh[i];
+					outMesh[i] = tempMesh;
+				}
+			}
+		}	
+
+		//vertical 垂直切
+		int _hsize = hsize + 1;
+		for (int j = 0; j < vsize; j++)
+		{
+			for (int i = 0; i < _hsize; i++)
+			{
+				if (outMesh[i + j * _hsize] != nullptr)
+				{
+					trimesh::TriMesh* tempMesh = nullptr;
+					split(outMesh[i + j * _hsize], vertical[j].z, normalV, &outMesh[i + (j + 1) * _hsize], &tempMesh, vertical[j].x, vertical[j].y);
+					if (outMesh[i + j * _hsize] != nullptr)
+					{
+						delete outMesh[i + j * _hsize];
+						outMesh[i + j * _hsize] = tempMesh;
+					}
+				}
+			}
+		}
+
 		return true;
 	}
 
