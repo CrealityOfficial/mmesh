@@ -441,11 +441,18 @@ namespace mmesh
 			float Point0 = distances.at(f.x);//面Face的3个顶点
 			float Point1 = distances.at(f.y);
 			float Point2 = distances.at(f.z);
-			if (Point0 > 0.0f && Point1 > 0.0f && Point2 > 0.0f)
+
+			if (Point0 == 0.0f && Point1 == 0.0f && Point2 == 0.0f)
+			{
+				collideFaces.push_back(f);//否则该面被切割，需后续重新生成面
+				continue;
+			}
+
+			if (Point0 >= 0.0f && Point1 >= 0.0f && Point2 >= 0.0f)
 			{
 				faceUp.push_back(f);//3个点都大于0则该面位于切割面上面
 			}
-			else if (Point0 < 0.0f && Point1 < 0.0f && Point2 < 0.0f)
+			else if (Point0 <= 0.0f && Point1 <= 0.0f && Point2 <= 0.0f)
 			{
 				faceDown.push_back(f);//3个点都小于0则该面位于切割面下面
 			}
@@ -461,6 +468,33 @@ namespace mmesh
 		FaceGenerateMesh(meshDown, inputMesh, faceDown);
 
 		std::vector<trimesh::vec3> lines;
+
+		auto getLine = [&lines,&inputMesh,&distances](int f1, int f2, int f3)
+		{
+			float Point0 = distances.at(f1);//面Face的3个顶点
+			float Point1 = distances.at(f2);
+			float Point2 = distances.at(f3);
+
+			if (Point0 == 0.0f && Point1 == 0.0f && Point2 == 0.0f)
+				return;
+
+			if (Point0 == 0.0f && Point1 == 0.0f && Point2 > 0.0f)
+			{
+				lines.push_back(inputMesh->vertices.at(f1));
+				lines.push_back(inputMesh->vertices.at(f2));
+			}
+			else if (Point0 == 0.0f && Point1 > 0.0f && Point2 == 0.0f)
+			{
+				lines.push_back(inputMesh->vertices.at(f3));
+				lines.push_back(inputMesh->vertices.at(f1));
+			}
+			else if (Point0 > 0.0f && Point1 == 0.0f && Point2 == 0.0f)
+			{
+				lines.push_back(inputMesh->vertices.at(f2));
+				lines.push_back(inputMesh->vertices.at(f3));
+			}
+		};
+
 		int faceNum = (int)inputMesh->faces.size();
 		for (int i = 0; i < faceNum; ++i)
 		{
@@ -470,7 +504,10 @@ namespace mmesh
 			float segment1 = distances.at(f.y) * distances.at(f.z);
 			float segment2 = distances.at(f.x) * distances.at(f.z);
 			if (segment0 == 0.0f && segment1 == 0.0f && segment2 == 0.0f)
+			{
+				getLine(f.x,f.y, f.z);//检测2个点在面的情况
 				continue;
+			}
 
 			if (segment0 >= 0.0f && (segment1 <= 0.0f || segment2 <= 0.0f))//f.z 为顶点
 			{
@@ -616,6 +653,7 @@ namespace mmesh
 			if (inputMesh != nullptr)
 				split(inputMesh, horizon[0].z, normalH, &outMesh[1], &outMesh[0], horizon[0].x, horizon[0].y);
 		}
+
 		for (int i = 1; i < hsize; i++)
 		{
 			if (outMesh[i] != nullptr)
