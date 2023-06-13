@@ -687,6 +687,15 @@ namespace mmesh
 			}
 		}
 
+		std::vector <trimesh::TriMesh*> _outMesh;
+		for (int i = vsize; i >=0; i--)
+		{
+			for (size_t j = 0; j < _hsize; j++)
+			{
+				_outMesh.push_back(outMesh[j+ i * _hsize]);
+			}
+		}
+		outMesh.swap(_outMesh);
 		return true;
 	}
 
