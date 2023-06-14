@@ -286,11 +286,11 @@ namespace mmesh
 		return needScale;
 	}
 
-	void dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)
+	bool dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)
 	{
 		std::clock_t start = clock();
 		if (!mesh)
-			return;
+			return false;
 
 		float sValue = 1.0f;
 		bool needScale = testNeedfitMesh(mesh, sValue);
@@ -327,7 +327,7 @@ namespace mmesh
 		size_t faceNum = mesh->faces.size();
 
 		if (vertexNum == 0 || faceNum == 0)
-			return;
+			return false;
 
 		trimesh::TriMesh* optimizeMesh = new trimesh::TriMesh();
 		bool interuptted = false;
@@ -383,7 +383,7 @@ namespace mmesh
 		if (interuptted)
 		{
 			delete optimizeMesh;
-			return;
+			return false;
 		}
 		trimesh::TriMesh* omesh = optimizeMesh;
 		omesh->vertices.resize(points.size());
@@ -418,6 +418,8 @@ namespace mmesh
 		clock_t end = clock();
 		double endtime = (double)(end - start);
 //		std::printf("total time1: %f\n", endtime);
+
+		return true;
 	}
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
