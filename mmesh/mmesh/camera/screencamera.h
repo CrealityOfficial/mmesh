@@ -39,6 +39,8 @@ namespace mmesh
 		trimesh::fxform projectionMatrix();
 	};
 
+	ScreenCameraMeta viewAllByProjection(const trimesh::box3& box, const trimesh::vec3& viewDir, float fovy);
+
 	void createCameraPoints(ScreenCameraMeta* meta, std::vector<trimesh::vec3>& positions);
 
 	class ScreenCameraTracer

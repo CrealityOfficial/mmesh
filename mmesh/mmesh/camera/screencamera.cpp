@@ -39,6 +39,36 @@ namespace mmesh
 		return xf;
 	}
 
+	//把box当做一个球来处理，直径是box.length()，相机放在球心位置往dir方向移动distance的位置
+	ScreenCameraMeta viewAllByProjection(const trimesh::box3& box, const trimesh::vec3& viewDir, float fovy)
+	{
+		ScreenCameraMeta meta;
+		memset(&meta, 0x0, sizeof(meta));
+
+		trimesh::vec3 bsize = box.size();
+		trimesh::vec3 ViewCenter = box.center(); //视点
+		float r = trimesh::length(bsize) / 2.0f;
+		
+		trimesh::vec3 dir = trimesh::normalized(viewDir);
+		float distance = r / (float)sinf(M_PI * fovy / 2.0 / 180.0);
+		trimesh::vec3 cameraPosition = ViewCenter + dir * distance;
+		trimesh::vec3 rightSide = trimesh::normalized(trimesh::vec3(1.0f, 1.0f, 0.0f));
+		trimesh::vec3 upVector = trimesh::normalized(trimesh::cross(rightSide, -dir));
+		float nearPlane = distance - 1.1f * r;
+		float farPlane = distance + 1.1f * r;
+
+		meta.type = ScreenCameraProjectionType::ePerspective;
+		meta.viewCenter = ViewCenter;
+		meta.upVector = upVector;
+		meta.position = cameraPosition;
+
+		meta.fNear = nearPlane;
+		meta.fFar = farPlane;
+		meta.fovy = fovy;
+
+		return meta;
+	}
+
 	void createCameraPoints(ScreenCameraMeta* meta, std::vector<trimesh::vec3>& positions)
 	{
 		positions.resize(9);
