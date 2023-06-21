@@ -52,8 +52,8 @@ namespace mmesh
 		trimesh::vec3 dir = trimesh::normalized(viewDir);
 		float distance = r / (float)sinf(M_PI * fovy / 2.0 / 180.0);
 		trimesh::vec3 cameraPosition = ViewCenter + dir * distance;
-		trimesh::vec3 rightSide = trimesh::normalized(trimesh::vec3(1.0f, 1.0f, 0.0f));
-		trimesh::vec3 upVector = trimesh::normalized(trimesh::cross(rightSide, -dir));
+		trimesh::vec3 upVector = trimesh::vec3(0.0, 0.0, 1.0);
+		
 		float nearPlane = distance - 1.1f * r;
 		float farPlane = distance + 1.1f * r;
 
