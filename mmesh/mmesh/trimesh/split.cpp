@@ -623,6 +623,7 @@ namespace mmesh
 	bool splitRangeXYZ(trimesh::TriMesh* inputMesh
 		, std::vector<trimesh::vec3>& horizon
 		, std::vector<trimesh::vec3>& vertical
+		, float interval
 		, std::vector <trimesh::TriMesh*>& outMesh)
 	{
 		int hsize = horizon.size();
@@ -647,7 +648,12 @@ namespace mmesh
 		trimesh::vec3 normalH = trimesh::vec3(1.0f, 0.0f, 0.0f);
 		trimesh::vec3 normalV = trimesh::vec3(0.0f, 1.0f, 0.0f);
 
-		//horizon  水平切
+		/*
+				|	|
+		        |   |
+				----->x
+		*/
+		//horizon 水平切
 		if (hsize>0)
 		{
 			if (inputMesh != nullptr)
@@ -668,6 +674,29 @@ namespace mmesh
 			}
 		}	
 
+		float _interval = 0.0f;
+		if (interval > 0.0f)
+		{
+			for (int i = 0; i < hsize; i++)
+			{
+				_interval = horizon[i].x - interval;
+				if (outMesh[i] != nullptr && _interval > 0.0f)
+				{
+					trimesh::TriMesh* tempMesh = nullptr;
+					split(outMesh[i], horizon[i].z, normalH, &tempMesh, &outMesh[i], _interval, horizon[i].y);
+					if (tempMesh != nullptr)
+					{
+						delete tempMesh;
+						tempMesh = nullptr;;
+					}
+				}
+			}
+		}
+
+		/*		
+			---------
+			---------
+		*/
 		//vertical 垂直切
 		int _hsize = hsize + 1;
 		for (int j = 0; j < vsize; j++)
@@ -682,6 +711,22 @@ namespace mmesh
 					{
 						delete outMesh[i + j * _hsize];
 						outMesh[i + j * _hsize] = tempMesh;
+					}
+
+					float _interval = 0.0f;
+					if (interval > 0.0f)
+					{
+						_interval = vertical[j].y - interval;
+						if (outMesh[i + j * _hsize] != nullptr && _interval > 0.0f)
+						{
+							trimesh::TriMesh* tempMesh = nullptr;
+							split(outMesh[i + j * _hsize], vertical[j].z, normalV, &tempMesh, &outMesh[i + j * _hsize], vertical[j].x,_interval);
+							if (tempMesh != nullptr)
+							{
+								delete tempMesh;
+								tempMesh = nullptr;;
+							}
+						}
 					}
 				}
 			}

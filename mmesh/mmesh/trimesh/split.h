@@ -62,6 +62,7 @@ namespace mmesh
 	bool splitRangeXYZ(trimesh::TriMesh* inputMesh
 		, std::vector<trimesh::vec3>& horizon
 		, std::vector<trimesh::vec3>& vertical
+		, float interval
 		, std::vector < trimesh::TriMesh*>& outMesh);
 
 	void FaceGenerateMesh(trimesh::TriMesh* newMesh, trimesh::TriMesh* inputMesh, std::vector<trimesh::TriMesh::Face>& inputface);
