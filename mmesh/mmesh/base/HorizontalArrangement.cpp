@@ -1,4 +1,5 @@
 #include"HorizontalArrangement.h"
+#include "mmesh/util/mnode.h"
 
 namespace mmesh
 {
@@ -88,7 +89,7 @@ namespace mmesh
 		//绕z和y旋转，使平面变平
 		const trimesh::vec3 XYnormal(0.0f, 0.0f, 1.0f);
 		trimesh::quaternion q = q.rotationTo(normal, XYnormal);
-		trimesh::fxform xf = fromQuaterian(q);
+		trimesh::fxform xf = mmesh::fromQuaterian(q);
 		for (trimesh::point& apoint : currentMesh->vertices)
 		{
 			apoint = (xf * apoint);

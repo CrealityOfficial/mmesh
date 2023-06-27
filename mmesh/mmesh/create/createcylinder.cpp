@@ -2,6 +2,8 @@
 #include "mmesh/trimesh/trimeshutil.h"
 #include "trimesh2/TriMesh_algo.h"
 #include "trimesh2/quaternion.h"
+#include "mmesh/util/mnode.h"
+
 #define  PI 3.141592 
 
 namespace mmesh
@@ -237,7 +239,7 @@ namespace mmesh
 
 		const trimesh::vec3 cyOriginNormal(0.0f, 0.0f, 1.0f);
 		trimesh::quaternion q = trimesh::quaternion::rotationTo(normal, cyOriginNormal);
-		trimesh::fxform xf = trimesh::fxform::trans(centerPoint) * fromQuaterian(q);
+		trimesh::fxform xf = trimesh::fxform::trans(centerPoint) * mmesh::fromQuaterian(q);
 		trimesh::apply_xform(mesh, trimesh::xform(xf));
 
 		return mesh;
@@ -304,7 +306,7 @@ namespace mmesh
 
 		const trimesh::vec3 cydestNormal(0.0f, 0.0f, 1.0f);
 		trimesh::quaternion q = trimesh::quaternion::rotationTo(trimesh::normalized(normal), cydestNormal);
-		trimesh::fxform xf = fromQuaterian(q);
+		trimesh::fxform xf = mmesh::fromQuaterian(q);
 		trimesh::apply_xform(cylinderMesh, trimesh::xform(xf));
 
 		return cylinderMesh;
@@ -402,7 +404,7 @@ namespace mmesh
 
 		const trimesh::vec3 cydestNormal(0.0f, 0.0f, 1.0f);
 		trimesh::quaternion q = trimesh::quaternion::rotationTo(trimesh::normalized(normal), cydestNormal);
-		trimesh::fxform xf = fromQuaterian(q);
+		trimesh::fxform xf = mmesh::fromQuaterian(q);
 		trimesh::apply_xform(mergedMesh, trimesh::xform(xf));
 
 		return mergedMesh;

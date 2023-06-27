@@ -13,6 +13,7 @@
 #include "ccglobal/log.h"
 #include "mmesh/create/createcylinder.h"
 #include "mmesh/trimesh/meshtopo.h"
+#include "mmesh/util/mnode.h"
 #include <ctime>
 
 namespace mmesh
@@ -720,7 +721,7 @@ namespace mmesh
 	{
 		trimesh::vec3 nn = trimesh::normalized(normal);
 		trimesh::quaternion q = trimesh::quaternion::fromDirection(nn, trimesh::vec3(0.0f, 0.0f, 1.0f));
-		trimesh::fxform m1 = trimesh::fromQuaterian(q);
+		trimesh::fxform m1 = mmesh::fromQuaterian(q);
 		return m1 * trimesh::fxform::trans(pos);
 	}
 
