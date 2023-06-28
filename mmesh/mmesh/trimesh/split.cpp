@@ -619,8 +619,8 @@ namespace mmesh
 		return true;
 	}
 
-	//切成小方块
-	bool splitRangeXYZ(trimesh::TriMesh* inputMesh
+	//切成小方块  先竖切 再横切
+	bool splitRangeXYZ1(trimesh::TriMesh* inputMesh
 		, std::vector<trimesh::vec3>& horizon
 		, std::vector<trimesh::vec3>& vertical
 		, float interval
@@ -687,7 +687,7 @@ namespace mmesh
 					if (tempMesh != nullptr)
 					{
 						delete tempMesh;
-						tempMesh = nullptr;;
+						tempMesh = nullptr;
 					}
 				}
 			}
@@ -724,7 +724,7 @@ namespace mmesh
 							if (tempMesh != nullptr)
 							{
 								delete tempMesh;
-								tempMesh = nullptr;;
+								tempMesh = nullptr;
 							}
 						}
 					}
@@ -738,6 +738,144 @@ namespace mmesh
 			for (size_t j = 0; j < _hsize; j++)
 			{
 				_outMesh.push_back(outMesh[j+ i * _hsize]);
+			}
+		}
+		outMesh.swap(_outMesh);
+		return true;
+	}
+
+	//切成小方块  先横切 再竖切
+	bool splitRangeXYZ(trimesh::TriMesh* inputMesh
+		, std::vector<trimesh::vec3>& horizon
+		, std::vector<trimesh::vec3>& vertical
+		, float interval
+		, std::vector <trimesh::TriMesh*>& outMesh)
+	{
+		int hsize = horizon.size();
+		int vsize = vertical.size();
+
+		if (hsize == 0 && vsize == 0)
+		{
+			trimesh::TriMesh* mesh = new trimesh::TriMesh();
+			*mesh = *inputMesh;
+			outMesh.push_back(mesh);
+			return true;
+		}
+
+		int capacity = hsize == 0 ? vsize + 1 : vsize == 0 ? hsize + 1 : (vsize + 1) * (hsize + 1);
+
+		outMesh.resize(capacity);
+		for (size_t i = 0; i < outMesh.size(); i++)
+		{
+			outMesh[i] = nullptr;
+		}
+
+		trimesh::vec3 normalH = trimesh::vec3(1.0f, 0.0f, 0.0f);
+		trimesh::vec3 normalV = trimesh::vec3(0.0f, 1.0f, 0.0f);
+
+		/*
+				|	|
+				|   |
+				----->x
+		*/
+		//horizon 垂直切
+		int _hsize = hsize + 1;
+		if (vsize > 0)
+		{
+			if (inputMesh != nullptr)
+				split(inputMesh, vertical[0].z, normalV, &outMesh[_hsize], &outMesh[0], vertical[0].x, vertical[0].y);
+		}
+
+		for (int i = 1; i < vsize; i++)
+		{
+			if (outMesh[_hsize*(i)] != nullptr)
+			{
+				trimesh::TriMesh* tempMesh = nullptr;
+				split(outMesh[_hsize * i], vertical[i].z, normalV, &outMesh[_hsize *(i+1)], &tempMesh, vertical[i].x, vertical[i].y);
+				if (outMesh[_hsize * i] != nullptr)
+				{
+					delete outMesh[i];
+					outMesh[_hsize * i] = tempMesh;
+				}
+			}
+		}
+
+		float _interval = 0.0f;
+		if (interval > 0.0f)
+		{
+			for (int i = 0; i < vsize; i++)
+			{
+				_interval = vertical[i].y - interval;
+				if (outMesh[_hsize*i] != nullptr && _interval > 0.0f)
+				{
+					trimesh::TriMesh* tempMesh = nullptr;
+					split(outMesh[_hsize * i], vertical[i].z, normalV, &tempMesh, &outMesh[_hsize*i], vertical[i].x, _interval);
+					if (tempMesh != nullptr)
+					{
+						delete tempMesh;
+						tempMesh = nullptr;
+					}
+				}
+			}
+		}
+
+		/*
+			---------
+			---------
+		*/
+		//vertical 水平切
+		float offset_x = 0.0f;
+		if (horizon.size() >= 2)
+		{
+			offset_x = (horizon[1].x - horizon[0].x) / 2.0f;
+		}
+
+		int _vsize = vsize + 1;
+		for (int j = 0; j < _vsize; j++)
+		{
+			for (int i = 0; i < hsize; i++)
+			{
+				if (outMesh[i + j * (hsize+1)] != nullptr)
+				{
+					trimesh::TriMesh* tempMesh = nullptr;
+
+					float x_val = horizon[i].x;
+					if (j % 2 >0 && offset_x>0.0f)
+					{
+						x_val += offset_x;
+					}
+					split(outMesh[i + j * (hsize + 1)], horizon[i].z, normalH, &outMesh[i + j * (hsize + 1) +1], &tempMesh, x_val, horizon[i].y);
+					if (outMesh[i + j * (hsize + 1)] != nullptr)
+					{
+						delete outMesh[i + j * (hsize + 1)];
+						outMesh[i + j * (hsize + 1)] = tempMesh;
+					}
+
+					float _interval = 0.0f;
+					if (interval > 0.0f)
+					{
+						_interval = x_val - interval;
+						if (outMesh[i + j * (hsize + 1)] != nullptr && _interval > 0.0f)
+						{
+							trimesh::TriMesh* tempMesh = nullptr;
+							split(outMesh[i + j * (hsize + 1)], horizon[i].z, normalH, &tempMesh, &outMesh[i + j * (hsize + 1)], _interval, horizon[i].y);
+							if (tempMesh != nullptr)
+							{
+								delete tempMesh;
+								tempMesh = nullptr;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		std::vector <trimesh::TriMesh*> _outMesh;
+		for (int i = vsize; i >= 0; i--)
+		{
+			for (size_t j = 0; j < _hsize; j++)
+			{
+				_outMesh.push_back(outMesh[j + i * _hsize]);
 			}
 		}
 		outMesh.swap(_outMesh);
