@@ -14,6 +14,12 @@ namespace mmesh
 
     //未用到的顶点用有效的顶点替换
     void removeNorVector2(trimesh::TriMesh* mesh);
+
+	template<class T>
+	void hashMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
+	{
+
+	}
 }
 
 #endif // MMESH_MNODE_1622032440408_H
