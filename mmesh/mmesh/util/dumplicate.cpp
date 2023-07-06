@@ -93,7 +93,7 @@ namespace mmesh
 			tracer->progress(0.2f);
 		}
 
-		size_t vertexNum = mesh->vertices.size();
+		//size_t vertexNum = mesh->vertices.size();
 		std::vector<trimesh::point>& vertices = mesh->vertices;
 
 		std::vector<point3dWithIndex> pVertices;

@@ -2,10 +2,8 @@
 #define MMESH_MNODE_1622032440408_H
 #include "trimesh2/TriMesh.h"
 #include <unordered_map>
-namespace ccglobal
-{
-	class Tracer;
-}
+#include "ccglobal/tracer.h"
+#include "trimesh2/TriMesh_algo.h"
 
 namespace mmesh
 {
@@ -58,7 +56,6 @@ namespace mmesh
 	template<class T>
 	bool hashMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
-        std::clock_t start = clock();
         if (!mesh)
             return false;
 
@@ -160,11 +157,6 @@ namespace mmesh
         mesh->need_bbox();
 
         delete omesh;
-
-        clock_t end = clock();
-        double endtime = (double)(end - start);
-        //		std::printf("total time1: %f\n", endtime);
-
         return true;
 	}
 }
