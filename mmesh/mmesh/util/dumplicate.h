@@ -1,7 +1,7 @@
 #ifndef MMESH_MNODE_1622032440408_H
 #define MMESH_MNODE_1622032440408_H
 #include "trimesh2/TriMesh.h"
-
+#include <unordered_map>
 namespace ccglobal
 {
 	class Tracer;
@@ -15,10 +15,157 @@ namespace mmesh
     //未用到的顶点用有效的顶点替换
     void removeNorVector2(trimesh::TriMesh* mesh);
 
-	template<class T>
-	void hashMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
-	{
+    struct hash_vec3 {
+        size_t operator()(const trimesh::vec3& v)const
+        {
+            return std::abs(v.x)* 10000.0f / 23.0f + std::abs(v.y) * 10000.0f / 19.0f + std::abs(v.z) * 10000.0f / 17.0f;
+        }
+    };
 
+    struct hash_func1 {
+        size_t operator()(const trimesh::vec3& v)const
+        {
+            return (int(v.x * 99971)) ^ (int(v.y * 99989)) ^ (int(v.z * 99991));
+        }
+    };
+
+    struct hash_func2 {
+        size_t operator()(const trimesh::vec3& v)const
+        {
+            return (int(v.x * 99971)) ^ (int(v.y * 99989) << 2) ^ (int(v.z * 99991) << 3);
+        }
+    };
+
+    bool compareTriMesh(const trimesh::TriMesh& mesh1, const trimesh::TriMesh& mesh2)
+    {
+        const auto& faces1 = mesh1.faces;
+        const auto& faces2 = mesh2.faces;
+        if (faces1.size() != faces2.size()) return false;
+        const int& facenums = faces1.size();
+        for (int i = 0; i < facenums; ++i) {
+            if (faces1[i] != faces2[i]) return false;
+        }
+        const auto& points1 = mesh1.vertices;
+        const auto& points2 = mesh2.vertices;
+        if (points1.size() != points2.size()) return false;
+        const int& pointnums = points1.size();
+        for (int i = 0; i < pointnums; ++i) {
+            if (points1[i] != points2[i]) return false;
+        }
+        return true;
+    }
+
+	template<class T>
+	bool hashMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
+	{
+        std::clock_t start = clock();
+        if (!mesh)
+            return false;
+
+        float sValue = 1.0f;
+        bool needScale = testNeedfitMesh(mesh, sValue);
+
+        if (needScale)
+            trimesh::apply_xform(mesh, trimesh::xform::scale(sValue));
+
+        size_t vertexNum = mesh->vertices.size();
+
+        struct equal_vec3 {
+            bool operator()(const trimesh::vec3& v1, const trimesh::vec3& v2) const
+            {
+                return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z;
+            }
+        };
+        typedef std::unordered_map<trimesh::vec3, int, T, equal_vec3> unique_point;
+        unique_point points((int)(vertexNum * 0.3) + 1);
+
+        typedef unique_point::iterator point_iterator;
+
+        size_t faceNum = mesh->faces.size();
+
+        if (vertexNum == 0 || faceNum == 0)
+            return false;
+
+        trimesh::TriMesh * optimizeMesh = new trimesh::TriMesh();
+        bool interuptted = false;
+
+        std::vector<int> vertexMapper;
+        vertexMapper.resize(vertexNum, -1);
+
+        if (tracer)
+            tracer->formatMessage("dumplicateMesh %d", (int)vertexNum);
+
+        size_t pVertex = vertexNum / 20;
+        if (pVertex == 0)
+            pVertex = vertexNum;
+
+        for (size_t i = 0; i < vertexNum; ++i) {
+            trimesh::point p = mesh->vertices.at(i);
+            point_iterator it = points.find(p);
+            if (it != points.end()) {
+                int index = (*it).second;
+                vertexMapper.at(i) = index;
+            } else {
+                int index = (int)points.size();
+                points.insert(unique_point::value_type(p, index));
+
+                vertexMapper.at(i) = index;
+            }
+
+            if (i % pVertex == 1) {
+                if (tracer) {
+                    tracer->formatMessage("dumplicateMesh %i", (int)i);
+                    tracer->progress((float)i / (float)vertexNum);
+                    if (tracer->interrupt()) {
+                        interuptted = true;
+                        break;
+                    }
+                }
+#if USE_SPYCC
+                SESSION_TICK("dumplicateMesh")
+#endif
+            }
+        }
+
+        if (tracer)
+            tracer->formatMessage("dumplicateMesh over %d", (int)points.size());
+
+        if (interuptted) {
+            delete optimizeMesh;
+            return false;
+        }
+        trimesh::TriMesh* omesh = optimizeMesh;
+        omesh->vertices.resize(points.size());
+        for (point_iterator it = points.begin(); it != points.end(); ++it) {
+            omesh->vertices.at(it->second) = it->first;
+        }
+
+        omesh->faces = mesh->faces;
+        for (size_t i = 0; i < faceNum; ++i) {
+            trimesh::TriMesh::Face& of = omesh->faces.at(i);
+            for (int j = 0; j < 3; ++j) {
+                int index = of[j];
+                of[j] = vertexMapper[index];
+            }
+        }
+
+        mesh->vertices.swap(omesh->vertices);
+        mesh->faces.swap(omesh->faces);
+        mesh->flags.clear();
+
+        if (needScale)
+            trimesh::apply_xform(mesh, trimesh::xform::scale(1.0f / sValue));
+
+        mesh->clear_bbox();
+        mesh->need_bbox();
+
+        delete omesh;
+
+        clock_t end = clock();
+        double endtime = (double)(end - start);
+        //		std::printf("total time1: %f\n", endtime);
+
+        return true;
 	}
 }
 
