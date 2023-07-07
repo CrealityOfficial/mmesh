@@ -4,13 +4,13 @@
 #include <unordered_map>
 #include "ccglobal/tracer.h"
 #include "trimesh2/TriMesh_algo.h"
-
+#include "mmesh/trimesh/trimeshutil.h"
 namespace mmesh
 {
 
 	void weldingMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
 
-    //Î´ÓÃµ½µÄ¶¥µãÓÃÓÐÐ§µÄ¶¥µãÌæ»»
+    //Î´ï¿½Ãµï¿½ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½æ»»
     void removeNorVector2(trimesh::TriMesh* mesh);
 
     struct hash_vec3 {
@@ -60,7 +60,7 @@ namespace mmesh
             return false;
 
         float sValue = 1.0f;
-        bool needScale = testNeedfitMesh(mesh, sValue);
+        bool needScale = mmesh::testNeedfitMesh(mesh, sValue);
 
         if (needScale)
             trimesh::apply_xform(mesh, trimesh::xform::scale(sValue));
@@ -76,8 +76,7 @@ namespace mmesh
         typedef std::unordered_map<trimesh::vec3, int, T, equal_vec3> unique_point;
         unique_point points((int)(vertexNum * 0.3) + 1);
 
-        typedef unique_point::iterator point_iterator;
-
+        
         size_t faceNum = mesh->faces.size();
 
         if (vertexNum == 0 || faceNum == 0)
@@ -98,7 +97,7 @@ namespace mmesh
 
         for (size_t i = 0; i < vertexNum; ++i) {
             trimesh::point p = mesh->vertices.at(i);
-            point_iterator it = points.find(p);
+            auto it = points.find(p);
             if (it != points.end()) {
                 int index = (*it).second;
                 vertexMapper.at(i) = index;
@@ -133,7 +132,7 @@ namespace mmesh
         }
         trimesh::TriMesh* omesh = optimizeMesh;
         omesh->vertices.resize(points.size());
-        for (point_iterator it = points.begin(); it != points.end(); ++it) {
+        for (auto it = points.begin(); it != points.end(); ++it) {
             omesh->vertices.at(it->second) = it->first;
         }
 
