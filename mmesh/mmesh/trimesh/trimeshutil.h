@@ -36,6 +36,7 @@ namespace mmesh
 
 	bool testNeedfitMesh(trimesh::TriMesh* mesh, float& scale);
 	bool dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr, float ratio = 0.3f);
+	bool dumplicateMeshExTest(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr, float ratio = 0.3f);
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer = nullptr);
 	void removeInvalidVertex(trimesh::TriMesh* mesh);
