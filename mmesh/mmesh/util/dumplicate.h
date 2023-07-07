@@ -34,24 +34,7 @@ namespace mmesh
         }
     };
 
-    bool compareTriMesh(const trimesh::TriMesh& mesh1, const trimesh::TriMesh& mesh2)
-    {
-        const auto& faces1 = mesh1.faces;
-        const auto& faces2 = mesh2.faces;
-        if (faces1.size() != faces2.size()) return false;
-        const int& facenums = faces1.size();
-        for (int i = 0; i < facenums; ++i) {
-            if (faces1[i] != faces2[i]) return false;
-        }
-        const auto& points1 = mesh1.vertices;
-        const auto& points2 = mesh2.vertices;
-        if (points1.size() != points2.size()) return false;
-        const int& pointnums = points1.size();
-        for (int i = 0; i < pointnums; ++i) {
-            if (points1[i] != points2[i]) return false;
-        }
-        return true;
-    }
+    bool compareTriMesh(const trimesh::TriMesh& mesh1, const trimesh::TriMesh& mesh2);
 
 	template<class T>
 	bool hashMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
