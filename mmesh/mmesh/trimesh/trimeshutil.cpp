@@ -286,7 +286,10 @@ namespace mmesh
 
 		return needScale;
 	}
-
+	bool dumplicateMeshExTest(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)	
+	{
+		return dumplicateMesh(mesh,tracer,ratio);
+	}
 	bool dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)
 	{
 		std::clock_t start = clock();
@@ -379,7 +382,7 @@ namespace mmesh
 		}
 
 		if (tracer)
-			tracer->formatMessage("dumplicateMesh over %d", (int)points.size());
+			tracer->formatMessage("56789 dumplicateMesh over %d", (int)points.size());
 
 		if (interuptted)
 		{
@@ -903,7 +906,7 @@ namespace mmesh
 					maxCount = (int)meshes.at(i)->vertices.size();
 			}
 
-			//策略改变 顶点少于150个 面少于50个
+			//锟斤拷锟皆改憋拷 锟斤拷锟斤拷锟斤拷锟斤拷150锟斤拷 锟斤拷锟斤拷锟斤拷50锟斤拷
 			//int smallCount = (int)((float)maxCount * 0.05f);
 			const int smallV = 150;
 			const int samllF = 50;
@@ -954,4 +957,7 @@ namespace mmesh
 	{
 		return trimesh::dvec3(v.x, v.y, v.z);
 	}
+
+
+	
 }
