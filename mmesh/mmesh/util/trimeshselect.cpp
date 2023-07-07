@@ -34,6 +34,21 @@ namespace mmesh
 		}
 		return 3;
 	}
+
+	trimesh::vec3 trimeshFaceNormal(trimesh::TriMesh* mesh, int faceID)
+	{
+		trimesh::vec3 n = trimesh::vec3(0.0f, 0.0f, 0.0f);
+		if (mesh && faceID >= 0 && faceID < (int)mesh->faces.size())
+		{
+			const trimesh::TriMesh::Face& f = mesh->faces.at(faceID);
+
+			trimesh::vec3 v01 = mesh->vertices.at(f[1]) - mesh->vertices.at(f[0]);
+			trimesh::vec3 v02 = mesh->vertices.at(f[2]) - mesh->vertices.at(f[0]);
+			n = v01 TRICROSS v02;
+			trimesh::normalize(n);
+		}
+		return n;
+	}
 }
 
 
