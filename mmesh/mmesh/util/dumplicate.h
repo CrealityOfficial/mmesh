@@ -1,5 +1,5 @@
-#ifndef MMESH_MNODE_1622032440408_H
-#define MMESH_MNODE_1622032440408_H
+#ifndef MMESH_MNODE_DUMPLICATE_1622032440408_H
+#define MMESH_MNODE_DUMPLICATE_1622032440408_H
 #include "trimesh2/TriMesh.h"
 #include <unordered_map>
 #include "ccglobal/tracer.h"
@@ -143,4 +143,4 @@ namespace mmesh
 	}
 }
 
-#endif // MMESH_MNODE_1622032440408_H
+#endif // MMESH_MNODE_DUMPLICATE_1622032440408_H
