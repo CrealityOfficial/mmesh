@@ -57,6 +57,7 @@ namespace mmesh
             }
         };
         typedef std::unordered_map<trimesh::vec3, int, T, equal_vec3> unique_point;
+        typedef unique_point::value_type unique_value;
         unique_point points((int)(vertexNum * 0.3) + 1);
 
         
@@ -86,7 +87,7 @@ namespace mmesh
                 vertexMapper.at(i) = index;
             } else {
                 int index = (int)points.size();
-                points.insert(unique_point::value_type(p, index));
+                points.insert(unique_value(p, index));
 
                 vertexMapper.at(i) = index;
             }
