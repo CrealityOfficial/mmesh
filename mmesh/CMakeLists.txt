@@ -14,10 +14,10 @@ if(MMESH_USE_FREEIMAGE)
 	__cc_find(freeImage)
 endif()
 
-if(TARGET freeimage)
+if(TARGET freeImage)
 	message(STATUS "build mmesh use freeImage ...........................")
 	add_definitions(-DHAVE_FREEIMAGE)
-	list(APPEND LIBS freeimage)
+	list(APPEND LIBS freeImage)
 endif()
 if(EMCC_WEB)
 	__add_real_target(mmesh lib SOURCE ${SRCS} 
