@@ -23,4 +23,27 @@ namespace mmesh
 				tris.push_back(mesh->vertices.at(f[j]));
 		}
 	}
+
+	void traitTrianglesFromMeshes(const std::vector<trimesh::TriMesh*>& meshes, std::vector<trimesh::vec3>& tris)
+	{
+		for (const trimesh::TriMesh* mesh : meshes)
+		{
+			if (!mesh)
+				continue;
+
+			if (mesh->faces.size() > 0)
+			{
+				for (const trimesh::TriMesh::Face& f : mesh->faces)
+				{
+					tris.push_back(mesh->vertices.at(f.x));
+					tris.push_back(mesh->vertices.at(f.y));
+					tris.push_back(mesh->vertices.at(f.z));
+				}
+			}
+			else
+			{
+				tris.insert(tris.end(), mesh->vertices.begin(), mesh->vertices.end());
+			}
+		}
+	}
 }
