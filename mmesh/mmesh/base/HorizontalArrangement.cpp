@@ -1,6 +1,7 @@
 #include"HorizontalArrangement.h"
 #include "mmesh/util/mnode.h"
-
+#include "qhullWrapper/hull/meshconvex.h"
+#include <queue>
 namespace mmesh
 {
 	void getConvexHullMesh(trimesh::TriMesh* mesh, std::vector<trimesh::TriMesh*>& meshs)
@@ -73,6 +74,129 @@ namespace mmesh
 		meshs.resize(std::min((int)meshs.size(), 50));//50
 		
 	}
+
+    void getConvexHullMesh2(trimesh::TriMesh* inputMesh, std::vector<trimesh::TriMesh>& partMeshes)
+    {
+        mmesh::dumplicateMesh(inputMesh);
+        const auto& faces = inputMesh->faces;
+        const auto& vertexs = inputMesh->vertices;
+        const int facenums = faces.size();
+        std::vector<trimesh::point> normals;
+        normals.reserve(facenums);
+        std::vector<float> areas;
+        areas.reserve(facenums);
+        for (const auto& f : faces) {
+            const auto& a = vertexs[f[0]];
+            const auto& b = vertexs[f[1]];
+            const auto& c = vertexs[f[2]];
+            const auto& n = 0.5 * (b - a)TRICROSS(c - a);
+            const auto & area = len(n);
+            areas.emplace_back(area);
+            normals.emplace_back(n / area);
+        }
+        inputMesh->need_across_edge();
+        std::vector<trimesh::TriMesh::Face> neighbors = inputMesh->across_edge;
+        std::vector<bool> masks(facenums, true);
+        std::vector<std::vector<int>> selectFaces;
+        selectFaces.reserve(facenums);
+        std::vector<trimesh::TriMesh> faceMeshes;
+        for (int f = 0; f < facenums; ++f) {
+            if (masks[f]) {
+                const auto& nf = normals[f];
+                std::vector<int>currentFaces;
+                std::queue<int>currentQueue;
+                currentQueue.emplace(f);
+                currentFaces.emplace_back(f);
+                masks[f] = false;
+                while (!currentQueue.empty()) {
+                    auto& fr = currentQueue.front();
+                    currentQueue.pop();
+                    const auto& neighbor = neighbors[fr];
+                    for (const auto& fa : neighbor) {
+                        if (fa < 0) continue;
+                        if (masks[fa]) {
+                            const auto& na = normals[fa];
+                            const auto& nr = normals[fr];
+                            if ((nr DOT na) > 0.95 && (nf DOT na) > 0.95) {
+                                currentQueue.emplace(fa);
+                                currentFaces.emplace_back(fa);
+                                masks[fa] = false;
+                            }
+                        }
+                    }
+                }
+                trimesh::TriMesh regionMesh;
+                const size_t num = currentFaces.size();
+                regionMesh.faces.reserve(num);
+                regionMesh.vertices.reserve(3 * num);
+                for (size_t i = 0; i < num; ++i) {
+                    const auto& f = currentFaces[i];
+                    for (int j = 0; j < 3; ++j) {
+                        regionMesh.vertices.emplace_back(std::move(vertexs[faces[f][j]]));
+                    }
+                    regionMesh.faces.emplace_back(std::move(trimesh::TriMesh::Face(3 * i, 3 * i + 1, 3 * i + 2)));
+                }
+                if (num > 1) mmesh::dumplicateMesh(&regionMesh);
+                faceMeshes.emplace_back(std::move(regionMesh));
+            }
+        }
+        for (auto& m : faceMeshes) {
+            m.need_pointareas();
+            m.need_normals();
+        }
+        std::sort(faceMeshes.begin(), faceMeshes.end(), [](const trimesh::TriMesh & a, const trimesh::TriMesh & b) {
+            double sa = 0, sb = 0;
+            for (const auto& area : a.pointareas) {
+                sa += area;
+            }
+            for (const auto& area : b.pointareas) {
+                sb += area;
+            }
+            return sa > sb;
+        });
+        const int regions = faceMeshes.size();
+        for (int i = 0; i < faceMeshes.size(); ++i) {
+            faceMeshes[i].write("test/hullfaces" + std::to_string(i) + ".stl");
+        }
+        //
+        partMeshes.reserve(regions);
+        for (unsigned int polygon_id = 0; polygon_id < regions; ++polygon_id) {
+            trimesh::vec3 normal;
+            trimesh::TriMesh* mesh = &faceMeshes[polygon_id];
+            trimesh::fxform xf = mmesh::adjustmentMesh(mesh, normal);
+            mesh = qhullWrapper::convex_hull_2d(mesh);
+            if (mmesh::checkMesh(mesh, normal)) {
+                faceMeshes.erase(faceMeshes.begin() + (polygon_id--));
+                continue;
+            }
+            mmesh::indentationMesh(mesh);
+            //通过逆矩阵转换回三维坐标
+            for (trimesh::point& apoint : mesh->vertices) {
+                apoint = trimesh::inv(xf) * apoint;
+            }
+            partMeshes.emplace_back(*mesh);
+        }
+
+        //三角化
+        for (trimesh::TriMesh& amesh : partMeshes) {
+            std::vector<trimesh::point> apoints = amesh.vertices;
+            amesh.vertices.clear();
+            if (apoints.size() < 3) {
+                continue;
+            }
+
+            for (size_t n = 2; n < apoints.size(); n++) {
+                int index = amesh.vertices.size();
+                amesh.vertices.push_back(apoints[0]);
+                amesh.vertices.push_back(apoints[n - 1]);
+                amesh.vertices.push_back(apoints[n]);
+                amesh.faces.push_back(trimesh::TriMesh::Face(index, index + 1, index + 2));
+            }
+        }
+        for (int i = 0; i < partMeshes.size(); ++i) {
+            partMeshes[i].write("test/hullfaces" + std::to_string(i) + ".stl");
+        }
+    }
 
 	trimesh::fxform adjustmentMesh(trimesh::TriMesh* inmesh, trimesh::vec3& normal)
 	{
