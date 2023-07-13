@@ -9,7 +9,6 @@
 namespace mmesh 
 {
 	void getConvexHullMesh(trimesh::TriMesh* mesh, std::vector<trimesh::TriMesh*>& meshs);
-    void getConvexHullMesh2(trimesh::TriMesh* mesh, std::vector<trimesh::TriMesh>& meshs);
 	trimesh::fxform adjustmentMesh(trimesh::TriMesh* inmesh ,trimesh::vec3& normal);
 	bool checkMesh(trimesh::TriMesh* inmesh, trimesh::vec3& normal);
 	void indentationMesh(trimesh::TriMesh* inmesh);
