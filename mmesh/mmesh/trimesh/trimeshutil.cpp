@@ -279,7 +279,7 @@ namespace mmesh
 			needScale = true;
 			scale = 100.0f / size.max();
 		}
-		else if (size.min() < 1.0f)
+		else if (size.min() < 1.0f && size.min() > 0.00001f)
 		{
 			needScale = true;
 			scale = 100.0f / size.min();
