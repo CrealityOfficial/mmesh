@@ -295,7 +295,7 @@ namespace mmesh
 
 	bool dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)
 	{
-		return hashMesh<hash_func1>(mesh, tracer);
+        return hashMesh<hash_func1>(mesh, tracer, ratio);
 	}
 
 	void removeNorFaces(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)

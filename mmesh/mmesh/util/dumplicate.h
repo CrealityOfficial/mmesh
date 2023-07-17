@@ -37,7 +37,7 @@ namespace mmesh
     bool compareTriMesh(const trimesh::TriMesh& mesh1, const trimesh::TriMesh& mesh2);
 
 	template<class T>
-	bool hashMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
+    bool hashMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio = 0.30f)
 	{
         if (!mesh)
             return false;
@@ -58,7 +58,7 @@ namespace mmesh
         };
         typedef std::unordered_map<trimesh::vec3, int, T, equal_vec3> unique_point;
         typedef typename unique_point::value_type unique_value;
-        unique_point points((int)(vertexNum * 0.3) + 1);
+        unique_point points((int)(vertexNum * ratio) + 1);
 
         
         size_t faceNum = mesh->faces.size();
