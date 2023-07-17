@@ -24,6 +24,18 @@ namespace mmesh
 		}
 	}
 
+	void traitTriangles(trimesh::TriMesh* mesh, std::vector<trimesh::vec3>& tris)
+	{
+		if (!mesh)
+			return;
+
+		std::vector<int> indices;
+		for (int i = 0; i < (int)mesh->faces.size(); ++i)
+			indices.push_back(i);
+
+		return traitTriangles(mesh, indices, tris);
+	}
+
 	void traitTrianglesFromMeshes(const std::vector<trimesh::TriMesh*>& meshes, std::vector<trimesh::vec3>& tris)
 	{
 		for (const trimesh::TriMesh* mesh : meshes)

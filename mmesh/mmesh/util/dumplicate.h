@@ -136,6 +136,7 @@ namespace mmesh
         if (needScale)
             trimesh::apply_xform(mesh, trimesh::xform::scale(1.0f / sValue));
 
+        mesh->flags.clear();
         mesh->clear_bbox();
         mesh->need_bbox();
 
