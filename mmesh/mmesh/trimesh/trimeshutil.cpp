@@ -288,12 +288,12 @@ namespace mmesh
 		return needScale;
 	}
 
-	bool dumplicateMeshExTest(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)	
+	bool dumplicateMeshExTest(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, const float& ratio)	
 	{
 		return dumplicateMesh(mesh,tracer,ratio);
 	}
 
-	bool dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, float ratio)
+	bool dumplicateMesh(trimesh::TriMesh* mesh, ccglobal::Tracer* tracer, const float& ratio)
 	{
         return hashMesh<hash_func1>(mesh, tracer, ratio);
 	}
