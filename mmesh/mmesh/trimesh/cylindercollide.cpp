@@ -6,6 +6,7 @@
 #include "mmesh/util/mnode.h"
 #include "mmesh/create/createcylinder.h"
 #include <mmesh/trimesh/algrithm3d.h>
+#include "mmesh/trimesh/shapecreator.h"
 
 #include <map>
 #include <list>
@@ -779,12 +780,11 @@ namespace mmesh
 
 		mmesh::point ZAXIS(0.0f,0.0f,1.0f);
 		trimesh::vec3 ax = m_cylinderDir;
-		trimesh::quaternion quat= trimesh::quaternion::fromDirection(ax, ZAXIS);
+		trimesh::quaternion quat = trimesh::quaternion::fromDirection(ax, ZAXIS);
 
 		trimesh::fxform xf = mmesh::fromQuaterian(quat);
 
 		m_mesh->need_bbox();
-		m_cylinderPointStart = m_cylinderPointStart + 0.2 * (-m_cylinderDir);
 		//double cylinderInitDepth = 2 * m_mesh->bbox.radius() + 2;
 		//box3 cylinderBox_new;
 		//int cylinderVertexNum = (int)m_cylinder->vertices.size();
@@ -833,12 +833,8 @@ namespace mmesh
 
 		m_cylinderDepth += 2.0;
 
-		m_cylinder = createCylinderMesh(newStartPos + m_cylinderDepth * ZAXIS, newStartPos, m_cylinderRadius, m_cylinderResolution, 0.0);
-		trimesh::fxform invXF = trimesh::inv(xf);
-		for (int i = 0; i < m_cylinder->vertices.size(); ++i)
-		{
-			m_cylinder->vertices[i] = invXF * m_cylinder->vertices[i];
-		}
+		m_cylinder = createCylinderMesh(m_cylinderPointStart + m_cylinderDepth * m_cylinderDir,
+			m_cylinderPointStart - m_cylinderRadius * m_cylinderDir, m_cylinderRadius, m_cylinderResolution, 0.0);
 
 		focusTriangle = (int)meshFocusFaces.size();
 		cylinderTriangles = (int)m_cylinder->faces.size();
@@ -1055,6 +1051,9 @@ namespace mmesh
 
 	trimesh::TriMesh* OptimizeCylinderCollide::createCylinderMesh(trimesh::vec3 top, trimesh::vec3 bottom, float radius, int num, float theta)
 	{
+#if 1
+		trimesh::TriMesh* mesh = mmesh::ShapeCreator::createCylinderMesh(top, bottom, radius, num, theta);
+#else
 		trimesh::TriMesh* mesh = new trimesh::TriMesh();
 
 		int hPart = num;
@@ -1140,7 +1139,7 @@ namespace mmesh
 			f1[2] = fvindex(1, i + 1);
 			++faceIndex;
 		}
-
+#endif
 		return mesh;
 	}
 
