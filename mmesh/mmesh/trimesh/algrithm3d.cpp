@@ -197,11 +197,23 @@ namespace mmesh
 	void getDevidePoint(const trimesh::vec& p0, const trimesh::vec& p1,
 		std::vector<trimesh::vec>& out, float theta, bool clockwise)
 	{
+		if (theta <= 0.02f)
+		{
+			return;
+		}
+
 		//int x = 1, y = 2;//旋转的点
 		//int dx = 1, dy = 1;//被绕着旋转的点
 
-		int count = theta > ARC_PER_BLOCK ? theta / ARC_PER_BLOCK : theta / 2;
-		int angle = theta > ARC_PER_BLOCK ? ARC_PER_BLOCK : theta / 2;
+		float block = ARC_PER_BLOCK;
+
+		int count = theta > block ? theta / block : 2;
+		float angle = theta > block ? block : theta / 2.0;
+
+		if (theta < block)
+		{
+			block = theta / 2.0;
+		}
 		//int count = theta / ARC_PER_BLOCK;
 		//int angle = ARC_PER_BLOCK;
 		out.reserve(count);
@@ -223,13 +235,13 @@ namespace mmesh
 			trimesh::vec _out = p0;
 			if (clockwise)
 			{
-				angle = ARC_PER_BLOCK * i;
+				angle = block * i;
 				_out.x = (p1.x - p0.x) * cos(angle * M_PIf / 180) + (p1.y - p0.y) * sin(angle * M_PIf / 180) + p0.x;
 				_out.y = (p1.y - p0.y) * cos(angle * M_PIf / 180) - (p1.x - p0.x) * sin(angle * M_PIf / 180) + p0.y;
 			}
 			else
 			{
-				angle = ARC_PER_BLOCK * i;
+				angle = block * i;
 
 				_out.x = (p1.x - p0.x) * cos(angle * M_PIf / 180) - (p1.y - p0.y) * sin(angle * M_PIf / 180) + p0.x;
 				_out.y = (p1.y - p0.y) * cos(angle * M_PIf / 180) + (p1.x - p0.x) * sin(angle * M_PIf / 180) + p0.y;
