@@ -55,6 +55,15 @@ namespace mmesh
 	bool split(trimesh::TriMesh* inputMesh, float z, const trimesh::vec3& normal,
 		trimesh::TriMesh** mesh1, trimesh::TriMesh** mesh2, float x = 0.0f, float y=0.0f);
 
+	struct SplitPlane
+	{
+		trimesh::vec3 normal;
+		trimesh::vec3 position;
+	};
+
+	bool splitSlot(trimesh::TriMesh* input, const SplitPlane& plane, 
+		std::vector<trimesh::TriMesh*>& outMeshes, bool NeedMerge = true, bool NeedRepair = true);
+
 	//ÇÐ¸îÇø¼ä
 	bool splitRangeZ(trimesh::TriMesh* inputMesh, float Upz, float Dowmz,trimesh::TriMesh** mesh);
 

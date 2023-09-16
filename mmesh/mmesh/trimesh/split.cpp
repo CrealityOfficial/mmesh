@@ -579,6 +579,25 @@ namespace mmesh
 		return true;
 	}
 
+	bool splitSlot(trimesh::TriMesh* input, const SplitPlane& plane,
+		std::vector<trimesh::TriMesh*>& outMeshes, bool NeedMerge, bool NeedRepair)
+	{
+		outMeshes.clear();
+		trimesh::TriMesh* m1 = new trimesh::TriMesh();
+		trimesh::TriMesh* m2 = new trimesh::TriMesh();
+		bool result = split(input, plane.position.z, plane.normal, &m1, &m2, plane.position.x, plane.position.y);
+		if (result)
+		{
+			outMeshes.push_back(m1);
+			outMeshes.push_back(m2);
+			return true;
+		}
+
+		delete m1;
+		delete m2;
+		return false;
+	}
+
 	bool splitRangeZ(trimesh::TriMesh* inputMesh, float Upz, float Dowmz, trimesh::TriMesh** mesh)
 	{
 		trimesh::vec3 normalUp = trimesh::vec3(0.0f, 0.0f, 1.0f);
